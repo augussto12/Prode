@@ -4,8 +4,8 @@ const COOKIE_NAME = 'prode_token';
 
 const cookieOptions = {
   httpOnly: true,      // ← No accesible desde JavaScript (anti-XSS)
-  secure: process.env.NODE_ENV === 'production', // HTTPS only en producción
-  sameSite: 'lax',     // Protección CSRF básica (strict rompe OAuth flows futuros)
+  secure: false,       // TODO: cambiar a true cuando tengas HTTPS/dominio
+  sameSite: 'lax',     // Protección CSRF básica
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días en ms
   path: '/',
 };
