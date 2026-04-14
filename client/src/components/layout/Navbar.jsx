@@ -93,6 +93,16 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
+          <Link
+            to="/profile"
+            onClick={() => setMobileOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium no-underline ${
+              isActive('/profile') ? 'text-white bg-white/10' : 'text-white/60 hover:text-white'
+            }`}
+          >
+            <User size={18} />
+            Mi Perfil
+          </Link>
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-red-400 hover:text-red-300 w-full bg-transparent border-none cursor-pointer"

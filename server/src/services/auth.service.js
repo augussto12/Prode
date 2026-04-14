@@ -4,8 +4,11 @@ import { generateToken } from '../utils/jwt.js';
 import { BadRequestError, UnauthorizedError } from '../utils/errors.js';
 
 export async function register({ email, username, password, displayName }) {
+  const cleanEmail = email.toLowerCase();
+  const cleanUsername = username.toLowerCase();
+  
   const existing = await prisma.user.findFirst({
-    where: { OR: [{ email }, { username }] },
+    where: { OR: [{ email: cleanEmail }, { username: cleanUsername }] },
   });
   if (existing) {
     throw new BadRequestError('El email o nombre de usuario ya existe');
@@ -13,7 +16,7 @@ export async function register({ email, username, password, displayName }) {
 
   const hashedPassword = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({
-    data: { email, username, password: hashedPassword, displayName: displayName || username },
+    data: { email: cleanEmail, username: cleanUsername, password: hashedPassword, displayName: displayName || username },
     select: { id: true, email: true, username: true, displayName: true, role: true },
   });
 
@@ -22,8 +25,9 @@ export async function register({ email, username, password, displayName }) {
 }
 
 export async function login({ login: loginField, password }) {
+  const cleanLogin = loginField.toLowerCase();
   const user = await prisma.user.findFirst({
-    where: { OR: [{ email: loginField }, { username: loginField }] },
+    where: { OR: [{ email: cleanLogin }, { username: cleanLogin }] },
   });
   if (!user) {
     throw new UnauthorizedError('Credenciales inválidas');
