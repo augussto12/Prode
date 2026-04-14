@@ -1,7 +1,9 @@
 # ═══════════════════════════════════════════════
 # Backend — Node.js + Prisma + Socket.io
 # ═══════════════════════════════════════════════
-FROM node:20-alpine
+FROM node:20-slim
+
+RUN apt-get update -y && apt-get install -y openssl wget && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
