@@ -1,0 +1,253 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PLAYER
+  ADMIN
+  SUPERADMIN
+}
+
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  FINISHED
+  POSTPONED
+  CANCELLED
+}
+
+model User {
+  id            Int           @id @default(autoincrement())
+  email         String        @unique
+  username      String        @unique
+  password      String
+  displayName   String
+  avatar        String?
+  role          Role          @default(PLAYER)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Personal theme customization
+  themePrimary      String?   @default("#6366f1")
+  themeSecondary    String?   @default("#8b5cf6")
+  themeAccent       String?   @default("#f59e0b")
+  themeBgFrom       String?   @default("#0f172a")
+  themeBgTo         String?   @default("#1e1b4b")
+
+  predictions   Prediction[]
+  groupUsers        GroupUser[]
+  favorites         Favorite[]
+  messages          Message[]
+  dreamTeam         DreamTeam?
+  outrightPrediction OutrightPrediction?
+
+  @@index([email])
+  @@index([username])
+}
+
+// Para equipos/selecciones favoritas
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  teamName  String   // Ej: "Argentina", "Brasil"
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamName])
+}
+
+model Group {
+  id            Int           @id @default(autoincrement())
+  name          String
+  description   String?
+  inviteCode    String        @unique @default(uuid())
+  isPublic      Boolean       @default(false)
+  createdById   Int
+
+  // Theme customization
+  primaryColor    String      @default("#6366f1")  
+  secondaryColor  String      @default("#8b5cf6")  
+  accentColor     String      @default("#f59e0b")  
+  bgGradientFrom  String      @default("#0f172a")  
+  bgGradientTo    String      @default("#1e1b4b")  
+  logoUrl         String?
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  groupUsers    GroupUser[]
+  messages      Message[]
+
+  @@index([inviteCode])
+}
+
+model GroupUser {
+  id            Int           @id @default(autoincrement())
+  userId        Int
+  groupId       Int
+  totalPoints   Int           @default(0)
+  joinedAt      DateTime      @default(now())
+  isAdmin       Boolean       @default(false)
+  isBanned      Boolean       @default(false)
+  bannedAt      DateTime?
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group         Group         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@index([groupId, totalPoints(sort: Desc)])
+}
+
+model Match {
+  id              Int           @id @default(autoincrement())
+  externalId      Int?          @unique
+  homeTeam        String
+  awayTeam        String
+  homeFlag        String?       
+  awayFlag        String?
+  matchDate       DateTime
+  stage           String        
+  venue           String?
+  status          MatchStatus   @default(SCHEDULED)
+
+  homeGoals       Int?
+  awayGoals       Int?
+  
+  homeShots       Int?
+  awayShots       Int?
+  homeCorners     Int?
+  awayCorners     Int?
+  homePossession  Float?
+  awayPossession  Float?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  predictions     Prediction[]
+
+  @@index([matchDate])
+  @@index([status])
+}
+
+model Prediction {
+  id              Int           @id @default(autoincrement())
+  userId          Int
+  matchId         Int
+
+  homeGoals       Int?
+  awayGoals       Int?
+  winner          String?
+  doubleChance    String?
+
+  btts            Boolean?
+  overUnder25     String?
+  moreShots       String?
+  moreCorners     String?   // HOME, AWAY, EQUAL
+  isJoker         Boolean   @default(false)
+  
+  pointsEarned    Int       @default(0)
+  isCalculated    Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match           Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, matchId]) 
+  @@index([matchId])
+  @@index([userId])
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  userId    Int
+  groupId   Int
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+}
+
+model ScoringConfig {
+  id            Int      @id @default(autoincrement())
+  exactScore    Int      @default(10)
+  correctWinner Int      @default(3)
+  doubleChance  Int      @default(1)
+  btts          Int      @default(2)
+  moreShots     Int      @default(2)
+  moreCorners   Int      @default(2)
+  overUnder     Int      @default(2)
+}
+
+model Player {
+  id          Int      @id @default(autoincrement())
+  name        String
+  country     String
+  position    String   // GK, DEF, MID, FWD
+  image       String?
+  price       Float?   // Optional for budget caps
+  
+  // Stats
+  goals       Int      @default(0)
+  assists     Int      @default(0)
+  cleanSheets Int      @default(0)
+  totalPoints Int      @default(0)
+
+  // Reverse relations to DreamTeam slots
+  gkTeams     DreamTeam[] @relation("GK")
+  def1Teams   DreamTeam[] @relation("DEF1")
+  def2Teams   DreamTeam[] @relation("DEF2")
+  mid1Teams   DreamTeam[] @relation("MID1")
+  mid2Teams   DreamTeam[] @relation("MID2")
+  fwd1Teams   DreamTeam[] @relation("FWD1")
+  fwd2Teams   DreamTeam[] @relation("FWD2")
+
+  // Reverse relations to Outrights
+  topScorers  OutrightPrediction[] @relation("TopScorer")
+  bestPlayers OutrightPrediction[] @relation("BestPlayer")
+}
+
+model DreamTeam {
+  userId      Int      @id
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  formation   String   @default("1-2-1") // E.g., 1-2-1, 1-1-2, 2-1-1
+  updatedAt   DateTime @updatedAt
+
+  gkId        Int?
+  gk          Player?  @relation("GK", fields: [gkId], references: [id])
+  def1Id      Int?
+  def1        Player?  @relation("DEF1", fields: [def1Id], references: [id])
+  def2Id      Int?
+  def2        Player?  @relation("DEF2", fields: [def2Id], references: [id])
+  mid1Id      Int?
+  mid1        Player?  @relation("MID1", fields: [mid1Id], references: [id])
+  mid2Id      Int?
+  mid2        Player?  @relation("MID2", fields: [mid2Id], references: [id])
+  fwd1Id      Int?
+  fwd1        Player?  @relation("FWD1", fields: [fwd1Id], references: [id])
+  fwd2Id      Int?
+  fwd2        Player?  @relation("FWD2", fields: [fwd2Id], references: [id])
+}
+
+model OutrightPrediction {
+  userId            Int      @id
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  championTeam      String?
+  runnerUpTeam      String?
+  
+  topScorerId       Int?
+  topScorer         Player?  @relation("TopScorer", fields: [topScorerId], references: [id])
+  bestPlayerId      Int?
+  bestPlayer        Player?  @relation("BestPlayer", fields: [bestPlayerId], references: [id])
+
+  updatedAt         DateTime @updatedAt
+}

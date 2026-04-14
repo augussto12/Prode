@@ -1,0 +1,73 @@
+import * as matchService from '../services/match.service.js';
+import * as scoringService from '../services/scoring.service.js';
+import prisma from '../config/database.js';
+
+export async function updateMatchResult(req, res, next) {
+  try {
+    const match = await matchService.updateMatchResult(Number(req.params.id), req.body);
+    res.json(match);
+  } catch (err) { next(err); }
+}
+
+export async function calculateScores(req, res, next) {
+  try {
+    const { matchId } = req.body;
+    if (!matchId) return res.status(400).json({ error: 'matchId is required' });
+    const result = await scoringService.calculateMatchScores(Number(matchId));
+    res.json({ message: 'Scores calculated', ...result });
+  } catch (err) { next(err); }
+}
+
+export async function getUsers(req, res, next) {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, email: true, username: true, displayName: true, role: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(users);
+  } catch (err) { next(err); }
+}
+
+export async function updateUserRole(req, res, next) {
+  try {
+    const { role } = req.body;
+    const targetId = Number(req.params.id);
+    if (!['PLAYER', 'ADMIN', 'SUPERADMIN'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+    if (targetId === req.user.id) {
+      return res.status(400).json({ error: 'No podés cambiarte el rol a vos mismo' });
+    }
+    const user = await prisma.user.update({
+      where: { id: targetId },
+      data: { role },
+      select: { id: true, email: true, username: true, displayName: true, role: true, createdAt: true },
+    });
+    res.json(user);
+  } catch (err) { next(err); }
+}
+
+export async function deleteUser(req, res, next) {
+  try {
+    const targetId = Number(req.params.id);
+    if (targetId === req.user.id) {
+      return res.status(400).json({ error: 'No podés eliminarte a vos mismo' });
+    }
+    await prisma.user.delete({ where: { id: targetId } });
+    res.json({ message: 'User deleted successfully' });
+  } catch (err) { next(err); }
+}
+
+export async function getScoringConfig(req, res, next) {
+  try {
+    const config = await scoringService.getScoringConfig();
+    res.json(config);
+  } catch (err) { next(err); }
+}
+
+export async function updateScoringConfig(req, res, next) {
+  try {
+    const config = await scoringService.updateScoringConfig(req.body);
+    res.json(config);
+  } catch (err) { next(err); }
+}

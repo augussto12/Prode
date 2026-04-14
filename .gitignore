@@ -1,0 +1,33 @@
+# ─── Dependencies ───
+node_modules/
+
+# ─── Build outputs ───
+dist/
+build/
+
+# ─── Environment files (contienen credenciales) ───
+.env
+.env.local
+.env.production
+!.env.example
+
+# ─── IDE ───
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ─── OS ───
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Prisma ───
+server/prisma/migrations/
+
+# ─── Logs ───
+*.log
+npm-debug.log*
+
+# ─── Docker volumes (si los hay locales) ───
+docker-data/

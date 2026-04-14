@@ -1,0 +1,38 @@
+services:
+  # ── Backend Node.js + Prisma + Socket.io ──
+  backend:
+    build: ./server
+    container_name: prode-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - NODE_ENV=production
+    networks:
+      - default
+      - nginx-proxy-manager_default
+      - db-principal_default
+
+  # ── Frontend Vite + Nginx ──
+  frontend:
+    build: ./client
+    container_name: prode-frontend
+    restart: always
+    ports:
+      - "8093:80"
+    depends_on:
+      - backend
+    networks:
+      - default
+      - nginx-proxy-manager_default
+
+networks:
+  nginx-proxy-manager_default:
+    external: true
+  db-principal_default:
+    external: true
