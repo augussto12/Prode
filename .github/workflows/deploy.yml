@@ -1,0 +1,32 @@
+name: Deploy Prode to VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            # Ir al directorio del proyecto
+            cd /home/prode
+
+            # Pull últimos cambios
+            git pull origin main
+
+            # Rebuild y restart containers
+            docker compose down
+            docker compose build --no-cache
+            docker compose up -d
+
+            # Limpiar imágenes viejas
+            docker image prune -f
+
+            echo "✅ Deploy completado"
