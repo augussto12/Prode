@@ -67,7 +67,7 @@ export default function Profile() {
     setSavingProfile(true);
     setMsg(null);
     try {
-      await api.put('/auth/profile', form);
+      await api.put('/auth/me', form);
       await fetchProfile();
       setPersonalTheme(form);
       setMsg({ type: 'success', text: '¡Perfil actualizado y tema aplicado ✅!' });
