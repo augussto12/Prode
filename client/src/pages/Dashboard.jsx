@@ -20,7 +20,7 @@ export default function Dashboard() {
     try {
       const [matchRes, favRes, teamRes] = await Promise.all([
         api.get('/matches'),
-        api.get('/auth/favorites'),
+        api.get('/auth/me/favorites'),
         api.get('/matches/teams'),
       ]);
       setMatches(matchRes.data);
@@ -38,7 +38,7 @@ export default function Dashboard() {
       ? favorites.filter((t) => t !== teamName)
       : [...favorites, teamName];
     setFavorites(updated);
-    await api.put('/auth/favorites', { teams: updated });
+    await api.put('/auth/me/favorites', { teams: updated });
   };
 
   const stages = [...new Set(matches.map((m) => m.stage))];

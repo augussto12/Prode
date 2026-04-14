@@ -16,7 +16,7 @@ export async function authenticate(req, res, next) {
     }
 
     if (!token) {
-      throw new UnauthorizedError('No token provided');
+      throw new UnauthorizedError('Token no proporcionado');
     }
 
     const decoded = verifyToken(token);
@@ -27,14 +27,14 @@ export async function authenticate(req, res, next) {
     });
 
     if (!user) {
-      throw new UnauthorizedError('User not found');
+      throw new UnauthorizedError('Usuario no encontrado');
     }
 
     req.user = user;
     next();
   } catch (error) {
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-      return res.status(401).json({ error: 'Invalid or expired token' });
+      return res.status(401).json({ error: 'Token inválido o expirado' });
     }
     next(error);
   }

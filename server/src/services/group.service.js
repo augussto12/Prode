@@ -58,7 +58,7 @@ export async function getGroupById(groupId, userId) {
       }
     },
   });
-  if (!group) throw new NotFoundError('Group not found');
+  if (!group) throw new NotFoundError('Grupo no encontrado');
 
   // Check membership
   const membership = await prisma.groupUser.findUnique({
@@ -72,7 +72,7 @@ export async function getGroupById(groupId, userId) {
 
 export async function joinGroup(userId, inviteCode) {
   const group = await prisma.group.findUnique({ where: { inviteCode } });
-  if (!group) throw new NotFoundError('Invalid invite code');
+  if (!group) throw new NotFoundError('Código de invitación inválido');
 
   const existing = await prisma.groupUser.findUnique({
     where: { userId_groupId: { userId, groupId: group.id } },
@@ -83,7 +83,7 @@ export async function joinGroup(userId, inviteCode) {
     throw new ForbiddenError('Fuiste baneado de este grupo. Contacta al admin para que te desbanee.');
   }
 
-  if (existing) throw new BadRequestError('Already a member of this group');
+  if (existing) throw new BadRequestError('Ya sos miembro de este grupo');
 
   await prisma.groupUser.create({
     data: { userId, groupId: group.id },
@@ -96,7 +96,7 @@ export async function leaveGroup(userId, groupId) {
   const membership = await prisma.groupUser.findUnique({
     where: { userId_groupId: { userId, groupId } },
   });
-  if (!membership) throw new NotFoundError('Not a member of this group');
+  if (!membership) throw new NotFoundError('No sos miembro de este grupo');
 
   await prisma.groupUser.delete({
     where: { userId_groupId: { userId, groupId } },
@@ -107,7 +107,7 @@ export async function deleteGroup(userId, groupId) {
   const membership = await prisma.groupUser.findUnique({
     where: { userId_groupId: { userId, groupId } },
   });
-  if (!membership || !membership.isAdmin) throw new ForbiddenError('Only admin can delete group');
+  if (!membership || !membership.isAdmin) throw new ForbiddenError('Solo el admin puede eliminar el grupo');
 
   await prisma.group.delete({
     where: { id: groupId },
@@ -139,7 +139,7 @@ export async function updateGroupTheme(groupId, userId, themeData) {
     where: { userId_groupId: { userId, groupId } },
   });
   if (!membership || !membership.isAdmin) {
-    throw new ForbiddenError('Only group admins can update theme');
+    throw new ForbiddenError('Solo los admins del grupo pueden cambiar el tema');
   }
 
   return prisma.group.update({
@@ -169,15 +169,15 @@ export async function removeMember(groupId, userIdToKick, requestingUserId) {
     where: { userId_groupId: { userId: requestingUserId, groupId } },
   });
   if (!adminMembership || !adminMembership.isAdmin) {
-    throw new ForbiddenError('Only group admins can remove members');
+    throw new ForbiddenError('Solo los admins del grupo pueden expulsar miembros');
   }
 
   const targetMembership = await prisma.groupUser.findUnique({
     where: { userId_groupId: { userId: userIdToKick, groupId } },
   });
-  if (!targetMembership) throw new NotFoundError('User is not a member of this group');
+  if (!targetMembership) throw new NotFoundError('El usuario no es miembro de este grupo');
   if (targetMembership.isAdmin && targetMembership.userId !== requestingUserId) {
-    throw new ForbiddenError('Cannot ban another admin');
+    throw new ForbiddenError('No podés banear a otro admin');
   }
 
   // Soft delete: marcar como baneado en vez de borrar
@@ -192,7 +192,7 @@ export async function getBannedMembers(groupId, requestingUserId) {
     where: { userId_groupId: { userId: requestingUserId, groupId } },
   });
   if (!adminMembership || !adminMembership.isAdmin) {
-    throw new ForbiddenError('Only group admins can view banned members');
+    throw new ForbiddenError('Solo los admins del grupo pueden ver los baneados');
   }
 
   const banned = await prisma.groupUser.findMany({
@@ -217,14 +217,14 @@ export async function unbanMember(groupId, userIdToUnban, requestingUserId) {
     where: { userId_groupId: { userId: requestingUserId, groupId } },
   });
   if (!adminMembership || !adminMembership.isAdmin) {
-    throw new ForbiddenError('Only group admins can unban members');
+    throw new ForbiddenError('Solo los admins del grupo pueden desbanear miembros');
   }
 
   const targetMembership = await prisma.groupUser.findUnique({
     where: { userId_groupId: { userId: userIdToUnban, groupId } },
   });
   if (!targetMembership || !targetMembership.isBanned) {
-    throw new NotFoundError('User is not banned from this group');
+    throw new NotFoundError('El usuario no está baneado de este grupo');
   }
 
   await prisma.groupUser.update({

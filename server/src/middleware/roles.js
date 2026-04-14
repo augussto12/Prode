@@ -3,10 +3,10 @@ import { ForbiddenError } from '../utils/errors.js';
 export function requireRole(...roles) {
   return (req, res, next) => {
     if (!req.user) {
-      return next(new ForbiddenError('Authentication required'));
+      return next(new ForbiddenError('Autenticación requerida'));
     }
     if (!roles.includes(req.user.role)) {
-      return next(new ForbiddenError(`Requires role: ${roles.join(' or ')}`));
+      return next(new ForbiddenError(`Requiere rol: ${roles.join(' o ')}`));
     }
     next();
   };

@@ -8,7 +8,7 @@ export async function register({ email, username, password, displayName }) {
     where: { OR: [{ email }, { username }] },
   });
   if (existing) {
-    throw new BadRequestError('Email or username already exists');
+    throw new BadRequestError('El email o nombre de usuario ya existe');
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -26,12 +26,12 @@ export async function login({ login: loginField, password }) {
     where: { OR: [{ email: loginField }, { username: loginField }] },
   });
   if (!user) {
-    throw new UnauthorizedError('Invalid credentials');
+    throw new UnauthorizedError('Credenciales inválidas');
   }
 
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) {
-    throw new UnauthorizedError('Invalid credentials');
+    throw new UnauthorizedError('Credenciales inválidas');
   }
 
   const token = generateToken(user);

@@ -12,9 +12,9 @@ export async function updateMatchResult(req, res, next) {
 export async function calculateScores(req, res, next) {
   try {
     const { matchId } = req.body;
-    if (!matchId) return res.status(400).json({ error: 'matchId is required' });
+    if (!matchId) return res.status(400).json({ error: 'matchId es requerido' });
     const result = await scoringService.calculateMatchScores(Number(matchId));
-    res.json({ message: 'Scores calculated', ...result });
+    res.json({ message: 'Puntajes calculados', ...result });
   } catch (err) { next(err); }
 }
 
@@ -33,7 +33,7 @@ export async function updateUserRole(req, res, next) {
     const { role } = req.body;
     const targetId = Number(req.params.id);
     if (!['PLAYER', 'ADMIN', 'SUPERADMIN'].includes(role)) {
-      return res.status(400).json({ error: 'Invalid role' });
+      return res.status(400).json({ error: 'Rol inválido' });
     }
     if (targetId === req.user.id) {
       return res.status(400).json({ error: 'No podés cambiarte el rol a vos mismo' });
@@ -54,7 +54,7 @@ export async function deleteUser(req, res, next) {
       return res.status(400).json({ error: 'No podés eliminarte a vos mismo' });
     }
     await prisma.user.delete({ where: { id: targetId } });
-    res.json({ message: 'User deleted successfully' });
+    res.json({ message: 'Usuario eliminado' });
   } catch (err) { next(err); }
 }
 
