@@ -26,7 +26,7 @@ export default function Navbar() {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-white/10 shadow-lg" style={{ background: 'var(--color-bg-start)' }}>
+    <nav className="sticky top-0 z-50 border-b border-white/10 shadow-lg backdrop-blur-md" style={{ background: 'color-mix(in srgb, var(--color-bg-start) 80%, transparent)' }}>
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
