@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { LayoutDashboard, Save, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
+import useCompetitionStore from '../store/competitionStore';
 import Pitch from '../components/dreamteam/Pitch';
 import useToastStore from '../store/toastStore';
 
@@ -17,17 +18,19 @@ export default function DreamTeam() {
   
   const [filter, setFilter] = useState('ALL');
   const [saving, setSaving] = useState(false);
+  const { activeCompetition } = useCompetitionStore();
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (activeCompetition?.id) loadData();
+  }, [activeCompetition?.id]);
 
   const loadData = async () => {
     try {
-      const { data: pData } = await api.get('/dreamteam/players');
+      const compParam = activeCompetition?.id ? `?competitionId=${activeCompetition.id}` : '';
+      const { data: pData } = await api.get(`/dreamteam/players${compParam}`);
       setPlayers(pData);
       
-      const { data: teamData } = await api.get('/dreamteam');
+      const { data: teamData } = await api.get(`/dreamteam${compParam}`);
       if (teamData) {
         setFormation(teamData.formation || '1-2-1');
         setTeam({
@@ -43,7 +46,7 @@ export default function DreamTeam() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.post('/dreamteam', { formation, players: team });
+      await api.post('/dreamteam', { formation, players: team, competitionId: activeCompetition?.id });
       useToastStore.getState().addToast({ type: 'success', message: '¡Dream Team guardado correctamente!' });
     } catch (err) {
       useToastStore.getState().addToast({ type: 'error', message: 'Error guardando equipo' });
@@ -155,14 +158,14 @@ export default function DreamTeam() {
               <p className="text-white/60 text-sm">Armá tu 5 ideal. Recibirás puntos cuando anoten goles o asistan en la vida real.</p>
             </div>
             
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-3 w-full md:w-auto">
                {/* Formation selector */}
                <div className="flex bg-black/20 rounded-xl p-1 border border-white/5">
                  {['1-2-1', '1-1-2', '2-1-1'].map(form => (
                    <button 
                      key={form} 
                      onClick={() => handleFormationChange(form)}
-                     className={`px-4 py-2 rounded-lg text-sm font-bold transition-all border-none cursor-pointer ${
+                     className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all border-none cursor-pointer ${
                        formation === form ? 'bg-white/10 text-emerald-400' : 'text-white/50 bg-transparent hover:text-white'
                      }`}
                    >
@@ -174,9 +177,9 @@ export default function DreamTeam() {
                <button 
                  onClick={handleSave}
                  disabled={saving || count < 5}
-                 className="px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-colors border-none"
+                 className="px-4 sm:px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-colors border-none text-xs sm:text-sm"
                >
-                 <Save size={18} /> {saving ? '...' : `Guardar (${count}/5)`}
+                 <Save size={16} /> {saving ? '...' : `Guardar (${count}/5)`}
                </button>
             </div>
          </div>
@@ -190,7 +193,7 @@ export default function DreamTeam() {
          </div>
 
          {/* Players Bazar (1 Col) */}
-         <div className="glass-card rounded-2xl flex flex-col h-[650px] overflow-hidden border border-white/10 shadow-2xl">
+         <div className="glass-card rounded-2xl flex flex-col h-[400px] lg:h-[650px] overflow-hidden border border-white/10 shadow-2xl">
             <div className="p-4 border-b border-white/5 bg-white/[0.02]">
                <h3 className="font-bold text-white mb-3">Catálogo de Jugadores</h3>
                
@@ -212,15 +215,13 @@ export default function DreamTeam() {
 
             <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-white/10">
                <div className="space-y-1">
-                 <AnimatePresence>
+                 {/* Player list - no AnimatePresence for perf */}
                    {players.filter(p => filter === 'ALL' || p.position === filter).map(p => {
                       const isSelected = Object.values(team).includes(p.id);
 
                       return (
-                        <motion.div 
+                        <div 
                           key={p.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
                           className={`flex items-center justify-between p-2 rounded-xl transition-all ${
                             isSelected ? 'bg-white/[0.03] opacity-60 border-emerald-500/30' : 'hover:bg-white/[0.05] cursor-pointer'
                           } border border-transparent`}
@@ -229,7 +230,7 @@ export default function DreamTeam() {
                           }}
                         >
                           <div className="flex items-center gap-3">
-                            <img src={p.image || 'https://cdn-icons-png.flaticon.com/512/3112/3112946.png'} className="w-10 h-10 rounded-full bg-black/50 border border-white/20 object-cover" />
+                            <img src={p.image || 'https://cdn-icons-png.flaticon.com/512/3112/3112946.png'} loading="lazy" className="w-10 h-10 rounded-full bg-black/50 border border-white/20 object-cover" />
                             <div>
                               <div className="text-sm font-bold text-white/90">{p.name}</div>
                               <div className="text-[10px] text-white/40 uppercase tracking-widest">{p.position} • {p.country}</div>
@@ -238,10 +239,9 @@ export default function DreamTeam() {
                           <div className="flex items-center gap-2">
                              {isSelected && <Check size={16} className="text-emerald-400" />}
                           </div>
-                        </motion.div>
+                        </div>
                       );
                    })}
-                 </AnimatePresence>
                </div>
             </div>
          </div>

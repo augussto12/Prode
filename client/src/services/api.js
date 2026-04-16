@@ -11,9 +11,11 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Limpiar estado local y redirigir a login
-      localStorage.removeItem('prode_user');
-      window.location.href = '/login';
+      // Si el usuario supuestamente estaba logueado y el token expiró, limpiamos y mandamos al login
+      if (localStorage.getItem('prode_user')) {
+        localStorage.removeItem('prode_user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

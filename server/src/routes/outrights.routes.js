@@ -5,11 +5,21 @@ import prisma from '../config/database.js';
 const router = Router();
 router.use(authenticate);
 
-// Get User's Outright Predictions
+// Get User's Outright Predictions for a competition
 router.get('/', async (req, res, next) => {
   try {
+    const { competitionId } = req.query;
+    if (!competitionId) {
+      return res.status(400).json({ error: 'competitionId es requerido' });
+    }
+
     const outrights = await prisma.outrightPrediction.findUnique({
-      where: { userId: req.user.id }
+      where: {
+        userId_competitionId: {
+          userId: req.user.id,
+          competitionId: Number(competitionId),
+        },
+      },
     });
     res.json(outrights || {});
   } catch (err) { next(err); }
@@ -18,24 +28,31 @@ router.get('/', async (req, res, next) => {
 // Save or Update User's Outright Predictions
 router.post('/', async (req, res, next) => {
   try {
-    const data = req.body; // { championTeam, runnerUpTeam, topScorerId, bestPlayerId }
-    
-    // Convert string inputs that are empty to null if necessary, 
-    // or just pass them along if the form strips them correctly.
+    const { competitionId, championTeam, runnerUpTeam, topScorerId, bestPlayerId } = req.body;
+    if (!competitionId) {
+      return res.status(400).json({ error: 'competitionId es requerido' });
+    }
+
     const outrights = await prisma.outrightPrediction.upsert({
-      where: { userId: req.user.id },
+      where: {
+        userId_competitionId: {
+          userId: req.user.id,
+          competitionId: Number(competitionId),
+        },
+      },
       update: {
-        championTeam: data.championTeam || null,
-        runnerUpTeam: data.runnerUpTeam || null,
-        topScorerId: data.topScorerId ? Number(data.topScorerId) : null,
-        bestPlayerId: data.bestPlayerId ? Number(data.bestPlayerId) : null,
+        championTeam: championTeam || null,
+        runnerUpTeam: runnerUpTeam || null,
+        topScorerId: topScorerId ? Number(topScorerId) : null,
+        bestPlayerId: bestPlayerId ? Number(bestPlayerId) : null,
       },
       create: {
         userId: req.user.id,
-        championTeam: data.championTeam || null,
-        runnerUpTeam: data.runnerUpTeam || null,
-        topScorerId: data.topScorerId ? Number(data.topScorerId) : null,
-        bestPlayerId: data.bestPlayerId ? Number(data.bestPlayerId) : null,
+        competitionId: Number(competitionId),
+        championTeam: championTeam || null,
+        runnerUpTeam: runnerUpTeam || null,
+        topScorerId: topScorerId ? Number(topScorerId) : null,
+        bestPlayerId: bestPlayerId ? Number(bestPlayerId) : null,
       }
     });
 

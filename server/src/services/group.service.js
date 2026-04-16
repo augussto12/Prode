@@ -3,12 +3,17 @@ import { BadRequestError, NotFoundError, ForbiddenError } from '../utils/errors.
 import crypto from 'crypto';
 
 export async function createGroup(userId, data) {
+  if (!data.competitionId) {
+    throw new BadRequestError('competitionId es requerido para crear un grupo');
+  }
+
   const group = await prisma.group.create({
     data: {
       name: data.name,
       description: data.description,
       isPublic: data.isPublic || false,
       createdById: userId,
+      competitionId: Number(data.competitionId),
       primaryColor: data.primaryColor || '#6366f1',
       secondaryColor: data.secondaryColor || '#8b5cf6',
       accentColor: data.accentColor || '#f59e0b',
@@ -30,7 +35,10 @@ export async function getMyGroups(userId) {
     where: { userId, isBanned: false },
     include: {
       group: {
-        include: { _count: { select: { groupUsers: { where: { isBanned: false } } } } },
+        include: {
+          _count: { select: { groupUsers: { where: { isBanned: false } } } },
+          competition: { select: { id: true, name: true, logo: true } },
+        },
       },
     },
     orderBy: { joinedAt: 'desc' },
@@ -49,6 +57,7 @@ export async function getGroupById(groupId, userId) {
     where: { id: groupId },
     include: { 
       _count: { select: { groupUsers: { where: { isBanned: false } } } },
+      competition: { select: { id: true, name: true, logo: true } },
       messages: {
         take: 50,
         orderBy: { createdAt: 'asc' },

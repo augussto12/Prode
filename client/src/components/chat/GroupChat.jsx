@@ -25,27 +25,30 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
     if (!user) return;
 
     // Connect to server socket (cookie HttpOnly se envía automáticamente)
-    socketRef.current = io(window.location.origin, {
+    const socket = io(window.location.origin, {
       withCredentials: true,
     });
+    
+    socketRef.current = socket;
 
-    socketRef.current.on('connect', () => {
+    socket.on('connect', () => {
       setConnected(true);
       // Join group room
-      socketRef.current.emit('join_group', groupId);
+      socket.emit('join_group', groupId);
     });
 
-    socketRef.current.on('disconnect', () => {
+    socket.on('disconnect', () => {
       setConnected(false);
     });
 
-    socketRef.current.on('new_message', (msg) => {
+    socket.on('new_message', (msg) => {
       setMessages(prev => [...prev, msg]);
     });
 
     return () => {
-      socketRef.current?.emit('leave_group', groupId);
-      socketRef.current?.disconnect();
+      socket.emit('leave_group', groupId);
+      socket.disconnect();
+      socketRef.current = null;
     };
   }, [user, groupId]);
 

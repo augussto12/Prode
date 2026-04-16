@@ -2,36 +2,45 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Star, Filter, ChevronDown } from 'lucide-react';
 import api from '../services/api';
+import useCompetitionStore from '../store/competitionStore';
 import MatchCard from '../components/matches/MatchCard';
 
 export default function Dashboard() {
   const [matches, setMatches] = useState([]);
+  const [predictions, setPredictions] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [teams, setTeams] = useState([]);
-  const [filter, setFilter] = useState('all'); // 'all' | 'favorites' | stage name
+  const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [showFavPicker, setShowFavPicker] = useState(false);
+  const { activeCompetition } = useCompetitionStore();
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (activeCompetition?.id) loadData();
+  }, [activeCompetition?.id]);
 
   const loadData = async () => {
     try {
-      const [matchRes, favRes, teamRes] = await Promise.all([
-        api.get('/matches'),
+      const compParam = activeCompetition?.id ? `?competitionId=${activeCompetition.id}` : '';
+      const [matchRes, favRes, teamRes, predRes] = await Promise.all([
+        api.get(`/matches${compParam}`),
         api.get('/auth/me/favorites'),
         api.get('/matches/teams'),
+        api.get('/predictions/my'),
       ]);
       setMatches(matchRes.data);
       setFavorites(favRes.data.map((f) => f.teamName));
       setTeams(teamRes.data);
+      setPredictions(predRes.data);
     } catch (err) {
       console.error('Error loading dashboard:', err);
     } finally {
       setLoading(false);
     }
   };
+
+  // Map predictions by matchId for O(1) lookup
+  const predictionsMap = new Map(predictions.map(p => [p.matchId, p]));
 
   const toggleFavorite = async (teamName) => {
     const updated = favorites.includes(teamName)
@@ -154,25 +163,44 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      {/* Matches grouped by date */}
-      {Object.entries(grouped).map(([date, dateMatches]) => (
-        <div key={date}>
-          <div className="flex items-center gap-2 mb-3">
-            <Calendar size={16} className="text-white/40" />
-            <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider">{date}</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {dateMatches.map((match) => (
-              <MatchCard
-                key={match.id}
-                match={match}
-                isFavorite={favorites.includes(match.homeTeam) || favorites.includes(match.awayTeam)}
-                onPredictionSaved={loadData}
-              />
+      {/* Matches grouped by date → stage */}
+      {Object.entries(grouped).map(([date, dateMatches]) => {
+        // Sub-group by stage within the date
+        const byStage = {};
+        dateMatches.forEach(m => {
+          const stage = m.stage || 'Sin fase';
+          if (!byStage[stage]) byStage[stage] = [];
+          byStage[stage].push(m);
+        });
+
+        return (
+          <div key={date}>
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar size={16} className="text-white/40" />
+              <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider">{date}</h2>
+            </div>
+            {Object.entries(byStage).map(([stage, stageMatches]) => (
+              <div key={stage} className="mb-4">
+                <div className="flex items-center gap-2 mb-2 ml-1">
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--color-primary)' }} />
+                  <span className="text-xs font-medium text-white/30">{stage}</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {stageMatches.map((match) => (
+                    <MatchCard
+                      key={match.id}
+                      match={match}
+                      isFavorite={favorites.includes(match.homeTeam) || favorites.includes(match.awayTeam)}
+                      existingPrediction={predictionsMap.get(match.id)}
+                      onPredictionSaved={loadData}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {sortedMatches.length === 0 && (
         <div className="text-center py-16 text-white/40">

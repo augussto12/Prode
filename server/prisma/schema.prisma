@@ -43,8 +43,8 @@ model User {
   groupUsers        GroupUser[]
   favorites         Favorite[]
   messages          Message[]
-  dreamTeam         DreamTeam?
-  outrightPrediction OutrightPrediction?
+  dreamTeams        DreamTeam[]
+  outrightPredictions OutrightPrediction[]
 
   @@index([email])
   @@index([username])
@@ -59,6 +59,22 @@ model Favorite {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, teamName])
+}
+
+model Competition {
+  id          Int      @id @default(autoincrement())
+  externalId  Int
+  name        String
+  logo        String?
+  season      Int      @default(2022)
+  
+  matches     Match[]
+  groups      Group[]
+  dreamTeams  DreamTeam[]
+  outrights   OutrightPrediction[]
+  playerStats PlayerCompetitionStats[]
+
+  @@unique([externalId, season])
 }
 
 model Group {
@@ -76,6 +92,9 @@ model Group {
   bgGradientFrom  String      @default("#0f172a")  
   bgGradientTo    String      @default("#1e1b4b")  
   logoUrl         String?
+
+  competitionId Int
+  competition   Competition   @relation(fields: [competitionId], references: [id])
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -103,6 +122,21 @@ model GroupUser {
   @@index([groupId, totalPoints(sort: Desc)])
 }
 
+model Team {
+  id          Int      @id @default(autoincrement())
+  externalId  Int      @unique
+  name        String
+  code        String?
+  logo        String?
+  country     String?
+  flag        String?
+  
+  players     Player[]
+  coaches     Coach[]
+  
+  @@index([externalId])
+}
+
 model Match {
   id              Int           @id @default(autoincrement())
   externalId      Int?          @unique
@@ -110,10 +144,16 @@ model Match {
   awayTeam        String
   homeFlag        String?       
   awayFlag        String?
+  homeTeamLogo    String?
+  awayTeamLogo    String?
+  round           String?
   matchDate       DateTime
   stage           String        
   venue           String?
   status          MatchStatus   @default(SCHEDULED)
+
+  competitionId   Int
+  competition     Competition   @relation(fields: [competitionId], references: [id])
 
   homeGoals       Int?
   awayGoals       Int?
@@ -125,13 +165,33 @@ model Match {
   homePossession  Float?
   awayPossession  Float?
 
+  statistics      Json?
+
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   predictions     Prediction[]
+  events          MatchEvent[]
 
   @@index([matchDate])
   @@index([status])
+  @@index([competitionId])
+}
+
+model MatchEvent {
+  id          Int      @id @default(autoincrement())
+  matchId     Int
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  elapsed     Int
+  extraTime   Int?
+  teamName    String
+  teamLogo    String?
+  type        String   // Goal, Card, subst, Var
+  detail      String   // Normal Goal, Penalty, Yellow Card, etc.
+  playerName  String?
+  assistName  String?
+
+  @@index([matchId])
 }
 
 model Prediction {
@@ -178,28 +238,31 @@ model Message {
 
 model ScoringConfig {
   id            Int      @id @default(autoincrement())
-  exactScore    Int      @default(10)
-  correctWinner Int      @default(3)
-  doubleChance  Int      @default(1)
-  btts          Int      @default(2)
-  moreShots     Int      @default(2)
-  moreCorners   Int      @default(2)
-  overUnder     Int      @default(2)
+  exactScore    Int      @default(5)
+  correctWinner Int      @default(2)
+  doubleChance  Int      @default(0) // Legacy
+  btts          Int      @default(0) // Legacy
+  moreShots     Int      @default(1)
+  moreCorners   Int      @default(1)
+  overUnder     Int      @default(0) // Legacy
 }
 
 model Player {
   id          Int      @id @default(autoincrement())
+  externalId  Int?     @unique
   name        String
+  teamId      Int?
+  team        Team?    @relation(fields: [teamId], references: [id])
   country     String
   position    String   // GK, DEF, MID, FWD
   image       String?
+  photo       String?  // URL from API
+  number      Int?
+  age         Int?
   price       Float?   // Optional for budget caps
   
-  // Stats
-  goals       Int      @default(0)
-  assists     Int      @default(0)
-  cleanSheets Int      @default(0)
-  totalPoints Int      @default(0)
+  // Stats por competencia (tabla separada)
+  stats       PlayerCompetitionStats[]
 
   // Reverse relations to DreamTeam slots
   gkTeams     DreamTeam[] @relation("GK")
@@ -213,11 +276,26 @@ model Player {
   // Reverse relations to Outrights
   topScorers  OutrightPrediction[] @relation("TopScorer")
   bestPlayers OutrightPrediction[] @relation("BestPlayer")
+
+  @@index([teamId])
+}
+
+model Coach {
+  id          Int      @id @default(autoincrement())
+  externalId  Int      @unique
+  name        String
+  photo       String?
+  teamId      Int?
+  team        Team?    @relation(fields: [teamId], references: [id])
 }
 
 model DreamTeam {
-  userId      Int      @id
+  id          Int      @id @default(autoincrement())
+  userId      Int      
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  competitionId Int   
+  competition Competition  @relation(fields: [competitionId], references: [id])
+  
   formation   String   @default("1-2-1") // E.g., 1-2-1, 1-1-2, 2-1-1
   updatedAt   DateTime @updatedAt
 
@@ -235,11 +313,16 @@ model DreamTeam {
   fwd1        Player?  @relation("FWD1", fields: [fwd1Id], references: [id])
   fwd2Id      Int?
   fwd2        Player?  @relation("FWD2", fields: [fwd2Id], references: [id])
+
+  @@unique([userId, competitionId])
 }
 
 model OutrightPrediction {
-  userId            Int      @id
+  id                Int      @id @default(autoincrement())
+  userId            Int      
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  competitionId     Int   
+  competition       Competition  @relation(fields: [competitionId], references: [id])
   
   championTeam      String?
   runnerUpTeam      String?
@@ -250,4 +333,22 @@ model OutrightPrediction {
   bestPlayer        Player?  @relation("BestPlayer", fields: [bestPlayerId], references: [id])
 
   updatedAt         DateTime @updatedAt
+
+  @@unique([userId, competitionId])
+}
+
+model PlayerCompetitionStats {
+  id            Int         @id @default(autoincrement())
+  playerId      Int
+  player        Player      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  competitionId Int
+  competition   Competition @relation(fields: [competitionId], references: [id])
+
+  goals         Int         @default(0)
+  assists       Int         @default(0)
+  cleanSheets   Int         @default(0)
+  totalPoints   Int         @default(0)
+
+  @@unique([playerId, competitionId])
+  @@index([competitionId])
 }

@@ -1,13 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Trophy, Home, Users, Shield, LogOut, Menu, X, User, Star } from 'lucide-react';
+import { Trophy, Home, Users, Shield, LogOut, Menu, X, User, Compass, Zap } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import api from '../../services/api';
 
 export default function Navbar() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [liveCount, setLiveCount] = useState(0);
+  const intervalRef = useRef(null);
+
+  const checkLive = async () => {
+    try {
+      const { data } = await api.get('/explorer/live');
+      setLiveCount(data?.total || 0);
+    } catch {
+      setLiveCount(0);
+    }
+  };
+
+  useEffect(() => {
+    checkLive();
+    intervalRef.current = setInterval(checkLive, 60000); // Check every 60s
+    return () => clearInterval(intervalRef.current);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -15,102 +33,164 @@ export default function Navbar() {
   };
 
   const links = [
-    { to: '/dashboard', label: 'Dashboard', icon: Home },
-    { to: '/dreamteam', label: 'Dream Team', icon: Star },
+    { to: '/explorar', label: 'Explorar', icon: Compass, badge: liveCount > 0 ? liveCount : null },
+    { to: '/liga/1', label: 'Mundial 2026', icon: Trophy, gold: true },
+    { to: '/torneo', label: 'Mi Prode', icon: Zap },
     { to: '/groups', label: 'Grupos', icon: Users },
     ...(user?.role === 'ADMIN' || user?.role === 'SUPERADMIN'
       ? [{ to: '/admin', label: 'Admin', icon: Shield }]
       : []),
   ];
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   return (
     <nav className="sticky top-0 z-50 border-b border-white/10 shadow-lg backdrop-blur-md" style={{ background: 'color-mix(in srgb, var(--color-bg-start) 80%, transparent)' }}>
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-[1600px] mx-auto px-4 md:px-8">
+        <div className="flex items-center justify-between h-14">
           {/* Logo */}
-          <Link to="/dashboard" className="flex items-center gap-2 text-white no-underline">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--color-primary)' }}>
-              <Trophy size={20} />
+          <Link to="/explorar" className="flex items-center gap-2 text-white no-underline">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--color-primary)' }}>
+              <Trophy size={16} />
             </div>
-            <span className="text-lg font-bold tracking-tight">Prode Mundial</span>
+            <span className="text-base font-bold tracking-tight hidden sm:inline">Prode</span>
           </Link>
 
           {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-0.5">
             {links.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all no-underline ${
+                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all no-underline ${
                   isActive(link.to)
                     ? 'text-white'
-                    : 'text-white/60 hover:text-white hover:bg-white/5'
+                    : link.gold
+                      ? 'text-amber-400 hover:text-amber-300 hover:bg-amber-500/10'
+                      : 'text-white/50 hover:text-white hover:bg-white/5'
                 }`}
-                style={isActive(link.to) ? { background: 'var(--color-primary)' } : {}}
+                style={
+                  isActive(link.to)
+                    ? { background: link.gold ? 'linear-gradient(135deg, #b8860b, #daa520)' : 'var(--color-primary)' }
+                    : {}
+                }
               >
-                <link.icon size={16} />
+                <link.icon size={14} />
                 {link.label}
+                {link.badge && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-[9px] font-bold flex items-center justify-center text-white animate-pulse">
+                    {link.badge}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
 
-          {/* User Menu */}
-          <div className="hidden md:flex items-center gap-3">
-            <Link to="/profile" className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/5 transition-all no-underline text-sm">
-              <User size={16} />
-              {user?.displayName}
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-sm cursor-pointer border-none bg-transparent"
-            >
-              <LogOut size={16} />
-            </button>
+          {/* User Status / Menu */}
+          <div className="hidden md:flex items-center gap-2">
+            {user ? (
+              <>
+                <Link to="/profile" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-all no-underline text-xs">
+                  <User size={14} />
+                  {user.displayName}
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-xs cursor-pointer border-none bg-transparent"
+                >
+                  <LogOut size={14} />
+                </button>
+              </>
+            ) : (
+              <div className="flex gap-2">
+                <Link to="/login" className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white/80 hover:text-white hover:bg-white/5 transition-all no-underline">
+                  Ingresar
+                </Link>
+                <Link to="/register" className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-500 hover:bg-indigo-600 transition-all no-underline shadow-lg shadow-indigo-500/20">
+                  Registrarse
+                </Link>
+              </div>
+            )}
           </div>
 
-          {/* Mobile toggle */}
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden text-white bg-transparent border-none cursor-pointer">
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {/* Mobile: live badge + toggle */}
+          <div className="flex items-center gap-2 md:hidden">
+            {liveCount > 0 && (
+              <Link to="/explorar" className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-bold no-underline animate-pulse">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                {liveCount}
+              </Link>
+            )}
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="text-white bg-transparent border-none cursor-pointer p-1">
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-white/10 px-4 pb-4 pt-2">
-          {links.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium no-underline ${
-                isActive(link.to) ? 'text-white bg-white/10' : 'text-white/60 hover:text-white'
-              }`}
-            >
-              <link.icon size={18} />
-              {link.label}
-            </Link>
-          ))}
-          <Link
-            to="/profile"
-            onClick={() => setMobileOpen(false)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium no-underline ${
-              isActive('/profile') ? 'text-white bg-white/10' : 'text-white/60 hover:text-white'
-            }`}
-          >
-            <User size={18} />
-            Mi Perfil
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-red-400 hover:text-red-300 w-full bg-transparent border-none cursor-pointer"
-          >
-            <LogOut size={18} />
-            Cerrar sesión
-          </button>
+        <>
+          <div className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div className="md:hidden absolute top-[72px] left-0 right-0 z-50 bg-[#0f0c29]/95 backdrop-blur-md border-b border-white/10 px-4 pb-4 pt-2 shadow-2xl">
+            {links.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => setMobileOpen(false)}
+                className={`relative flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium no-underline ${
+                  isActive(link.to) ? 'text-white bg-white/10' : 'text-white/60 hover:text-white'
+                }`}
+              >
+                <link.icon size={18} />
+                {link.label}
+                {link.badge && (
+                  <span className="ml-auto w-5 h-5 rounded-full bg-red-500 text-[10px] font-bold flex items-center justify-center text-white">
+                    {link.badge}
+                  </span>
+                )}
+              </Link>
+            ))}
+            {user ? (
+              <>
+                <Link
+                  to="/profile"
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium no-underline ${
+                    isActive('/profile') ? 'text-white bg-white/10' : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  <User size={18} />
+                  Mi Perfil
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-red-400 hover:text-red-300 w-full bg-transparent border-none cursor-pointer"
+                >
+                  <LogOut size={18} />
+                  Cerrar sesión
+                </button>
+              </>
+            ) : (
+              <div className="mt-2 pt-2 border-t border-white/10 space-y-2">
+                <Link
+                  to="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-center w-full py-3 rounded-lg text-sm font-semibold text-white/80 hover:bg-white/5 transition-all no-underline border border-white/10"
+                >
+                  Ingresar
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-center w-full py-3 rounded-lg text-sm font-bold text-white bg-indigo-500 hover:bg-indigo-600 transition-all no-underline shadow-lg shadow-indigo-500/20"
+                >
+                  Crear cuenta gratis
+                </Link>
+              </div>
+            )}
         </div>
+        </>
       )}
     </nav>
   );

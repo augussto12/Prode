@@ -355,7 +355,7 @@ export default function GroupView() {
         </div>
 
         {/* CHAT (Ocupa 1 columna) */}
-        <div className="h-[600px] lg:h-auto pb-10">
+        <div className="h-[400px] sm:h-[500px] lg:h-auto pb-10">
            <GroupChat groupId={id} initialMessages={group.messages || []} />
         </div>
 

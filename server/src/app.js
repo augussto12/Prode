@@ -13,6 +13,9 @@ import adminRoutes from './routes/admin.routes.js';
 import dreamteamRoutes from './routes/dreamteam.routes.js';
 import outrightsRoutes from './routes/outrights.routes.js';
 import guruRoutes from './routes/guru.routes.js';
+import syncRoutes from './routes/sync.routes.js';
+import competitionRoutes from './routes/competition.routes.js';
+import explorerRoutes from './routes/explorer.routes.js';
 
 const app = express();
 
@@ -75,6 +78,9 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/dreamteam', dreamteamRoutes);
 app.use('/api/outrights', outrightsRoutes);
 app.use('/api/guru', guruRoutes);
+app.use('/api/admin/sync', syncRoutes);
+app.use('/api/competitions', competitionRoutes);
+app.use('/api/explorer', explorerRoutes);
 
 // Error handler centralizado
 app.use(errorHandler);

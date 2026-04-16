@@ -23,23 +23,11 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden bg-[#0a0a0a]">
-      {/* Animated Background Elements */}
+      {/* Background Elements (Optimized) */}
       <div className="absolute inset-0 z-0">
-        <motion.div
-          animate={{ x: [-20, 20, -20], y: [-20, 20, -20], rotate: [0, 90, 0] }}
-          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-indigo-600/30 rounded-full blur-[120px] mix-blend-screen"
-        />
-        <motion.div
-          animate={{ x: [20, -20, 20], y: [20, -20, 20], rotate: [0, -90, 0] }}
-          transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-          className="absolute bottom-[10%] right-[20%] w-[600px] h-[600px] bg-purple-600/30 rounded-full blur-[150px] mix-blend-screen"
-        />
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[40%] left-[50%] -translate-x-1/2 w-[800px] h-[300px] bg-amber-500/20 rounded-[100%] blur-[100px] mix-blend-screen"
-        />
+        <div className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] mix-blend-screen" />
+        <div className="absolute bottom-[10%] right-[20%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[150px] mix-blend-screen" />
+        <div className="absolute top-[40%] left-[50%] -translate-x-1/2 w-[800px] h-[300px] bg-amber-500/10 rounded-[100%] blur-[100px] mix-blend-screen" />
       </div>
 
       <motion.div

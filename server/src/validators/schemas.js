@@ -29,6 +29,7 @@ export const profileUpdateSchema = z.object({
 
 // --- PREDICTIONS ---
 export const predictionSchema = z.object({
+  matchId: z.number().int().positive(),
   homeGoals: z.number().int().min(0).max(20).optional().nullable(),
   awayGoals: z.number().int().min(0).max(20).optional().nullable(),
   winner: z.enum(['HOME', 'AWAY', 'DRAW']).optional().nullable(),
@@ -45,6 +46,7 @@ export const groupCreateSchema = z.object({
   name: z.string().min(1, 'Nombre requerido').max(50, 'Máximo 50 caracteres').trim(),
   description: z.string().max(500).optional().default(''),
   isPublic: z.boolean().optional().default(false),
+  competitionId: z.number().int().positive('competitionId es requerido'),
   primaryColor: z.string().regex(hexColorRegex).optional(),
   secondaryColor: z.string().regex(hexColorRegex).optional(),
   accentColor: z.string().regex(hexColorRegex).optional(),

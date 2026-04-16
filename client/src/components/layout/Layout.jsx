@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import GuruChat from '../chat/GuruChat';
@@ -6,10 +7,17 @@ export default function Layout() {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <main className="pt-20 p-4 pb-24 md:pb-4 max-w-7xl mx-auto">
-        <Outlet />
+      <main className="pt-18 px-4 md:px-8 pb-24 md:pb-4 max-w-[1600px] mx-auto">
+        <Suspense fallback={
+          <div className="flex justify-center py-20">
+            <div className="w-8 h-8 border-3 border-white/20 border-t-indigo-500 rounded-full animate-spin" />
+          </div>
+        }>
+          <Outlet />
+        </Suspense>
       </main>
       <GuruChat />
     </div>
   );
 }
+

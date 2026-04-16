@@ -64,7 +64,7 @@ export default function GuruChat() {
              initial={{ opacity: 0, y: 50, scale: 0.9 }}
              animate={{ opacity: 1, y: 0, scale: 1 }}
              exit={{ opacity: 0, y: 50, scale: 0.9 }}
-             className="fixed bottom-6 right-6 w-[350px] h-[500px] z-50 rounded-2xl flex flex-col overflow-hidden shadow-2xl border border-rose-500/30"
+             className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 w-full sm:w-[350px] h-full sm:h-[500px] z-50 sm:rounded-2xl flex flex-col overflow-hidden shadow-2xl border-none sm:border sm:border-rose-500/30"
              style={{ background: 'linear-gradient(to bottom, #171717, #0a0a0a)' }}
           >
              {/* Header */}

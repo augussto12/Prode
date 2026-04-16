@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Plus, Users, LogIn, Copy, Check, Globe } from 'lucide-react';
 import api from '../services/api';
 import useToastStore from '../store/toastStore';
+import useCompetitionStore from '../store/competitionStore';
 
 export default function GroupList() {
   const [myGroups, setMyGroups] = useState([]);
@@ -19,6 +20,7 @@ export default function GroupList() {
     bgGradientFrom: '#0f172a', bgGradientTo: '#1e1b4b',
   });
   const navigate = useNavigate();
+  const { activeCompetition } = useCompetitionStore();
 
   useEffect(() => { loadGroups(); }, []);
 
@@ -36,8 +38,12 @@ export default function GroupList() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    if (!activeCompetition?.id) {
+      useToastStore.getState().addToast({ type: 'error', message: 'Primero sincronizá un torneo desde el Admin Panel' });
+      return;
+    }
     try {
-      const { data } = await api.post('/groups', createForm);
+      const { data } = await api.post('/groups', { ...createForm, competitionId: activeCompetition.id });
       navigate(`/groups/${data.id}`);
     } catch (err) { useToastStore.getState().addToast({ type: 'error', message: err.response?.data?.error || 'Error al crear grupo' }); }
   };
@@ -164,6 +170,12 @@ export default function GroupList() {
                 <span className="flex items-center gap-1"><Users size={12} /> {group.memberCount} miembros</span>
                 <span className="font-semibold text-amber-400">{group.totalPoints} pts</span>
               </div>
+              {group.competition && (
+                <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-white/5">
+                  {group.competition.logo && <img src={group.competition.logo} alt="" className="w-4 h-4 object-contain" />}
+                  <span className="text-[10px] text-white/30 uppercase tracking-wider">{group.competition.name}</span>
+                </div>
+              )}
             </Link>
           </motion.div>
         ))}
