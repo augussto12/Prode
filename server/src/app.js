@@ -21,6 +21,9 @@ const app = express();
 
 // --- CAPA 1: MIDDLEWARE DE BLINDAJE ---
 
+// Confiar en el proxy (vital si usás Docker/Nginx, evita el error ERR_ERL_UNEXPECTED_X_FORWARDED_FOR)
+app.set('trust proxy', 1);
+
 // Headers de seguridad (CSP, X-Frame-Options, HSTS, etc.)
 app.use(helmet());
 
