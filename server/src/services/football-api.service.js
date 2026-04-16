@@ -4,17 +4,21 @@
  * Los logos/imágenes NO cuentan contra la cuota.
  */
 
-const API_BASE = process.env.FOOTBALL_API_BASE || 'https://v3.football.api-sports.io';
-const API_KEY = process.env.FOOTBALL_API_KEY;
-
 async function apiCall(endpoint, params = {}) {
+  const API_BASE = process.env.FOOTBALL_API_BASE || 'https://v3.football.api-sports.io';
+  const API_KEY = process.env.FOOTBALL_API_KEY;
+
+  if (!API_KEY) {
+    console.error('FATAL: FOOTBALL_API_KEY is not defined in process.env');
+  }
+
   const url = new URL(`${API_BASE}/${endpoint}`);
   Object.entries(params).forEach(([k, v]) => {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
   });
 
   const res = await fetch(url.toString(), {
-    headers: { 'x-apisports-key': API_KEY },
+    headers: { 'x-apisports-key': API_KEY || '' },
   });
 
   if (!res.ok) {
@@ -173,8 +177,11 @@ export async function fetchInjuries(params) {
 // ═══════════════════════════════════════
 
 export async function fetchAccountStatus() {
+  const API_KEY = process.env.FOOTBALL_API_KEY;
+  const API_BASE = process.env.FOOTBALL_API_BASE || 'https://v3.football.api-sports.io';
+  
   const res = await fetch(`${API_BASE}/status`, {
-    headers: { 'x-apisports-key': API_KEY },
+    headers: { 'x-apisports-key': API_KEY || '' },
   });
   const data = await res.json();
   return data.response;
