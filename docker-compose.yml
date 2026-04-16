@@ -12,6 +12,10 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - FRONTEND_URL=${FRONTEND_URL}
+      - FOOTBALL_API_KEY=${FOOTBALL_API_KEY}
+      - FOOTBALL_API_BASE=${FOOTBALL_API_BASE:-https://v3.football.api-sports.io}
+      - FOOTBALL_LEAGUE_ID=${FOOTBALL_LEAGUE_ID:-1}
+      - FOOTBALL_SEASON=${FOOTBALL_SEASON:-2022}
       - NODE_ENV=production
     networks:
       - default
