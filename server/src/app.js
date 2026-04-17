@@ -45,11 +45,13 @@ app.use(helmet({
   hsts: isProduction ? { maxAge: 31536000, includeSubDomains: true } : false,
 }));
 
+const frontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : null;
+
 // CORS restrictivo — solo nuestro frontend
 const allowedOrigins = [
   // Orígenes de desarrollo solo si NO estamos en producción
   ...(!isProduction ? ['http://localhost:3000', 'http://localhost:5173'] : []),
-  process.env.FRONTEND_URL,
+  frontendUrl,
 ].filter(Boolean);
 
 app.use(cors({
@@ -61,6 +63,7 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.warn(`[CORS REJECTED] Origin: ${origin} | Allowed: ${allowedOrigins.join(', ')}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
