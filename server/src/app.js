@@ -56,8 +56,8 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Permitir requests sin origin solo en desarrollo (Postman, apps nativas)
-    if (!origin && !isProduction) {
+    // Permitir requests sin origin (ej: llamadas desde Nginx o misma origin si el proxy oculta el source)
+    if (!origin) {
       return callback(null, true);
     }
     if (allowedOrigins.includes(origin)) {
