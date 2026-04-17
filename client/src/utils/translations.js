@@ -234,3 +234,129 @@ export function tOddValue(value) {
   // If it's a number/score like "1-0" or "Inter Miami", don't format it.
   return ODDS_VALUES[value] || value;
 }
+
+// ═══════════════════════════════════════
+// INJURIES / ABSENCES
+// ═══════════════════════════════════════
+
+const INJURY_REASONS = {
+  // Lesiones musculares
+  'Injury': 'Lesión',
+  'Muscle Injury': 'Lesión muscular',
+  'Calf Injury': 'Lesión en la pantorrilla',
+  'Hamstring Injury': 'Lesión en el isquiotibial',
+  'Thigh Injury': 'Lesión en el muslo',
+  'Groin Injury': 'Lesión en la ingle',
+  'Hip Injury': 'Lesión en la cadera',
+  'Back Injury': 'Lesión en la espalda',
+  'Neck Injury': 'Lesión en el cuello',
+  'Adductor Injury': 'Lesión en el aductor',
+  'Abductor Injury': 'Lesión en el abductor',
+  'Quadriceps Injury': 'Lesión en el cuádriceps',
+
+  // Articulaciones
+  'Knee Injury': 'Lesión en la rodilla',
+  'Ankle Injury': 'Lesión en el tobillo',
+  'Foot Injury': 'Lesión en el pie',
+  'Shoulder Injury': 'Lesión en el hombro',
+  'Elbow Injury': 'Lesión en el codo',
+  'Wrist Injury': 'Lesión en la muñeca',
+  'Finger Injury': 'Lesión en el dedo',
+
+  // Tendones y ligamentos
+  'Achilles Tendon Injury': 'Lesión en el tendón de Aquiles',
+  'Tendon Injury': 'Lesión en el tendón',
+  'Ligament Injury': 'Lesión de ligamento',
+  'ACL Injury': 'Lesión de ligamento cruzado',
+  'MCL Injury': 'Lesión de ligamento colateral',
+  'Meniscus Injury': 'Lesión de menisco',
+  'Cruciate Ligament Injury': 'Rotura de ligamento cruzado',
+  'Cruciate Ligament Rupture': 'Rotura de ligamento cruzado',
+
+  // Huesos
+  'Fracture': 'Fractura',
+  'Broken Leg': 'Fractura de pierna',
+  'Broken Arm': 'Fractura de brazo',
+  'Broken Nose': 'Fractura de nariz',
+  'Broken Jaw': 'Fractura de mandíbula',
+  'Broken Toe': 'Fractura de dedo del pie',
+  'Broken Foot': 'Fractura de pie',
+  'Broken Rib': 'Fractura de costilla',
+  'Broken Collarbone': 'Fractura de clavícula',
+  'Broken Cheekbone': 'Fractura de pómulo',
+
+  // Cirugías y recuperación
+  'Surgery': 'Cirugía',
+  'Post-Surgery': 'Post-cirugía',
+  'Recovery': 'Recuperación',
+  'Rehabilitation': 'Rehabilitación',
+
+  // Otros tipos de lesión
+  'Concussion': 'Conmoción cerebral',
+  'Head Injury': 'Lesión en la cabeza',
+  'Eye Injury': 'Lesión en el ojo',
+  'Rib Injury': 'Lesión costal',
+  'Facial Injury': 'Lesión facial',
+  'Dental Injury': 'Lesión dental',
+  'Spinal Injury': 'Lesión espinal',
+  'Pelvic Injury': 'Lesión pélvica',
+  'Heel Injury': 'Lesión en el talón',
+  'Shin Injury': 'Lesión en la espinilla',
+  'Fibula Injury': 'Lesión en el peroné',
+  'Metatarsal Injury': 'Lesión en el metatarso',
+
+  // General
+  'Knock': 'Golpe',
+  'Bruise': 'Contusión',
+  'Sprain': 'Esguince',
+  'Strain': 'Distensión',
+  'Dislocation': 'Dislocación',
+  'Inflammation': 'Inflamación',
+  'Swollen': 'Hinchazón',
+  'Fitness': 'Baja forma física',
+  'Illness': 'Enfermedad',
+  'Flu': 'Gripe',
+  'Virus': 'Virus',
+  'Covid': 'COVID',
+  'Fever': 'Fiebre',
+  'Heart Condition': 'Problema cardíaco',
+
+  // Disciplina y estado
+  'Yellow Cards': 'Acum. amarillas',
+  'Red Card': 'Tarjeta roja',
+  'Suspended': 'Suspendido',
+  'Suspension': 'Suspensión',
+  'Banned': 'Sancionado',
+  'Domestic Suspension': 'Suspensión doméstica',
+  'International Duty': 'Selección nacional',
+  'Rest': 'Descanso',
+  'Personal Reasons': 'Motivos personales',
+  'Family Reasons': 'Motivos familiares',
+  'Lack of match fitness': 'Falta de ritmo',
+  'Not in squad': 'Fuera de la convocatoria',
+  'Coaching Staff Decision': 'Decisión técnica',
+  'Manager Decision': 'Decisión del DT',
+  'Transfer': 'Transferencia',
+  'On loan': 'A préstamo',
+  'Training Injury': 'Lesión en entrenamiento',
+  'Match Injury': 'Lesión en partido',
+  'Unknown': 'Desconocido',
+  'Inactive': 'Inactivo',
+  'Missing Fixture': 'Ausente',
+  'Questionable': 'En duda',
+  'Doubtful': 'Dudoso',
+  'Out': 'Baja',
+};
+
+/** Traduce un motivo de lesión / ausencia */
+export function tInjury(reason) {
+  if (!reason) return '';
+  // Intentar match exacto primero
+  if (INJURY_REASONS[reason]) return INJURY_REASONS[reason];
+  // Intentar match parcial (la API a veces envía "Muscle Injury (14 days)")
+  const cleanReason = reason.split('(')[0].trim();
+  if (INJURY_REASONS[cleanReason]) return INJURY_REASONS[cleanReason];
+  // Si no hay traducción, devolver el original
+  return reason;
+}
+

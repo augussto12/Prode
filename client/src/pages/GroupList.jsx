@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Users, LogIn, Copy, Check, Globe } from 'lucide-react';
+import { Plus, Users, LogIn, Copy, Check, Globe, Loader2 } from 'lucide-react';
 import api from '../services/api';
 import useToastStore from '../store/toastStore';
 import useCompetitionStore from '../store/competitionStore';
@@ -12,15 +12,16 @@ export default function GroupList() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [copiedId, setCopiedId] = useState(null);
   const [createForm, setCreateForm] = useState({
-    name: '', description: '', isPublic: false,
+    name: '', description: '', isPublic: false, competitionId: '',
     primaryColor: '#6366f1', secondaryColor: '#8b5cf6', accentColor: '#f59e0b',
     bgGradientFrom: '#0f172a', bgGradientTo: '#1e1b4b',
   });
   const navigate = useNavigate();
-  const { activeCompetition } = useCompetitionStore();
+  const { activeCompetition, competitions } = useCompetitionStore();
 
   useEffect(() => { loadGroups(); }, []);
 
@@ -38,14 +39,20 @@ export default function GroupList() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!activeCompetition?.id) {
-      useToastStore.getState().addToast({ type: 'error', message: 'Primero sincronizá un torneo desde el Admin Panel' });
+    const compId = createForm.competitionId || activeCompetition?.id;
+    if (!compId) {
+      useToastStore.getState().addToast({ type: 'error', message: 'Seleccioná un torneo para el prode' });
       return;
     }
     try {
-      const { data } = await api.post('/groups', { ...createForm, competitionId: activeCompetition.id });
+      setIsCreating(true);
+      const { data } = await api.post('/groups', { ...createForm, competitionId: Number(compId) });
       navigate(`/groups/${data.id}`);
-    } catch (err) { useToastStore.getState().addToast({ type: 'error', message: err.response?.data?.error || 'Error al crear grupo' }); }
+    } catch (err) { 
+      useToastStore.getState().addToast({ type: 'error', message: err.response?.data?.error || 'Error al crear grupo' }); 
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleJoin = async (e) => {
@@ -91,9 +98,45 @@ export default function GroupList() {
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-2xl p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Nuevo Grupo</h3>
           <form onSubmit={handleCreate} className="space-y-4">
+            {/* Tournament Selector */}
+            <div>
+              <label className="block text-white/60 text-sm mb-2">Torneo del Prode *</label>
+              {competitions.length === 0 ? (
+                <div className="text-sm text-amber-400/80 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
+                  ⚠️ No hay torneos sincronizados. Pedile al admin que sincronice desde el Admin Panel.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  {competitions.map(comp => (
+                    <button
+                      key={comp.id}
+                      type="button"
+                      onClick={() => setCreateForm({...createForm, competitionId: comp.id})}
+                      className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer text-left ${
+                        createForm.competitionId === comp.id
+                          ? 'bg-indigo-500/15 border-indigo-500/40 shadow-[0_0_12px_rgba(99,102,241,0.15)]'
+                          : 'bg-white/[0.03] border-white/10 hover:border-white/25 hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      {comp.logo && <img src={comp.logo} alt="" className="w-8 h-8 object-contain shrink-0" />}
+                      <div className="min-w-0">
+                        <div className={`text-sm font-semibold truncate ${createForm.competitionId === comp.id ? 'text-indigo-300' : 'text-white/80'}`}>{comp.name}</div>
+                        <div className="text-[10px] text-white/30">Temporada {comp.season}</div>
+                      </div>
+                      {createForm.competitionId === comp.id && (
+                        <div className="ml-auto shrink-0 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
+                          <Check size={12} className="text-white" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-white/60 text-sm mb-1">Nombre del grupo</label>
+                <label className="block text-white/60 text-sm mb-1">Nombre del grupo *</label>
                 <input type="text" value={createForm.name} onChange={(e) => setCreateForm({...createForm, name: e.target.value})} required
                   className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500" placeholder="Ej: Los Pibes del Barrio" />
               </div>
@@ -129,9 +172,10 @@ export default function GroupList() {
               <label htmlFor="isPublic" className="text-sm text-white/60 cursor-pointer">Grupo público (visible para todos)</label>
             </div>
 
-            <button type="submit" className="px-6 py-2.5 rounded-xl text-white font-medium text-sm cursor-pointer border-none hover:opacity-90"
+            <button type="submit" disabled={isCreating} className="px-6 py-2.5 rounded-xl text-white font-medium text-sm cursor-pointer border-none hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
               style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}>
-              Crear Grupo
+              {isCreating && <Loader2 size={16} className="animate-spin" />}
+              {isCreating ? 'Creando...' : 'Crear Grupo'}
             </button>
           </form>
         </motion.div>

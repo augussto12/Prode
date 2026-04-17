@@ -8,7 +8,7 @@ const router = Router();
 
 router.post('/', authenticate, validate(predictionSchema), ctrl.upsert);
 router.get('/my', authenticate, ctrl.getMy);
-router.get('/match/:matchId', authenticate, ctrl.getForMatch);
-router.get('/match/:matchId/group/:groupId', authenticate, ctrl.getGroupPredictions);
+router.get('/fixture/:fixtureId', authenticate, ctrl.getForFixture);
+router.get('/fixture/:fixtureId/group/:groupId', authenticate, ctrl.getGroupPredictions);
 
 export default router;

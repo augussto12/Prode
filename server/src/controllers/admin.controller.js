@@ -1,20 +1,10 @@
-import * as matchService from '../services/match.service.js';
 import * as scoringService from '../services/scoring.service.js';
 import prisma from '../config/database.js';
 
-export async function updateMatchResult(req, res, next) {
-  try {
-    const match = await matchService.updateMatchResult(Number(req.params.id), req.body);
-    res.json(match);
-  } catch (err) { next(err); }
-}
-
 export async function calculateScores(req, res, next) {
   try {
-    const { matchId } = req.body;
-    if (!matchId) return res.status(400).json({ error: 'matchId es requerido' });
-    const result = await scoringService.calculateMatchScores(Number(matchId));
-    res.json({ message: 'Puntajes calculados', ...result });
+    const result = await scoringService.scorePendingPredictions();
+    res.json(result);
   } catch (err) { next(err); }
 }
 

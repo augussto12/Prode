@@ -88,9 +88,10 @@ export async function fetchTopAssists(leagueId, season) {
 }
 
 /** Fixtures por fecha (YYYY-MM-DD) */
-export async function fetchFixturesByDate(date, leagueId = null) {
+export async function fetchFixturesByDate(date, leagueId = null, tz = null) {
   const params = { date };
   if (leagueId) params.league = leagueId;
+  if (tz) params.timezone = tz;
   return apiCall('fixtures', params);
 }
 
@@ -198,4 +199,12 @@ export async function fetchRounds(leagueId, season, { current = false, dates = f
 /** Fixture por status */
 export async function fetchFixturesByStatus(leagueId, season, status) {
   return apiCall('fixtures', { league: leagueId, season, status });
+}
+
+export async function fetchTeamStatistics(leagueId, season, teamId) {
+  return apiCall('teams/statistics', { league: leagueId, season, team: teamId });
+}
+
+export async function fetchTeamTransfers(teamId) {
+  return apiCall('transfers', { team: teamId });
 }

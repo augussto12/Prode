@@ -15,7 +15,7 @@ export default function Login() {
     e.preventDefault();
     try {
       await doLogin(login, password);
-      navigate('/dashboard');
+      navigate('/explorar');
     } catch (err) {
       // error is set in store
     }

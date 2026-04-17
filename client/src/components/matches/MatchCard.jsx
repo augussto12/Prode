@@ -6,7 +6,7 @@ import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import useToastStore from '../../store/toastStore';
 
-export default memo(function MatchCard({ match, isFavorite, existingPrediction: existingProp, onPredictionSaved }) {
+export default memo(function MatchCard({ match, isFavorite, existingPrediction: existingProp, onPredictionSaved, hideStage = false }) {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const addToast = useToastStore(state => state.addToast);
@@ -59,13 +59,18 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
         isJoker: prediction.isJoker || false
       };
       
-      await api.post('/predictions', { matchId: match.id, ...payload });
+      await api.post('/predictions', { 
+        externalFixtureId: match.externalId, 
+        competitionId: match.competitionId,
+        ...payload 
+      });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
       if (onPredictionSaved) onPredictionSaved();
     } catch (err) {
-      setErrorMsg(err.response?.data?.error || 'Error al guardar. Tal vez ya usaste tu comodín x2 hoy.');
-      if (err.response?.data?.error?.includes('comodín')) {
+      const msg = err.response?.data?.error || 'Error al guardar. Tal vez ya usaste tu comodín x2 hoy.';
+      addToast({ type: 'error', message: msg });
+      if (msg.toLowerCase().includes('comodín')) {
         setPrediction(prev => ({...prev, isJoker: false}));
       }
     } finally {
@@ -76,27 +81,26 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
 
   const statusBadge = () => {
     if (isFinished) return <span className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">Finalizado</span>;
-    if (isLive) return <span className="px-2 py-0.5 bg-red-500/20 text-red-400 rounded-full text-xs font-medium animate-pulse">EN VIVO</span>;
+    if (isLive) {
+      // Mostrar minuto + status corto (HT, ET, PEN, etc.)
+      const ss = match.statusShort;
+      let liveLabel = 'EN VIVO';
+      if (ss === 'HT') liveLabel = 'Entretiempo';
+      else if (ss === 'ET') liveLabel = 'Tiempo Extra';
+      else if (ss === 'P' || ss === 'PEN') liveLabel = 'Penales';
+      else if (ss === 'BT') liveLabel = 'Descanso TE';
+      else if (match.elapsed) liveLabel = `${match.elapsed}'`;
+
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-red-500/20 text-red-400 rounded-full text-xs font-bold">
+          <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+          {liveLabel}
+        </span>
+      );
+    }
     return <span className="px-2 py-0.5 bg-white/10 text-white/50 rounded-full text-xs">{matchDate.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</span>;
   };
 
-
-
-  const ToggleButton = ({ field, value, label }) => (
-    <button
-      type="button"
-      onClick={() => !isPast && setPrediction({ ...prediction, [field]: value })}
-      disabled={isPast}
-      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-all border cursor-pointer ${
-        prediction[field] === value
-          ? 'border-violet-400/50 text-violet-300'
-          : 'bg-white/5 border-white/10 text-white/50 hover:border-white/30'
-      } disabled:opacity-40 disabled:cursor-not-allowed`}
-      style={prediction[field] === value ? { background: 'rgba(139,92,246,0.15)' } : {}}
-    >
-      {label}
-    </button>
-  );
 
   return (
     <motion.div
@@ -108,7 +112,15 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
       {/* Header */}
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs text-white/40 font-medium">{match.stage}</span>
+          <div className="flex items-center gap-2">
+            {!hideStage && match.stage && <span className="text-xs text-white/40 font-medium">{match.stage}</span>}
+            {match.round && /2nd\s*Leg/i.test(match.round) && (
+              <span className="px-1.5 py-0.5 bg-indigo-500/15 text-indigo-400 rounded text-[9px] font-bold uppercase tracking-wider border border-indigo-500/20">Vuelta</span>
+            )}
+            {match.round && /1st\s*Leg/i.test(match.round) && (
+              <span className="px-1.5 py-0.5 bg-white/5 text-white/40 rounded text-[9px] font-bold uppercase tracking-wider border border-white/10">Ida</span>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             {user && (
               <button
@@ -131,12 +143,15 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
 
         {/* Teams & Score */}
         <div className="flex items-center justify-between">
-          <div className="flex-1 text-center cursor-pointer group" onClick={() => navigate(`/equipo/${match.homeTeamId}`)}>
+          <div 
+            className={`flex-1 text-center ${match.homeTeamId ? 'cursor-pointer group' : ''}`} 
+            onClick={() => match.homeTeamId && navigate(`/equipo/${match.homeTeamId}`)}
+          >
             {match.homeTeamLogo
-              ? <img src={match.homeTeamLogo} alt={match.homeTeam} className="w-10 h-10 mx-auto mb-1 object-contain group-hover:scale-110 transition-transform" />
+              ? <img src={match.homeTeamLogo} alt={match.homeTeam} className={`w-10 h-10 mx-auto mb-1 object-contain ${match.homeTeamId ? 'group-hover:scale-110 transition-transform' : ''}`} />
               : <div className="text-2xl mb-1">{match.homeFlag || '🏳️'}</div>
             }
-            <div className="text-sm font-semibold text-white truncate group-hover:text-indigo-300 transition-colors">{match.homeTeam}</div>
+            <div className={`text-sm font-semibold text-white truncate ${match.homeTeamId ? 'group-hover:text-indigo-300 transition-colors' : ''}`}>{match.homeTeam}</div>
           </div>
 
           <div className="px-4 text-center">
@@ -178,12 +193,15 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
             )}
           </div>
 
-          <div className="flex-1 text-center cursor-pointer group" onClick={() => navigate(`/equipo/${match.awayTeamId}`)}>
+          <div 
+            className={`flex-1 text-center ${match.awayTeamId ? 'cursor-pointer group' : ''}`} 
+            onClick={() => match.awayTeamId && navigate(`/equipo/${match.awayTeamId}`)}
+          >
             {match.awayTeamLogo
-              ? <img src={match.awayTeamLogo} alt={match.awayTeam} className="w-10 h-10 mx-auto mb-1 object-contain group-hover:scale-110 transition-transform" />
+              ? <img src={match.awayTeamLogo} alt={match.awayTeam} className={`w-10 h-10 mx-auto mb-1 object-contain ${match.awayTeamId ? 'group-hover:scale-110 transition-transform' : ''}`} />
               : <div className="text-2xl mb-1">{match.awayFlag || '🏳️'}</div>
             }
-            <div className="text-sm font-semibold text-white truncate group-hover:text-indigo-300 transition-colors">{match.awayTeam}</div>
+            <div className={`text-sm font-semibold text-white truncate ${match.awayTeamId ? 'group-hover:text-indigo-300 transition-colors' : ''}`}>{match.awayTeam}</div>
           </div>
         </div>
 
@@ -222,9 +240,9 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
           <div>
             <label className="text-xs text-white/40 mb-1.5 block">Más Remates</label>
             <div className="flex gap-2">
-              <ToggleButton field="moreShots" value="HOME" label={match.homeTeam} />
-              <ToggleButton field="moreShots" value="EQUAL" label="Igual" />
-              <ToggleButton field="moreShots" value="AWAY" label={match.awayTeam} />
+              <ToggleButton field="moreShots" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+              <ToggleButton field="moreShots" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+              <ToggleButton field="moreShots" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
             </div>
           </div>
 
@@ -232,13 +250,12 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
           <div>
             <label className="text-xs text-white/40 mb-1.5 block">Más Córners</label>
             <div className="flex gap-2">
-              <ToggleButton field="moreCorners" value="HOME" label={match.homeTeam} />
-              <ToggleButton field="moreCorners" value="EQUAL" label="Igual" />
-              <ToggleButton field="moreCorners" value="AWAY" label={match.awayTeam} />
+              <ToggleButton field="moreCorners" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+              <ToggleButton field="moreCorners" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+              <ToggleButton field="moreCorners" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
             </div>
           </div>
 
-          {/* Save Button */}
           <button
             onClick={handleSave}
             disabled={saving}
@@ -266,3 +283,22 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
     </motion.div>
   );
 });
+
+// Extraído fuera de MatchCard para evitar re-mount en cada render del padre
+function ToggleButton({ field, value, label, prediction, setPrediction, isPast }) {
+  return (
+    <button
+      type="button"
+      onClick={() => !isPast && setPrediction(prev => ({ ...prev, [field]: value }))}
+      disabled={isPast}
+      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-all border cursor-pointer ${
+        prediction[field] === value
+          ? 'border-violet-400/50 text-violet-300'
+          : 'bg-white/5 border-white/10 text-white/50 hover:border-white/30'
+      } disabled:opacity-40 disabled:cursor-not-allowed`}
+      style={prediction[field] === value ? { background: 'rgba(139,92,246,0.15)' } : {}}
+    >
+      {label}
+    </button>
+  );
+}

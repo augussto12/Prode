@@ -14,7 +14,7 @@ export default function Register() {
     e.preventDefault();
     try {
       await doRegister(form.email, form.username, form.password, form.displayName);
-      navigate('/dashboard');
+      navigate('/explorar');
     } catch (err) {}
   };
 

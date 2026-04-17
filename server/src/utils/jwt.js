@@ -4,7 +4,9 @@ const COOKIE_NAME = 'prode_token';
 
 const cookieOptions = {
   httpOnly: true,      // ← No accesible desde JavaScript (anti-XSS)
-  secure: false,       // TODO: cambiar a true cuando tengas HTTPS/dominio
+  // IMPORTANTE: Activar `secure: true` cuando configurés HTTPS con dominio.
+  // Mientras tanto queda en false para que funcione en HTTP.
+  secure: false,
   sameSite: 'lax',     // Protección CSRF básica
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días en ms
   path: '/',
@@ -12,7 +14,7 @@ const cookieOptions = {
 
 export function generateToken(user) {
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
+    { id: user.id, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );

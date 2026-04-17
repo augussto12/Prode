@@ -4,6 +4,7 @@ const api = axios.create({
   baseURL: '/api',
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true, // ← CRÍTICO: envía cookies HttpOnly automáticamente
+  timeout: 15000, // 15s — evita spinners infinitos si el server no responde
 });
 
 // Handle 401 errors globally (token expirado o inválido)

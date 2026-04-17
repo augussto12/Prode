@@ -7,8 +7,7 @@ import useAuthStore from '../store/authStore';
 import useCompetitionStore from '../store/competitionStore';
 
 export default function AdminPanel() {
-  const [tab, setTab] = useState('matches');
-  const [matches, setMatches] = useState([]);
+  const [tab, setTab] = useState('users');
   const [users, setUsers] = useState([]);
   const [scoringConfig, setScoringConfig] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,26 +20,24 @@ export default function AdminPanel() {
   const loadData = async () => {
     try {
       const compParam = activeCompetition?.id ? `?competitionId=${activeCompetition.id}` : '';
-      const [matchRes, userRes, configRes] = await Promise.all([
-        api.get(`/matches${compParam}`),
+      const [userRes, configRes] = await Promise.all([
         api.get('/admin/users').catch(() => ({ data: [] })),
         api.get('/admin/scoring/config').catch(() => ({ data: null })),
       ]);
-      setMatches(matchRes.data);
       setUsers(userRes.data);
       setScoringConfig(configRes.data);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
 
-  const saveResult = async (matchId, result) => {
+  const triggerCalculateScores = async () => {
     setSaving(true);
     try {
-      await api.put(`/admin/matches/${matchId}/result`, result);
-      await api.post('/admin/scoring/calculate', { matchId });
-      loadData();
-      useToastStore.getState().addToast({ type: 'success', message: 'Resultado guardado y puntos calculados ✅' });
-    } catch (err) { useToastStore.getState().addToast({ type: 'error', message: err.response?.data?.error || 'Error' }); }
+      const res = await api.post('/admin/scoring/calculate');
+      useToastStore.getState().addToast({ type: 'success', message: res.data?.message || 'Puntajes calculados correctamente ✅' });
+    } catch (err) { 
+      useToastStore.getState().addToast({ type: 'error', message: err.response?.data?.error || 'Error al calcular puntajes' }); 
+    }
     finally { setSaving(false); }
   };
 
@@ -72,10 +69,9 @@ export default function AdminPanel() {
   };
 
   const tabs = [
-    { id: 'matches', label: 'Resultados', icon: Trophy },
     { id: 'users', label: 'Usuarios', icon: Users },
     { id: 'scoring', label: 'Puntuación', icon: Calculator },
-    { id: 'sync', label: 'API Sync', icon: Database },
+    { id: 'sync', label: 'Config. BD', icon: Database },
   ];
 
   if (loading) {
@@ -106,14 +102,17 @@ export default function AdminPanel() {
         ))}
       </div>
 
-      {/* Matches Tab */}
-      {tab === 'matches' && (
-        <div className="space-y-3">
-          {matches.map((match) => (
-            <MatchResultEditor key={match.id} match={match} onSave={saveResult} saving={saving} />
-          ))}
-        </div>
-      )}
+      {/* Admin Quick Actions */}
+      <div className="flex gap-4 border-b border-white/5 pb-4">
+         <button 
+           onClick={triggerCalculateScores}
+           disabled={saving}
+           className="flex items-center gap-2 px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-indigo-500/25 disabled:opacity-50 cursor-pointer border-none"
+         >
+           {saving ? <Loader2 size={18} className="animate-spin" /> : <Calculator size={18} />}
+           {saving ? 'Calculando...' : 'Forzar Cálculo de Puntos (Batch Score)'}
+         </button>
+      </div>
 
       {/* Users Tab */}
       {tab === 'users' && (

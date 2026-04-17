@@ -3,7 +3,7 @@ import * as ctrl from '../controllers/group.controller.js';
 import { authenticate } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { requireGroupMember, requireGroupAdmin } from '../middleware/groupAccess.js';
-import { groupCreateSchema, groupThemeSchema } from '../validators/schemas.js';
+import { groupCreateSchema, groupThemeSchema, joinGroupSchema } from '../validators/schemas.js';
 
 const router = Router();
 
@@ -11,7 +11,7 @@ const router = Router();
 router.post('/', authenticate, validate(groupCreateSchema), ctrl.create);
 router.get('/', authenticate, ctrl.getMyGroups);
 router.get('/public', authenticate, ctrl.getPublic);
-router.post('/join', authenticate, ctrl.join);
+router.post('/join', authenticate, validate(joinGroupSchema), ctrl.join);
 
 // Requieren membresía (Anti-IDOR)
 router.get('/:id', authenticate, requireGroupMember, ctrl.getById);

@@ -26,7 +26,7 @@ export default function Dashboard() {
         api.get(`/matches${compParam}`),
         api.get('/auth/me/favorites'),
         api.get('/matches/teams'),
-        api.get('/predictions/my'),
+        api.get(`/predictions/my${compParam}`),
       ]);
       setMatches(matchRes.data);
       setFavorites(favRes.data.map((f) => f.teamName));

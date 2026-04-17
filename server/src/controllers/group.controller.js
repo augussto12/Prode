@@ -23,8 +23,8 @@ export async function getById(req, res, next) {
 
 export async function join(req, res, next) {
   try {
+    // inviteCode ya está validado como UUID por joinGroupSchema
     const { inviteCode } = req.body;
-    if (!inviteCode) return res.status(400).json({ error: 'inviteCode is required' });
     const group = await groupService.joinGroup(req.user.id, inviteCode);
     res.json(group);
   } catch (err) { next(err); }

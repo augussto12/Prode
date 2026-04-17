@@ -10,25 +10,6 @@ export async function syncTeams(req, res, next) {
   } catch (err) { next(err); }
 }
 
-export async function syncFixtures(req, res, next) {
-  try {
-    const result = await syncService.syncFixtures(
-      req.body.leagueId,
-      req.body.season
-    );
-    res.json({ message: 'Partidos sincronizados', ...result });
-  } catch (err) { next(err); }
-}
-
-export async function syncResults(req, res, next) {
-  try {
-    const result = await syncService.syncResults(
-      req.body.leagueId,
-      req.body.season
-    );
-    res.json({ message: 'Resultados actualizados', ...result });
-  } catch (err) { next(err); }
-}
 
 export async function syncSquad(req, res, next) {
   try {

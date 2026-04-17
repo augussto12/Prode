@@ -7,8 +7,6 @@ const router = Router();
 
 // Todas las rutas requieren autenticación + rol ADMIN como mínimo
 router.post('/teams', authenticate, isAdmin, ctrl.syncTeams);
-router.post('/fixtures', authenticate, isAdmin, ctrl.syncFixtures);
-router.post('/results', authenticate, isAdmin, ctrl.syncResults);
 router.post('/squad', authenticate, isAdmin, ctrl.syncSquad);
 router.post('/squads', authenticate, isAdmin, ctrl.syncAllSquads);
 router.get('/status', authenticate, isAdmin, ctrl.getApiStatus);

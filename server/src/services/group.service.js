@@ -7,27 +7,30 @@ export async function createGroup(userId, data) {
     throw new BadRequestError('competitionId es requerido para crear un grupo');
   }
 
-  const group = await prisma.group.create({
-    data: {
-      name: data.name,
-      description: data.description,
-      isPublic: data.isPublic || false,
-      createdById: userId,
-      competitionId: Number(data.competitionId),
-      primaryColor: data.primaryColor || '#6366f1',
-      secondaryColor: data.secondaryColor || '#8b5cf6',
-      accentColor: data.accentColor || '#f59e0b',
-      bgGradientFrom: data.bgGradientFrom || '#0f172a',
-      bgGradientTo: data.bgGradientTo || '#1e1b4b',
-    },
-  });
+  // Transacción: crear grupo + membresía admin atómicamente
+  return prisma.$transaction(async (tx) => {
+    const group = await tx.group.create({
+      data: {
+        name: data.name,
+        description: data.description,
+        isPublic: data.isPublic || false,
+        createdById: userId,
+        competitionId: Number(data.competitionId),
+        primaryColor: data.primaryColor || '#6366f1',
+        secondaryColor: data.secondaryColor || '#8b5cf6',
+        accentColor: data.accentColor || '#f59e0b',
+        bgGradientFrom: data.bgGradientFrom || '#0f172a',
+        bgGradientTo: data.bgGradientTo || '#1e1b4b',
+      },
+    });
 
-  // Creator joins as admin
-  await prisma.groupUser.create({
-    data: { userId, groupId: group.id, isAdmin: true },
-  });
+    // Creator joins as admin
+    await tx.groupUser.create({
+      data: { userId, groupId: group.id, isAdmin: true },
+    });
 
-  return group;
+    return group;
+  });
 }
 
 export async function getMyGroups(userId) {
@@ -151,15 +154,20 @@ export async function updateGroupTheme(groupId, userId, themeData) {
     throw new ForbiddenError('Solo los admins del grupo pueden cambiar el tema');
   }
 
+  const data = {
+    primaryColor: themeData.primaryColor,
+    secondaryColor: themeData.secondaryColor,
+    accentColor: themeData.accentColor,
+    bgGradientFrom: themeData.bgGradientFrom,
+    bgGradientTo: themeData.bgGradientTo,
+  };
+  
+  if (themeData.name !== undefined) data.name = themeData.name;
+  if (themeData.description !== undefined) data.description = themeData.description;
+
   return prisma.group.update({
     where: { id: groupId },
-    data: {
-      primaryColor: themeData.primaryColor,
-      secondaryColor: themeData.secondaryColor,
-      accentColor: themeData.accentColor,
-      bgGradientFrom: themeData.bgGradientFrom,
-      bgGradientTo: themeData.bgGradientTo,
-    },
+    data,
   });
 }
 

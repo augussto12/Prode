@@ -13,13 +13,7 @@ enum Role {
   SUPERADMIN
 }
 
-enum MatchStatus {
-  SCHEDULED
-  LIVE
-  FINISHED
-  POSTPONED
-  CANCELLED
-}
+// MatchStatus enum eliminado — ya no hay tabla Match
 
 model User {
   id            Int           @id @default(autoincrement())
@@ -68,11 +62,11 @@ model Competition {
   logo        String?
   season      Int      @default(2022)
   
-  matches     Match[]
   groups      Group[]
   dreamTeams  DreamTeam[]
   outrights   OutrightPrediction[]
   playerStats PlayerCompetitionStats[]
+  predictions Prediction[]
 
   @@unique([externalId, season])
 }
@@ -137,67 +131,13 @@ model Team {
   @@index([externalId])
 }
 
-model Match {
-  id              Int           @id @default(autoincrement())
-  externalId      Int?          @unique
-  homeTeam        String
-  awayTeam        String
-  homeFlag        String?       
-  awayFlag        String?
-  homeTeamLogo    String?
-  awayTeamLogo    String?
-  round           String?
-  matchDate       DateTime
-  stage           String        
-  venue           String?
-  status          MatchStatus   @default(SCHEDULED)
-
-  competitionId   Int
-  competition     Competition   @relation(fields: [competitionId], references: [id])
-
-  homeGoals       Int?
-  awayGoals       Int?
-  
-  homeShots       Int?
-  awayShots       Int?
-  homeCorners     Int?
-  awayCorners     Int?
-  homePossession  Float?
-  awayPossession  Float?
-
-  statistics      Json?
-
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-
-  predictions     Prediction[]
-  events          MatchEvent[]
-
-  @@index([matchDate])
-  @@index([status])
-  @@index([competitionId])
-}
-
-model MatchEvent {
-  id          Int      @id @default(autoincrement())
-  matchId     Int
-  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  elapsed     Int
-  extraTime   Int?
-  teamName    String
-  teamLogo    String?
-  type        String   // Goal, Card, subst, Var
-  detail      String   // Normal Goal, Penalty, Yellow Card, etc.
-  playerName  String?
-  assistName  String?
-
-  @@index([matchId])
-}
+// Match y MatchEvent ELIMINADOS — la data de partidos viene del Explorer API en tiempo real
 
 model Prediction {
-  id              Int           @id @default(autoincrement())
-  userId          Int
-  matchId         Int
+  id                  Int           @id @default(autoincrement())
+  userId              Int
+  externalFixtureId   Int           // ID del fixture en API-Football
+  competitionId       Int           // Liga/torneo al que pertenece
 
   homeGoals       Int?
   awayGoals       Int?
@@ -216,11 +156,12 @@ model Prediction {
   updatedAt       DateTime  @updatedAt
 
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  match           Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  competition     Competition @relation(fields: [competitionId], references: [id])
 
-  @@unique([userId, matchId]) 
-  @@index([matchId])
+  @@unique([userId, externalFixtureId]) 
+  @@index([externalFixtureId])
   @@index([userId])
+  @@index([competitionId])
 }
 
 model Message {

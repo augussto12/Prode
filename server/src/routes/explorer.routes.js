@@ -242,12 +242,13 @@ router.get('/live', async (req, res, next) => {
 /** GET /api/explorer/today — Partidos del día de hoy, agrupados por liga */
 router.get('/today', async (req, res, next) => {
   try {
-    // Current UTC date string: YYYY-MM-DD
-    const todayStr = new Date().toISOString().split('T')[0];
-    const cacheKey = `today-matches:${todayStr}`;
+    const tz = req.query.timezone || 'America/Argentina/Buenos_Aires';
+    // Format date in the requested timezone (en-CA naturally outputs YYYY-MM-DD)
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+    const cacheKey = `today-matches:${todayStr}:${tz}`;
 
     const data = await cachedApiCall(cacheKey, 600, async () => {
-      const result = await footballApi.fetchFixturesByDate(todayStr);
+      const result = await footballApi.fetchFixturesByDate(todayStr, null, tz);
       return result.response;
     });
 
@@ -516,14 +517,65 @@ router.get('/teams/:id/coach', async (req, res, next) => {
 router.get('/teams/:id/fixtures', async (req, res, next) => {
   try {
     const teamId = Number(req.params.id);
-    const season = Number(req.query.season) || getCurrentSeason();
-    const cacheKey = `team:fixtures:${teamId}:${season}`;
+    const currentYear = getCurrentSeason();
+    const prevYear = currentYear - 1;
+    const cacheKey = `team:fixtures:${teamId}:${prevYear}-${currentYear}`;
     
-    // Cache for 12 hours (43200s)
-    const data = await cachedApiCall(cacheKey, 43200, async () => {
-      const url = `${process.env.FOOTBALL_API_BASE || 'https://v3.football.api-sports.io'}/fixtures?team=${teamId}&season=${season}`;
-      const r = await fetch(url, { headers: { 'x-apisports-key': process.env.FOOTBALL_API_KEY } });
-      const result = await r.json();
+    // Cache for 1 hour (3600s) — fixtures change frequently during active seasons
+    const data = await cachedApiCall(cacheKey, 3600, async () => {
+      const baseUrl = `${process.env.FOOTBALL_API_BASE || 'https://v3.football.api-sports.io'}/fixtures`;
+      const headers = { 'x-apisports-key': process.env.FOOTBALL_API_KEY };
+      
+      // Fetch both seasons in parallel — European leagues use prev year (e.g., 2025 for 2025-2026)
+      const [currentRes, prevRes] = await Promise.all([
+        fetch(`${baseUrl}?team=${teamId}&season=${currentYear}`, { headers }).then(r => r.json()).catch(() => ({ response: [] })),
+        fetch(`${baseUrl}?team=${teamId}&season=${prevYear}`, { headers }).then(r => r.json()).catch(() => ({ response: [] })),
+      ]);
+
+      // Merge and deduplicate by fixture ID
+      const all = [...(currentRes.response || []), ...(prevRes.response || [])];
+      const seen = new Set();
+      return all.filter(f => {
+        const fId = f.fixture?.id;
+        if (seen.has(fId)) return false;
+        seen.add(fId);
+        return true;
+      });
+    });
+
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
+/** GET /api/explorer/teams/:id/statistics — Estadísticas del equipo */
+router.get('/teams/:id/statistics', async (req, res, next) => {
+  try {
+    const teamId = Number(req.params.id);
+    const season = Number(req.query.season) || getCurrentSeason();
+    const leagueId = Number(req.query.league);
+    
+    if (!leagueId) return res.status(400).json({ error: 'league query parameter required' });
+
+    const cacheKey = `team:stats:${teamId}:${leagueId}:${season}`;
+    
+    const data = await cachedApiCall(cacheKey, 86400, async () => {
+      const result = await footballApi.fetchTeamStatistics(leagueId, season, teamId);
+      return result.response || null;
+    });
+
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
+/** GET /api/explorer/teams/:id/transfers — Fichajes del equipo */
+router.get('/teams/:id/transfers', async (req, res, next) => {
+  try {
+    const teamId = Number(req.params.id);
+    const cacheKey = `team:transfers:${teamId}`;
+    
+    // Cache for 24 hours (86400s) since transfers don't change that rapidly outside of windows
+    const data = await cachedApiCall(cacheKey, 86400, async () => {
+      const result = await footballApi.fetchTeamTransfers(teamId);
       return result.response || [];
     });
 
@@ -535,7 +587,11 @@ router.get('/teams/:id/fixtures', async (req, res, next) => {
 // CACHE STATUS (admin)
 // ═══════════════════════════════════════
 
-router.get('/cache/stats', async (req, res) => {
+router.get('/cache/stats', authenticate, async (req, res) => {
+  // Solo admins pueden ver stats del cache
+  if (req.user.role !== 'ADMIN' && req.user.role !== 'SUPERADMIN') {
+    return res.status(403).json({ error: 'Acceso denegado' });
+  }
   res.json(getCacheStats());
 });
 

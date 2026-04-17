@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, MapPin } from 'lucide-react';
 import api from '../services/api';
-import { tStat, tEvent, tRound, tMarket, tOddValue } from '../utils/translations';
+import { tStat, tEvent, tRound, tMarket, tOddValue, tInjury } from '../utils/translations';
 
 export default function LiveMatch() {
   const { id } = useParams();
@@ -11,6 +11,7 @@ export default function LiveMatch() {
   const [data, setData] = useState(null);
   const [injuries, setInjuries] = useState([]);
   const [liveOdds, setLiveOdds] = useState([]);
+  const [firstLeg, setFirstLeg] = useState(null); // Partido de ida (para llaves de vuelta)
   const [loading, setLoading] = useState(true);
   const [activeLineupTab, setActiveLineupTab] = useState('home');
   const [activeOddsMarketIndex, setActiveOddsMarketIndex] = useState(0);
@@ -18,7 +19,13 @@ export default function LiveMatch() {
 
   useEffect(() => {
     loadMatch();
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    return () => {
+      // Limpiar interval al cambiar de partido o desmontar — evita polling con id viejo
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, [id]);
 
   const loadMatch = async () => {
@@ -29,6 +36,13 @@ export default function LiveMatch() {
       ]);
       setData(resultRes.data);
       setInjuries(injuriesRes.data || []);
+
+      // Detectar si es partido de VUELTA en fase final → buscar partido de ida
+      const roundStr = resultRes.data.fixture?.league?.round || '';
+      const isSecondLeg = /2nd\s*Leg/i.test(roundStr);
+      if (isSecondLeg) {
+        fetchFirstLeg(resultRes.data.fixture);
+      }
 
       // Polling if live
       const status = resultRes.data.fixture?.fixture?.status?.short;
@@ -53,6 +67,35 @@ export default function LiveMatch() {
       }
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
+  };
+
+  /** Busca el partido de ida en el H2H para calcular el agregado */
+  const fetchFirstLeg = async (fix) => {
+    try {
+      const homeId = fix.teams?.home?.id;
+      const awayId = fix.teams?.away?.id;
+      const leagueId = fix.league?.id;
+      if (!homeId || !awayId) return;
+
+      const { data: h2hData } = await api.get(`/explorer/h2h/${homeId}/${awayId}?last=5`);
+      const matches = h2hData || [];
+
+      // Buscar el partido de ida: misma liga, mismo año, que sea "1st Leg" y ya terminado
+      // En el partido de IDA, los equipos están invertidos (home de vuelta = away de ida)
+      const firstLegMatch = matches.find(m => {
+        const round = m.league?.round || '';
+        const isFirstLeg = /1st\s*Leg/i.test(round);
+        const sameLeague = m.league?.id === leagueId;
+        const isFinished = ['FT', 'AET', 'PEN'].includes(m.fixture?.status?.short);
+        return isFirstLeg && sameLeague && isFinished;
+      });
+
+      if (firstLegMatch) {
+        setFirstLeg(firstLegMatch);
+      }
+    } catch (e) {
+      console.log('No se pudo cargar el partido de ida');
+    }
   };
 
   const fetchLiveOdds = async () => {
@@ -135,6 +178,40 @@ export default function LiveMatch() {
             <div className="text-5xl md:text-7xl font-black text-white tracking-tighter" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
               {goals?.home ?? 0} <span className="text-white/20 font-normal mx-1 md:mx-3">-</span> {goals?.away ?? 0}
             </div>
+
+            {/* Agregado para llaves de ida y vuelta */}
+            {firstLeg && (() => {
+              // En el partido de ida, el "home" actual era "away" y viceversa
+              // Buscar qué equipo fue home/away en la ida
+              const idaHomeId = firstLeg.teams?.home?.id;
+              const currentHomeId = teams?.home?.id;
+              // Si el home actual era el away de ida
+              const idaGoalsForCurrentHome = idaHomeId === currentHomeId 
+                ? firstLeg.goals?.home 
+                : firstLeg.goals?.away;
+              const idaGoalsForCurrentAway = idaHomeId === currentHomeId 
+                ? firstLeg.goals?.away 
+                : firstLeg.goals?.home;
+
+              const aggHome = (goals?.home ?? 0) + (idaGoalsForCurrentHome ?? 0);
+              const aggAway = (goals?.away ?? 0) + (idaGoalsForCurrentAway ?? 0);
+
+              // Resultado de ida desde la perspectiva del home actual
+              const idaScoreText = `${idaGoalsForCurrentAway ?? 0} - ${idaGoalsForCurrentHome ?? 0}`;
+
+              return (
+                <div className="mt-2 space-y-1">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+                    <span className="text-[10px] uppercase tracking-widest font-bold text-indigo-400/70">Agregado</span>
+                    <span className="text-sm font-black text-indigo-300">{aggHome} - {aggAway}</span>
+                  </div>
+                  <div className="text-[10px] text-white/30 font-medium">
+                    Ida: <span className="text-white/50 font-bold">{idaScoreText}</span>
+                    <span className="text-white/20 ml-1">({firstLeg.teams?.home?.name})</span>
+                  </div>
+                </div>
+              );
+            })()}
             
             <div className="mt-4">
               {isLive ? (
@@ -347,7 +424,7 @@ export default function LiveMatch() {
                        <div className="flex-1 min-w-0">
                          <div className="text-xs font-bold text-white truncate leading-tight">{inj.player.name}</div>
                          <div className={`text-[8px] md:text-[9px] uppercase tracking-wider font-bold truncate ${inj.player.type === 'Missing Fixture' ? 'text-red-400' : 'text-amber-400'}`}>
-                           {inj.player.reason?.split('(')[0]?.trim() || (inj.player.type === 'Missing Fixture' ? 'Ausente' : 'En duda')}
+                           {tInjury(inj.player.reason?.split('(')[0]?.trim()) || tInjury(inj.player.type) || 'En duda'}
                          </div>
                        </div>
                     </div>
@@ -366,7 +443,7 @@ export default function LiveMatch() {
                        <div className="flex-1 min-w-0">
                          <div className="text-xs font-bold text-white truncate leading-tight">{inj.player.name}</div>
                          <div className={`text-[8px] md:text-[9px] uppercase tracking-wider font-bold truncate ${inj.player.type === 'Missing Fixture' ? 'text-red-400' : 'text-amber-400'}`}>
-                           {inj.player.reason?.split('(')[0]?.trim() || (inj.player.type === 'Missing Fixture' ? 'Ausente' : 'En duda')}
+                           {tInjury(inj.player.reason?.split('(')[0]?.trim()) || tInjury(inj.player.type) || 'En duda'}
                          </div>
                        </div>
                     </div>

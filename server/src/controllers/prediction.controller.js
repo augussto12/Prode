@@ -2,31 +2,32 @@ import * as predictionService from '../services/prediction.service.js';
 
 export async function upsert(req, res, next) {
   try {
-    const { matchId, ...data } = req.body;
-    if (!matchId) return res.status(400).json({ error: 'matchId is required' });
-    const prediction = await predictionService.upsertPrediction(req.user.id, Number(matchId), data);
+    const { externalFixtureId, competitionId, ...data } = req.body;
+    if (!externalFixtureId || !competitionId) return res.status(400).json({ error: 'externalFixtureId and competitionId are required' });
+    const prediction = await predictionService.upsertPrediction(req.user.id, Number(externalFixtureId), Number(competitionId), data);
     res.json(prediction);
   } catch (err) { next(err); }
 }
 
 export async function getMy(req, res, next) {
   try {
-    const predictions = await predictionService.getMyPredictions(req.user.id);
+    const competitionId = req.query.competitionId || null;
+    const predictions = await predictionService.getMyPredictions(req.user.id, competitionId);
     res.json(predictions);
   } catch (err) { next(err); }
 }
 
-export async function getForMatch(req, res, next) {
+export async function getForFixture(req, res, next) {
   try {
-    const predictions = await predictionService.getPredictionsForMatch(Number(req.params.matchId));
+    const predictions = await predictionService.getPredictionsForFixture(Number(req.params.fixtureId));
     res.json(predictions);
   } catch (err) { next(err); }
 }
 
 export async function getGroupPredictions(req, res, next) {
   try {
-    const predictions = await predictionService.getGroupPredictionsForMatch(
-      Number(req.params.matchId),
+    const predictions = await predictionService.getGroupPredictionsForFixture(
+      Number(req.params.fixtureId),
       Number(req.params.groupId),
       req.user.id
     );

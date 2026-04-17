@@ -10,23 +10,33 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
   const [connected, setConnected] = useState(false);
   
   const socketRef = useRef(null);
-  const bottomRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   useEffect(() => {
     setMessages(initialMessages);
   }, [initialMessages]);
 
   useEffect(() => {
-    // Scroll to bottom when messages load/update
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Scroll chat to bottom without pulling the entire window down
+    if (chatContainerRef.current) {
+       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   useEffect(() => {
     if (!user) return;
 
+    // Desconectar socket anterior si existe (previene listeners duplicados)
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+
     // Connect to server socket (cookie HttpOnly se envía automáticamente)
     const socket = io(window.location.origin, {
       withCredentials: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
     });
     
     socketRef.current = socket;
@@ -42,7 +52,11 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
     });
 
     socket.on('new_message', (msg) => {
-      setMessages(prev => [...prev, msg]);
+      setMessages(prev => {
+        // Dedup: evita mensajes duplicados por reconexión o re-render
+        if (msg.id && prev.some(m => m.id === msg.id)) return prev;
+        return [...prev, msg];
+      });
     });
 
     return () => {
@@ -50,7 +64,7 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [user, groupId]);
+  }, [user?.id, groupId]); // user.id es estable, user como objeto no lo es
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -76,7 +90,7 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
       </div>
 
       {/* Messages Window */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px] max-h-[500px] scrollbar-thin scrollbar-thumb-white/10">
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px] max-h-[500px] scrollbar-thin scrollbar-thumb-white/10">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center text-white/30 space-y-2">
             <span className="text-3xl">🗣️</span>
@@ -106,7 +120,6 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
             );
           })
         )}
-        <div ref={bottomRef} />
       </div>
 
       {/* Input Form */}

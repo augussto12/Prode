@@ -27,9 +27,17 @@ export const profileUpdateSchema = z.object({
   themeBgTo: z.string().regex(hexColorRegex, 'Color inválido').optional().nullable(),
 }).strict(); // STRICT: rechaza campos extra (previene mass assignment de role, email, password)
 
+// --- FAVORITES ---
+export const favoritesSchema = z.object({
+  teams: z.array(
+    z.string().min(1, 'Nombre de equipo vacío').max(100, 'Nombre demasiado largo').trim()
+  ).max(10, 'Máximo 10 equipos favoritos').default([]),
+});
+
 // --- PREDICTIONS ---
 export const predictionSchema = z.object({
-  matchId: z.number().int().positive(),
+  externalFixtureId: z.number().int().positive(),
+  competitionId: z.number().int().positive(),
   homeGoals: z.number().int().min(0).max(20).optional().nullable(),
   awayGoals: z.number().int().min(0).max(20).optional().nullable(),
   winner: z.enum(['HOME', 'AWAY', 'DRAW']).optional().nullable(),
@@ -55,11 +63,17 @@ export const groupCreateSchema = z.object({
 });
 
 export const groupThemeSchema = z.object({
+  name: z.string().min(1, 'Nombre requerido').max(50, 'Máximo 50 caracteres').trim().optional(),
+  description: z.string().max(500).optional(),
   primaryColor: z.string().regex(hexColorRegex).optional(),
   secondaryColor: z.string().regex(hexColorRegex).optional(),
   accentColor: z.string().regex(hexColorRegex).optional(),
   bgGradientFrom: z.string().regex(hexColorRegex).optional(),
   bgGradientTo: z.string().regex(hexColorRegex).optional(),
+});
+
+export const joinGroupSchema = z.object({
+  inviteCode: z.string().uuid('Código de invitación inválido'),
 });
 
 // --- MATCH RESULT (Admin) ---
@@ -100,4 +114,38 @@ export const scoringConfigSchema = z.object({
 // --- ROLE UPDATE ---
 export const roleUpdateSchema = z.object({
   role: z.enum(['PLAYER', 'ADMIN', 'SUPERADMIN']),
+});
+
+// --- OUTRIGHTS ---
+export const outrightPredictionSchema = z.object({
+  competitionId: z.number().int().positive('competitionId es requerido'),
+  championTeam: z.string().max(100).optional().nullable(),
+  runnerUpTeam: z.string().max(100).optional().nullable(),
+  topScorerId: z.number().int().positive().optional().nullable(),
+  bestPlayerId: z.number().int().positive().optional().nullable(),
+});
+
+// --- DREAM TEAM ---
+const optionalPlayerId = z.number().int().positive().optional().nullable();
+
+export const dreamTeamSaveSchema = z.object({
+  competitionId: z.number().int().positive('competitionId es requerido'),
+  formation: z.string().regex(/^\d+-\d+-\d+$/, 'Formación inválida (ej: 1-2-1)').default('1-2-1'),
+  players: z.object({
+    gkId: optionalPlayerId,
+    def1Id: optionalPlayerId,
+    def2Id: optionalPlayerId,
+    mid1Id: optionalPlayerId,
+    mid2Id: optionalPlayerId,
+    fwd1Id: optionalPlayerId,
+    fwd2Id: optionalPlayerId,
+  }),
+});
+
+// --- COMPETITION (Admin) ---
+export const competitionCreateSchema = z.object({
+  externalId: z.number().int().positive('externalId es requerido'),
+  name: z.string().min(1, 'Nombre requerido').max(100).trim(),
+  logo: z.string().url().max(500).optional().nullable(),
+  season: z.number().int().min(1900).max(2100).optional().default(2022),
 });

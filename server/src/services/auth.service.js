@@ -77,14 +77,16 @@ export async function updateProfile(userId, data) {
 }
 
 export async function setFavorites(userId, teamNames) {
-  // Delete existing and recreate
-  await prisma.favorite.deleteMany({ where: { userId } });
-  if (teamNames && teamNames.length > 0) {
-    await prisma.favorite.createMany({
-      data: teamNames.map((teamName) => ({ userId, teamName })),
-    });
-  }
-  return prisma.favorite.findMany({ where: { userId } });
+  // Envolver en transacción para evitar pérdida de datos si createMany falla
+  return prisma.$transaction(async (tx) => {
+    await tx.favorite.deleteMany({ where: { userId } });
+    if (teamNames && teamNames.length > 0) {
+      await tx.favorite.createMany({
+        data: teamNames.map((teamName) => ({ userId, teamName })),
+      });
+    }
+    return tx.favorite.findMany({ where: { userId } });
+  });
 }
 
 export async function getFavorites(userId) {

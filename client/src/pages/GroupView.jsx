@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Share2, Check, Users, Settings, LogOut, Trophy, Trash2, ShieldBan, ShieldCheck } from 'lucide-react';
+import { Share2, Check, Users, Settings, LogOut, Trophy, Trash2, ShieldBan, ShieldCheck, Loader2, Edit3, X, Calendar } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import api from '../services/api';
 import useToastStore from '../store/toastStore';
 import GroupChat from '../components/chat/GroupChat';
+import ProdeMatches from '../components/matches/ProdeMatches';
 
 export default function GroupView() {
   const { id } = useParams();
@@ -20,6 +21,9 @@ export default function GroupView() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('leaderboard'); // 'leaderboard' | 'banned'
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', description: '', primaryColor: '', secondaryColor: '', accentColor: '', bgGradientFrom: '', bgGradientTo: '' });
 
   useEffect(() => {
     loadGroup();
@@ -122,17 +126,50 @@ export default function GroupView() {
     });
   };
 
+  const openEditModal = () => {
+    setEditForm({
+      name: group.name || '',
+      description: group.description || '',
+      primaryColor: group.primaryColor || '#6366f1',
+      secondaryColor: group.secondaryColor || '#8b5cf6',
+      accentColor: group.accentColor || '#f59e0b',
+      bgGradientFrom: group.bgGradientFrom || '#0f172a',
+      bgGradientTo: group.bgGradientTo || '#1e1b4b',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditSave = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      await api.put(`/groups/${id}/theme`, editForm);
+      useToastStore.getState().addToast({ type: 'success', message: 'Grupo actualizado correctamente' });
+      setShowEditModal(false);
+      loadGroup(); // reload
+    } catch (err) {
+      useToastStore.getState().addToast({ type: 'error', message: err.response?.data?.error || 'Error al actualizar grupo' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const copyCode = () => {
     navigator.clipboard.writeText(group.inviteCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (loading) return <div className="p-8 text-center text-white/50 animate-pulse">Cargando grupo...</div>;
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center p-20 gap-4">
+      <Loader2 size={32} className="animate-spin text-indigo-500" />
+      <span className="text-white/50 text-sm">Cargando datos del grupo...</span>
+    </div>
+  );
   if (!group) return null;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       {/* Header */}
       <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
         {/* Dynamic Background */}
@@ -143,7 +180,13 @@ export default function GroupView() {
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">{group.name}</h1>
             <p className="text-white/60 text-sm max-w-xl">{group.description}</p>
-            <div className="flex items-center gap-4 mt-4 text-sm">
+            <div className="flex flex-wrap items-center gap-3 mt-4 text-sm">
+              {group.competition && (
+                <span className="flex items-center gap-1.5 text-white/80 bg-white/5 px-3 py-1 rounded-full">
+                  {group.competition.logo && <img src={group.competition.logo} alt="" className="w-4 h-4 object-contain" />}
+                  {group.competition.name}
+                </span>
+              )}
               <span className="flex items-center gap-1.5 text-white/80 bg-white/5 px-3 py-1 rounded-full">
                 <Users size={16} /> {group.memberCount} miembros
               </span>
@@ -177,22 +220,25 @@ export default function GroupView() {
               <LogOut size={16} /> Salir del grupo
             </button>
             
-            {group.isAdmin && (
-              <button 
-                onClick={handleDelete}
-                className="flex items-center justify-center gap-2 w-full py-2 rounded-xl text-red-500 text-sm font-medium hover:bg-red-500/10 transition-colors border-none bg-transparent cursor-pointer relative z-10"
-              >
-                <Trash2 size={16} /> Eliminar Grupo
-              </button>
-            )}
+            {/* Admin Controls */}
+            {group.isAdmin ? (
+              <div className="flex flex-col gap-2 min-w-[200px]">
+                <button onClick={openEditModal} className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-xl font-bold transition-all border border-indigo-500/30 cursor-pointer text-sm">
+                  <Edit3 size={16} /> Editar Grupo
+                </button>
+                <button onClick={handleDelete} className="flex items-center justify-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl font-bold transition-all border border-red-500/30 cursor-pointer text-sm">
+                  <Trash2 size={16} /> Eliminar Grupo
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* LEADERBOARD / BANNED (Ocupa 2 de las 3 columnas en desktop) */}
-        <div className="lg:col-span-2 space-y-4">
+        {/* LEADERBOARD / BANNED */}
+        <div className="lg:col-span-8 xl:col-span-9 space-y-4">
           
           {/* Tabs */}
           <div className="flex items-center gap-2">
@@ -205,6 +251,16 @@ export default function GroupView() {
               }`}
             >
               <Trophy size={16} /> Tabla de Posiciones
+            </button>
+            <button 
+              onClick={() => setActiveTab('predictions')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border-none cursor-pointer ${
+                activeTab === 'predictions' 
+                  ? 'bg-indigo-500/20 text-indigo-300' 
+                  : 'bg-transparent text-white/40 hover:text-white/60'
+              }`}
+            >
+              <Calendar size={16} /> Hacer Predicciones
             </button>
             {group.isAdmin && (
               <button 
@@ -351,15 +407,100 @@ export default function GroupView() {
                 )}
               </motion.div>
             )}
+
+            {activeTab === 'predictions' && (
+              <motion.div
+                key="predictions"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="pt-2"
+              >
+                {/* Tournament Header */}
+                {group.competition && (
+                  <div className="flex items-center gap-3 mb-6 p-4 rounded-2xl bg-white/5 border border-white/10">
+                    {group.competition.logo ? (
+                      <img src={group.competition.logo} alt={group.competition.name} className="w-10 h-10 object-contain drop-shadow-md" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-xl">🏆</div>
+                    )}
+                    <div>
+                      <div className="text-xs text-white/40 uppercase tracking-widest font-bold mb-0.5">Torneo Activo</div>
+                      <h2 className="text-xl font-black text-white">{group.competition.name}</h2>
+                    </div>
+                  </div>
+                )}
+                
+                <ProdeMatches competitionId={group.competitionId} />
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
 
-        {/* CHAT (Ocupa 1 columna) */}
-        <div className="h-[400px] sm:h-[500px] lg:h-auto pb-10">
-           <GroupChat groupId={id} initialMessages={group.messages || []} />
+        {/* CHAT */}
+        <div className="lg:col-span-4 xl:col-span-3 h-[400px] sm:h-[500px] lg:h-[calc(100vh-180px)] lg:sticky lg:top-24 pb-4">
+          <GroupChat groupId={Number(id)} initialMessages={group.messages || []} />
         </div>
-
       </div>
+
+      {/* MODAL: EDITAR GRUPO */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex py-10 justify-center overflow-y-auto">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-card rounded-2xl w-full max-w-lg m-auto border border-white/10 shadow-2xl overflow-hidden relative">
+            <div className="bg-white/5 p-4 border-b border-white/10 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Edit3 size={20} className="text-indigo-400" /> Editar Grupo
+              </h3>
+              <button onClick={() => setShowEditModal(false)} className="text-white/40 hover:text-white bg-transparent border-none cursor-pointer rounded-full hover:bg-white/10 p-1">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditSave} className="p-6 space-y-5">
+              <div>
+                <label className="block text-white/60 text-sm mb-1">Nombre</label>
+                <input type="text" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} required
+                       className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500" />
+              </div>
+              
+              <div>
+                <label className="block text-white/60 text-sm mb-1">Descripción</label>
+                <textarea rows="2" value={editForm.description} onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                          className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-xl text-white text-sm resize-none focus:outline-none focus:border-indigo-500" />
+              </div>
+
+              <div>
+                <label className="block text-white/60 text-sm mb-2">Colores del grupo (Se aplicarán a todos los miembros)</label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 bg-black/20 p-4 rounded-xl border border-white/5">
+                  {[
+                    { label: 'Primario', key: 'primaryColor' },
+                    { label: 'Secundario', key: 'secondaryColor' },
+                    { label: 'Acento', key: 'accentColor' },
+                    { label: 'Fondo de', key: 'bgGradientFrom' },
+                    { label: 'Fondo a', key: 'bgGradientTo' },
+                  ].map(({ label, key }) => (
+                    <div key={key} className="flex items-center gap-2 bg-white/5 p-2 rounded-lg">
+                      <input type="color" value={editForm[key]} onChange={(e) => setEditForm({...editForm, [key]: e.target.value})}
+                        className="w-6 h-6 rounded border border-white/20 cursor-pointer bg-transparent" />
+                      <span className="text-[11px] text-white/70 truncate">{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                <button type="button" onClick={() => setShowEditModal(false)} className="px-4 py-2 rounded-xl text-white/60 hover:text-white bg-transparent border border-white/10 cursor-pointer text-sm font-medium">
+                  Cancelar
+                </button>
+                <button type="submit" disabled={isSaving} className="px-6 py-2 rounded-xl text-white font-bold bg-indigo-500 hover:bg-indigo-600 border-none cursor-pointer text-sm flex items-center gap-2 disabled:opacity-50">
+                  {isSaving && <Loader2 size={16} className="animate-spin" />}
+                  {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

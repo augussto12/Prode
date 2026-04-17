@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Trophy, ArrowLeft, Table, Calendar, Target, Users, Zap, ChevronDown, ShieldCheck, GitBranch, List } from 'lucide-react';
+import { Trophy, ArrowLeft, Table, Calendar, Target, Users, Zap, ChevronDown, ShieldCheck, GitBranch, List, Loader2, Check } from 'lucide-react';
 import api from '../services/api';
 import { tCountry, tRound } from '../utils/translations';
 import TournamentBracket, { hasKnockoutFixtures } from '../components/TournamentBracket';
+import useAuthStore from '../store/authStore';
+import useCompetitionStore from '../store/competitionStore';
+import useToastStore from '../store/toastStore';
 
 const WORLD_CUP_ID = 1;
 
@@ -32,8 +35,15 @@ export default function LeagueView() {
   const [loading, setLoading] = useState(true);
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [fixturesView, setFixturesView] = useState('list'); // 'list' | 'bracket'
+  const [syncing, setSyncing] = useState(false);
+
+  const currentUser = useAuthStore(s => s.user);
+  const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPERADMIN';
+  const { competitions, fetchCompetitions } = useCompetitionStore();
+  const addToast = useToastStore(s => s.addToast);
 
   const isWorldCup = Number(id) === WORLD_CUP_ID;
+  const isSynced = competitions.some(c => c.externalId === Number(id) && c.season === season);
 
   // Generate available seasons (current year down to 2020)
   const availableSeasons = Array.from({ length: currentYear - 2019 }, (_, i) => currentYear - i);
@@ -74,6 +84,25 @@ export default function LeagueView() {
       setSeason(activeSeason);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
+  };
+
+  const handleEnableProde = async () => {
+    if (!isAdmin || !season) return;
+    setSyncing(true);
+    try {
+      addToast({ type: 'success', message: 'Descargando equipos y logos...' });
+      await api.post(`/admin/sync/teams`, { leagueId: Number(id), season });
+      
+      addToast({ type: 'success', message: 'Descargando fixtures y fechas...' });
+      await api.post(`/admin/sync/fixtures`, { leagueId: Number(id), season });
+      
+      await fetchCompetitions();
+      addToast({ type: 'success', message: '¡Torneo habilitado para el Prode!' });
+    } catch (err) {
+      addToast({ type: 'error', message: err.response?.data?.error || 'Error al habilitar el torneo' });
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const loadStandings = async () => {
@@ -127,11 +156,15 @@ export default function LeagueView() {
 
   const loadTeams = async () => {
     try {
-      // Use standings to get teams (they have team logos and names)
-      if (!standings) await loadStandings();
-      // Teams are extracted from standings groups
+      // Usar standings si ya está cargado, sino cargarlo directo (no leer state post-setState, es async)
+      let standingsData = standings;
+      if (!standingsData) {
+        const { data } = await api.get(`/explorer/leagues/${id}/standings?season=${season}`);
+        setStandings(data);
+        standingsData = data;
+      }
       const allTeams = [];
-      const groups = standings?.league?.standings || [];
+      const groups = standingsData?.league?.standings || [];
       groups.forEach(group => {
         group.forEach(row => {
           allTeams.push(row.team);
@@ -191,16 +224,26 @@ export default function LeagueView() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 mt-3 md:mt-0">
-            {/* Prode button (World Cup only) */}
-            {isWorldCup && (
-              <Link
-                to="/torneo"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold no-underline text-white transition-all hover:scale-105"
-                style={{ background: 'linear-gradient(135deg, #b8860b, #daa520, #ffd700)' }}
+            {/* Admin Enable Prode Button */}
+            {isAdmin && !isSynced && (
+              <button
+                onClick={handleEnableProde}
+                disabled={syncing}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border-none text-white cursor-pointer transition-all hover:scale-105 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed"
+                style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}
               >
-                <Zap size={14} /> Prode
-              </Link>
+                {syncing ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
+                {syncing ? 'Habilitando...' : 'Habilitar para Prode'}
+              </button>
             )}
+
+            {/* Admin Synced Indicator */}
+            {isAdmin && isSynced && (
+              <span className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
+                <Check size={14} /> Prode Disp.
+              </span>
+            )}
+
             {/* Season selector */}
             <div className="relative">
               <select
