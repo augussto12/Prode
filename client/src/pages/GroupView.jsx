@@ -169,109 +169,116 @@ export default function GroupView() {
   if (!group) return null;
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
+      <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-6 relative overflow-hidden">
         {/* Dynamic Background */}
         <div className="absolute inset-0 opacity-20 pointer-events-none"
              style={{ background: `linear-gradient(135deg, var(--color-primary), var(--color-secondary))` }} />
         
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col gap-4 sm:gap-6">
+          {/* Top: Name + Meta */}
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">{group.name}</h1>
-            <p className="text-white/60 text-sm max-w-xl">{group.description}</p>
-            <div className="flex flex-wrap items-center gap-3 mt-4 text-sm">
+            <h1 className="text-xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">{group.name}</h1>
+            {group.description && (
+              <p className="text-white/60 text-xs sm:text-sm max-w-xl">{group.description}</p>
+            )}
+            <div className="flex flex-wrap items-center gap-2 mt-3 text-xs sm:text-sm">
               {group.competition && (
-                <span className="flex items-center gap-1.5 text-white/80 bg-white/5 px-3 py-1 rounded-full">
+                <span className="flex items-center gap-1.5 text-white/80 bg-white/5 px-2.5 py-1 rounded-full">
                   {group.competition.logo && <img src={group.competition.logo} alt="" className="w-4 h-4 object-contain" />}
-                  {group.competition.name}
+                  <span className="truncate max-w-[120px] sm:max-w-none">{group.competition.name}</span>
                 </span>
               )}
-              <span className="flex items-center gap-1.5 text-white/80 bg-white/5 px-3 py-1 rounded-full">
-                <Users size={16} /> {group.memberCount} miembros
+              <span className="flex items-center gap-1.5 text-white/80 bg-white/5 px-2.5 py-1 rounded-full">
+                <Users size={14} /> {group.memberCount} miembros
               </span>
               {group.isAdmin && (
-                <span className="flex items-center gap-1.5 text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full font-medium">
-                  <Settings size={16} /> Admin
+                <span className="flex items-center gap-1.5 text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-full font-medium">
+                  <Settings size={14} /> Admin
                 </span>
               )}
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 min-w-[200px]">
-            <div className="bg-black/20 rounded-xl p-3 border border-white/5 text-center">
-              <div className="text-xs text-white/40 mb-1">Código de Invitación</div>
-              <div className="flex items-center justify-center gap-2">
-                <span className="font-mono text-lg text-white font-bold tracking-wider">{group.inviteCode}</span>
+          {/* Bottom: Invite code + Actions — horizontal on mobile */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {/* Invite code — compact on mobile */}
+            <div className="bg-black/20 rounded-xl p-2.5 sm:p-3 border border-white/5 flex items-center gap-3 sm:flex-col sm:text-center sm:min-w-[200px]">
+              <div className="text-[10px] sm:text-xs text-white/40 shrink-0">Código</div>
+              <div className="flex items-center gap-2 flex-1 justify-center">
+                <span className="font-mono text-sm sm:text-lg text-white font-bold tracking-wider truncate">{group.inviteCode}</span>
                 <button 
                   onClick={copyCode}
-                  className="p-1.5 text-indigo-400 hover:text-indigo-300 hover:bg-white/5 rounded-lg transition-colors cursor-pointer border-none bg-transparent"
+                  className="p-1.5 text-indigo-400 hover:text-indigo-300 hover:bg-white/5 rounded-lg transition-colors cursor-pointer border-none bg-transparent shrink-0"
                   title="Copiar código"
                 >
-                  {copied ? <Check size={18} className="text-emerald-400" /> : <Share2 size={18} />}
+                  {copied ? <Check size={16} className="text-emerald-400" /> : <Share2 size={16} />}
                 </button>
               </div>
             </div>
-            
-            <button 
-              onClick={handleLeave}
-              className="flex items-center justify-center gap-2 w-full py-2 rounded-xl text-red-400 text-sm font-medium hover:bg-red-400/10 transition-colors border-none bg-transparent cursor-pointer"
-            >
-              <LogOut size={16} /> Salir del grupo
-            </button>
-            
-            {/* Admin Controls */}
-            {group.isAdmin ? (
-              <div className="flex flex-col gap-2 min-w-[200px]">
-                <button onClick={openEditModal} className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-xl font-bold transition-all border border-indigo-500/30 cursor-pointer text-sm">
-                  <Edit3 size={16} /> Editar Grupo
-                </button>
-                <button onClick={handleDelete} className="flex items-center justify-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl font-bold transition-all border border-red-500/30 cursor-pointer text-sm">
-                  <Trash2 size={16} /> Eliminar Grupo
-                </button>
-              </div>
-            ) : null}
+
+            {/* Action buttons — row on mobile */}
+            <div className="flex flex-wrap gap-2 sm:flex-col sm:gap-2 sm:min-w-[180px]">
+              <button 
+                onClick={handleLeave}
+                className="flex items-center justify-center gap-1.5 flex-1 sm:flex-none sm:w-full py-2 px-3 rounded-xl text-red-400 text-xs sm:text-sm font-medium hover:bg-red-400/10 transition-colors border-none bg-transparent cursor-pointer"
+              >
+                <LogOut size={14} /> Salir
+              </button>
+              
+              {group.isAdmin && (
+                <>
+                  <button onClick={openEditModal} className="flex items-center justify-center gap-1.5 flex-1 sm:flex-none sm:w-full px-3 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-xl font-bold transition-all border border-indigo-500/30 cursor-pointer text-xs sm:text-sm">
+                    <Edit3 size={14} /> Editar
+                  </button>
+                  <button onClick={handleDelete} className="flex items-center justify-center gap-1.5 flex-1 sm:flex-none sm:w-full px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl font-bold transition-all border border-red-500/30 cursor-pointer text-xs sm:text-sm">
+                    <Trash2 size={14} /> Eliminar
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
         
-        {/* LEADERBOARD / BANNED */}
-        <div className="lg:col-span-8 xl:col-span-9 space-y-4">
+        {/* LEADERBOARD / PREDICTIONS / BANNED */}
+        <div className="lg:col-span-8 xl:col-span-9 space-y-4 min-w-0">
           
-          {/* Tabs */}
-          <div className="flex items-center gap-2">
+          {/* Tabs — horizontal scroll on mobile */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             <button 
               onClick={() => setActiveTab('leaderboard')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border-none cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'leaderboard' 
                   ? 'bg-white/10 text-white' 
                   : 'bg-transparent text-white/40 hover:text-white/60'
               }`}
             >
-              <Trophy size={16} /> Tabla de Posiciones
+              <Trophy size={14} /> Posiciones
             </button>
             <button 
               onClick={() => setActiveTab('predictions')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border-none cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'predictions' 
                   ? 'bg-indigo-500/20 text-indigo-300' 
                   : 'bg-transparent text-white/40 hover:text-white/60'
               }`}
             >
-              <Calendar size={16} /> Hacer Predicciones
+              <Calendar size={14} /> Predicciones
             </button>
             {group.isAdmin && (
               <button 
                 onClick={() => setActiveTab('banned')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border-none cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
                   activeTab === 'banned' 
                     ? 'bg-red-500/20 text-red-400' 
                     : 'bg-transparent text-white/40 hover:text-white/60'
                 }`}
               >
-                <ShieldBan size={16} /> Baneados {bannedList.length > 0 && `(${bannedList.length})`}
+                <ShieldBan size={14} /> Baneados {bannedList.length > 0 && `(${bannedList.length})`}
               </button>
             )}
           </div>
@@ -283,7 +290,7 @@ export default function GroupView() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="space-y-3"
+                className="space-y-2 sm:space-y-3"
               >
                 {leaderboard.map((entry) => {
                   const isMe = entry.userId === user.id;
@@ -292,14 +299,14 @@ export default function GroupView() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       key={entry.userId}
-                      className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${
+                      className={`flex items-center gap-2.5 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all ${
                         isMe 
                         ? 'bg-indigo-500/10 border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.15)]' 
                         : 'bg-white/[0.02] border-white/5'
                       }`}
                     >
                       {/* Rank */}
-                      <div className={`w-8 text-center font-bold text-lg ${
+                      <div className={`w-7 sm:w-8 text-center font-bold text-base sm:text-lg shrink-0 ${
                         entry.rank === 1 ? 'text-amber-400' :
                         entry.rank === 2 ? 'text-slate-300' :
                         entry.rank === 3 ? 'text-amber-700' :
@@ -309,40 +316,40 @@ export default function GroupView() {
                       </div>
 
                       {/* Avatar */}
-                      <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-bold border border-white/20">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 flex items-center justify-center text-white text-sm sm:text-base font-bold border border-white/20 shrink-0">
                         {entry.displayName.charAt(0).toUpperCase()}
                       </div>
 
                       {/* User */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-sm font-medium truncate ${isMe ? 'text-indigo-300' : 'text-white'}`}>
+                        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                          <span className={`text-xs sm:text-sm font-medium truncate ${isMe ? 'text-indigo-300' : 'text-white'}`}>
                             {entry.displayName}
                           </span>
                           {entry.isAdmin && (
-                            <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-400 rounded text-[10px] font-semibold">ADMIN</span>
+                            <span className="px-1 py-0.5 bg-amber-500/20 text-amber-400 rounded text-[9px] sm:text-[10px] font-semibold shrink-0">ADMIN</span>
                           )}
                           {isMe && (
-                            <span className="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-400 rounded text-[10px] font-semibold">TÚ</span>
+                            <span className="px-1 py-0.5 bg-indigo-500/20 text-indigo-400 rounded text-[9px] sm:text-[10px] font-semibold shrink-0">TÚ</span>
                           )}
                         </div>
-                        <div className="text-xs text-white/30">@{entry.username}</div>
+                        <div className="text-[10px] sm:text-xs text-white/30 truncate">@{entry.username}</div>
                       </div>
 
                       {/* Score & Actions */}
-                      <div className="flex items-center gap-4 shrink-0">
+                      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                         <div className="text-right">
-                          <div className="text-lg font-bold" style={{ color: 'var(--color-accent)' }}>{entry.totalPoints}</div>
-                          <div className="text-[10px] text-white/30 uppercase tracking-wider">pts</div>
+                          <div className="text-base sm:text-lg font-bold" style={{ color: 'var(--color-accent)' }}>{entry.totalPoints}</div>
+                          <div className="text-[9px] sm:text-[10px] text-white/30 uppercase tracking-wider">pts</div>
                         </div>
                         
                         {/* Admin Actions */}
                         {group.isAdmin && !isMe && (
                           <button 
                             onClick={() => handleKick(entry.userId)}
-                            className="ml-2 p-1.5 rounded-lg text-red-400/50 hover:text-red-400 hover:bg-red-500/10 transition-all bg-transparent border-none cursor-pointer"
+                            className="p-1 sm:p-1.5 rounded-lg text-red-400/50 hover:text-red-400 hover:bg-red-500/10 transition-all bg-transparent border-none cursor-pointer"
                             title="Banear usuario">
-                            <ShieldBan size={16} />
+                            <ShieldBan size={14} />
                           </button>
                         )}
                       </div>
@@ -365,7 +372,7 @@ export default function GroupView() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="space-y-3"
+                className="space-y-2 sm:space-y-3"
               >
                 {bannedList.length === 0 ? (
                   <div className="py-12 text-center text-white/40 glass-card rounded-xl">
@@ -379,17 +386,17 @@ export default function GroupView() {
                       key={entry.userId}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center gap-4 p-4 rounded-2xl border border-red-500/10 bg-red-500/[0.03]"
+                      className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-red-500/10 bg-red-500/[0.03]"
                     >
                       {/* Avatar */}
-                      <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center text-red-400 font-bold border border-red-500/20">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-500/10 flex items-center justify-center text-red-400 text-sm sm:text-base font-bold border border-red-500/20 shrink-0">
                         {entry.displayName.charAt(0).toUpperCase()}
                       </div>
 
                       {/* User */}
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-white truncate">{entry.displayName}</div>
-                        <div className="text-xs text-white/30">@{entry.username}</div>
+                        <div className="text-xs sm:text-sm font-medium text-white truncate">{entry.displayName}</div>
+                        <div className="text-[10px] sm:text-xs text-white/30 truncate">@{entry.username}</div>
                         <div className="text-[10px] text-red-400/60 mt-0.5">
                           Baneado {entry.bannedAt ? new Date(entry.bannedAt).toLocaleDateString('es-AR') : ''}
                         </div>
@@ -398,9 +405,9 @@ export default function GroupView() {
                       {/* Unban */}
                       <button
                         onClick={() => handleUnban(entry.userId)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition-colors border-none cursor-pointer"
+                        className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] sm:text-xs font-bold hover:bg-emerald-500/20 transition-colors border-none cursor-pointer shrink-0"
                       >
-                        <ShieldCheck size={14} /> Desbanear
+                        <ShieldCheck size={12} /> Desbanear
                       </button>
                     </motion.div>
                   ))
@@ -414,19 +421,19 @@ export default function GroupView() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="pt-2"
+                className="pt-1 sm:pt-2"
               >
                 {/* Tournament Header */}
                 {group.competition && (
-                  <div className="flex items-center gap-3 mb-6 p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="flex items-center gap-2.5 sm:gap-3 mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10">
                     {group.competition.logo ? (
-                      <img src={group.competition.logo} alt={group.competition.name} className="w-10 h-10 object-contain drop-shadow-md" />
+                      <img src={group.competition.logo} alt={group.competition.name} className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow-md shrink-0" />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-xl">🏆</div>
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 flex items-center justify-center text-lg sm:text-xl shrink-0">🏆</div>
                     )}
-                    <div>
-                      <div className="text-xs text-white/40 uppercase tracking-widest font-bold mb-0.5">Torneo Activo</div>
-                      <h2 className="text-xl font-black text-white">{group.competition.name}</h2>
+                    <div className="min-w-0">
+                      <div className="text-[10px] sm:text-xs text-white/40 uppercase tracking-widest font-bold mb-0.5">Torneo Activo</div>
+                      <h2 className="text-base sm:text-xl font-black text-white truncate">{group.competition.name}</h2>
                     </div>
                   </div>
                 )}
@@ -438,40 +445,40 @@ export default function GroupView() {
         </div>
 
         {/* CHAT */}
-        <div className="lg:col-span-4 xl:col-span-3 h-[400px] sm:h-[500px] lg:h-[calc(100vh-180px)] lg:sticky lg:top-24 pb-4">
+        <div className="lg:col-span-4 xl:col-span-3 h-[350px] sm:h-[450px] lg:h-[calc(100vh-180px)] lg:sticky lg:top-24 pb-4">
           <GroupChat groupId={Number(id)} initialMessages={group.messages || []} />
         </div>
       </div>
 
       {/* MODAL: EDITAR GRUPO */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex py-10 justify-center overflow-y-auto">
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-card rounded-2xl w-full max-w-lg m-auto border border-white/10 shadow-2xl overflow-hidden relative">
-            <div className="bg-white/5 p-4 border-b border-white/10 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Edit3 size={20} className="text-indigo-400" /> Editar Grupo
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-card rounded-xl sm:rounded-2xl w-full max-w-lg border border-white/10 shadow-2xl overflow-hidden relative my-auto">
+            <div className="bg-white/5 p-3 sm:p-4 border-b border-white/10 flex items-center justify-between">
+              <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                <Edit3 size={18} className="text-indigo-400" /> Editar Grupo
               </h3>
               <button onClick={() => setShowEditModal(false)} className="text-white/40 hover:text-white bg-transparent border-none cursor-pointer rounded-full hover:bg-white/10 p-1">
                 <X size={20} />
               </button>
             </div>
             
-            <form onSubmit={handleEditSave} className="p-6 space-y-5">
+            <form onSubmit={handleEditSave} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
               <div>
-                <label className="block text-white/60 text-sm mb-1">Nombre</label>
+                <label className="block text-white/60 text-xs sm:text-sm mb-1">Nombre</label>
                 <input type="text" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} required
-                       className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500" />
+                       className="w-full px-3 sm:px-4 py-2 bg-black/40 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500" />
               </div>
               
               <div>
-                <label className="block text-white/60 text-sm mb-1">Descripción</label>
+                <label className="block text-white/60 text-xs sm:text-sm mb-1">Descripción</label>
                 <textarea rows="2" value={editForm.description} onChange={(e) => setEditForm({...editForm, description: e.target.value})}
-                          className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-xl text-white text-sm resize-none focus:outline-none focus:border-indigo-500" />
+                          className="w-full px-3 sm:px-4 py-2 bg-black/40 border border-white/10 rounded-xl text-white text-sm resize-none focus:outline-none focus:border-indigo-500" />
               </div>
 
               <div>
-                <label className="block text-white/60 text-sm mb-2">Colores del grupo (Se aplicarán a todos los miembros)</label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 bg-black/20 p-4 rounded-xl border border-white/5">
+                <label className="block text-white/60 text-xs sm:text-sm mb-2">Colores del grupo</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 bg-black/20 p-3 sm:p-4 rounded-xl border border-white/5">
                   {[
                     { label: 'Primario', key: 'primaryColor' },
                     { label: 'Secundario', key: 'secondaryColor' },
@@ -481,20 +488,20 @@ export default function GroupView() {
                   ].map(({ label, key }) => (
                     <div key={key} className="flex items-center gap-2 bg-white/5 p-2 rounded-lg">
                       <input type="color" value={editForm[key]} onChange={(e) => setEditForm({...editForm, [key]: e.target.value})}
-                        className="w-6 h-6 rounded border border-white/20 cursor-pointer bg-transparent" />
-                      <span className="text-[11px] text-white/70 truncate">{label}</span>
+                        className="w-6 h-6 rounded border border-white/20 cursor-pointer bg-transparent shrink-0" />
+                      <span className="text-[10px] sm:text-[11px] text-white/70 truncate">{label}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-                <button type="button" onClick={() => setShowEditModal(false)} className="px-4 py-2 rounded-xl text-white/60 hover:text-white bg-transparent border border-white/10 cursor-pointer text-sm font-medium">
+              <div className="flex justify-end gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-white/10">
+                <button type="button" onClick={() => setShowEditModal(false)} className="px-3 sm:px-4 py-2 rounded-xl text-white/60 hover:text-white bg-transparent border border-white/10 cursor-pointer text-xs sm:text-sm font-medium">
                   Cancelar
                 </button>
-                <button type="submit" disabled={isSaving} className="px-6 py-2 rounded-xl text-white font-bold bg-indigo-500 hover:bg-indigo-600 border-none cursor-pointer text-sm flex items-center gap-2 disabled:opacity-50">
-                  {isSaving && <Loader2 size={16} className="animate-spin" />}
-                  {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+                <button type="submit" disabled={isSaving} className="px-4 sm:px-6 py-2 rounded-xl text-white font-bold bg-indigo-500 hover:bg-indigo-600 border-none cursor-pointer text-xs sm:text-sm flex items-center gap-2 disabled:opacity-50">
+                  {isSaving && <Loader2 size={14} className="animate-spin" />}
+                  {isSaving ? 'Guardando...' : 'Guardar'}
                 </button>
               </div>
             </form>

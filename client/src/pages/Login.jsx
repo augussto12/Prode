@@ -129,6 +129,12 @@ export default function Login() {
               Registrate
             </Link>
           </div>
+
+          <div className="mt-3 text-center">
+            <Link to="/explorar" className="inline-flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 no-underline transition-colors">
+              ← Explorar sin cuenta
+            </Link>
+          </div>
         </div>
       </motion.div>
     </div>

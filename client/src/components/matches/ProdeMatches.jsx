@@ -165,29 +165,29 @@ export default function ProdeMatches({ competitionId, initialTab = 'matches' }) 
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       
       {/* Sub-Tabs: Partidos / Historial */}
-      <div className="flex bg-white/5 p-1 rounded-xl w-fit mb-4">
+      <div className="flex bg-white/5 p-1 rounded-xl w-full sm:w-fit">
         <button
           onClick={() => setActiveTab('matches')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all border-none cursor-pointer ${
+          className={`flex items-center justify-center gap-1.5 sm:gap-2 flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all border-none cursor-pointer ${
             activeTab === 'matches'
               ? 'bg-white/10 text-white shadow-sm'
               : 'bg-transparent text-white/40 hover:text-white/60'
           }`}
         >
-          <List size={16} /> Partidos
+          <List size={14} /> Partidos
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all border-none cursor-pointer ${
+          className={`flex items-center justify-center gap-1.5 sm:gap-2 flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all border-none cursor-pointer ${
             activeTab === 'history'
               ? 'bg-white/10 text-white shadow-sm'
               : 'bg-transparent text-white/40 hover:text-white/60'
           }`}
         >
-          <BarChart3 size={16} /> Mi Historial / Puntos
+          <BarChart3 size={14} /> Historial
         </button>
       </div>
 
@@ -196,56 +196,56 @@ export default function ProdeMatches({ competitionId, initialTab = 'matches' }) 
       ) : (
         <>
           {/* Filters Header */}
-          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-2">
-        {/* Time Segmented Control */}
-        <div className="flex bg-black/20 p-1 rounded-xl border border-white/5 w-full xl:w-auto overflow-x-auto scrollbar-hide">
-          {[
-            { id: 'upcoming', label: 'Próximos / En Vivo' },
-            { id: 'past', label: 'Terminados' },
-            { id: 'all', label: 'Todos' }
-          ].map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTimeFilter(t.id)}
-              className={`flex-1 xl:flex-none px-4 py-1.5 rounded-lg text-sm font-medium transition-all border-none cursor-pointer whitespace-nowrap ${
-                timeFilter === t.id
-                  ? 'bg-indigo-500 text-white shadow-md'
-                  : 'bg-transparent text-white/50 hover:text-white/80 hover:bg-white/5'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Other Filters (Favorites, Stage) */}
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => setShowFavPicker(!showFavPicker)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer border-none"
-            style={{
-              background: showFavPicker ? 'var(--color-accent)' : 'rgba(255,255,255,0.05)',
-              color: showFavPicker ? '#000' : 'rgba(255,255,255,0.7)',
-            }}
-          >
-            <Star size={16} /> Favoritos
-          </button>
-          <div className="relative flex-1 md:flex-none">
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="w-full appearance-none bg-white/5 border border-white/10 text-white/70 text-sm px-4 py-2 pr-8 rounded-xl cursor-pointer focus:outline-none focus:border-indigo-500"
-            >
-              <option value="all">Todas las Fases</option>
-              <option value="favorites">⭐ Mis Favoritos</option>
-              {stages.map((s) => (
-                <option key={s} value={s}>{s}</option>
+          <div className="flex flex-col gap-3 sm:gap-4 mb-2">
+            {/* Time Segmented Control */}
+            <div className="flex bg-black/20 p-1 rounded-xl border border-white/5 w-full overflow-x-auto scrollbar-hide">
+              {[
+                { id: 'upcoming', label: 'Próximos' },
+                { id: 'past', label: 'Terminados' },
+                { id: 'all', label: 'Todos' }
+              ].map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setTimeFilter(t.id)}
+                  className={`flex-1 px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all border-none cursor-pointer whitespace-nowrap ${
+                    timeFilter === t.id
+                      ? 'bg-indigo-500 text-white shadow-md'
+                      : 'bg-transparent text-white/50 hover:text-white/80 hover:bg-white/5'
+                  }`}
+                >
+                  {t.label}
+                </button>
               ))}
-            </select>
-            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+            </div>
+
+            {/* Other Filters (Favorites, Stage) */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowFavPicker(!showFavPicker)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all cursor-pointer border-none shrink-0"
+                style={{
+                  background: showFavPicker ? 'var(--color-accent)' : 'rgba(255,255,255,0.05)',
+                  color: showFavPicker ? '#000' : 'rgba(255,255,255,0.7)',
+                }}
+              >
+                <Star size={14} /> <span className="hidden xs:inline">Favoritos</span><span className="xs:hidden">⭐</span>
+              </button>
+              <div className="relative flex-1 min-w-0">
+                <select
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  className="w-full appearance-none bg-white/5 border border-white/10 text-white/70 text-xs sm:text-sm px-3 sm:px-4 py-2 pr-7 sm:pr-8 rounded-xl cursor-pointer focus:outline-none focus:border-indigo-500"
+                >
+                  <option value="all">Todas las Fases</option>
+                  <option value="favorites">⭐ Mis Favoritos</option>
+                  {stages.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <ChevronDown size={12} className="absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
       <AnimatePresence>
         {showFavPicker && (
@@ -255,25 +255,25 @@ export default function ProdeMatches({ competitionId, initialTab = 'matches' }) 
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="glass-card rounded-2xl p-4">
-              <p className="text-white/60 text-sm mb-3">Seleccioná tus equipos favoritos para verlos primero:</p>
-              <div className="flex flex-wrap gap-2">
+            <div className="glass-card rounded-xl sm:rounded-2xl p-3 sm:p-4">
+              <p className="text-white/60 text-xs sm:text-sm mb-3">Seleccioná tus equipos favoritos:</p>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {teams.map((team) => (
                   <button
                     key={team.name}
                     onClick={() => toggleFavorite(team.name)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all border cursor-pointer ${
+                    className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-sm transition-all border cursor-pointer ${
                       favorites.includes(team.name)
                         ? 'border-amber-400/50 text-amber-300 bg-amber-400/10'
                         : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:border-white/30'
                     }`}
                   >
                     {team.logo ? (
-                      <img src={team.logo} alt="" className="w-4 h-4 object-contain" />
+                      <img src={team.logo} alt="" className="w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain" />
                     ) : (
-                      <span>{team.flag || '⚽'}</span>
+                      <span>⚽</span>
                     )}
-                    <span>{team.name}</span>
+                    <span className="truncate max-w-[60px] sm:max-w-none">{team.name}</span>
                   </button>
                 ))}
               </div>
@@ -292,17 +292,17 @@ export default function ProdeMatches({ competitionId, initialTab = 'matches' }) 
 
         return (
           <div key={date}>
-            <div className="flex items-center gap-2 mb-3">
-              <Calendar size={16} className="text-white/40" />
-              <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider">{date}</h2>
+            <div className="flex items-center gap-2 mb-2 sm:mb-3">
+              <Calendar size={14} className="text-white/40 shrink-0" />
+              <h2 className="text-xs sm:text-sm font-semibold text-white/50 uppercase tracking-wider truncate">{date}</h2>
             </div>
             {Object.entries(byStage).map(([stage, stageMatches]) => (
-              <div key={stage} className="mb-4">
+              <div key={stage} className="mb-3 sm:mb-4">
                 <div className="flex items-center gap-2 mb-2 ml-1">
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--color-primary)' }} />
-                  <span className="text-xs font-medium text-white/30">{stage}</span>
+                  <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--color-primary)' }} />
+                  <span className="text-[10px] sm:text-xs font-medium text-white/30">{stage}</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   {stageMatches.map((match) => (
                     <MatchCard
                       key={match.id}
@@ -321,9 +321,9 @@ export default function ProdeMatches({ competitionId, initialTab = 'matches' }) 
       })}
 
       {sortedMatches.length === 0 && (
-        <div className="text-center py-16 text-white/40 glass-card rounded-xl">
-          <Calendar size={48} className="mx-auto mb-4 opacity-30" />
-          <p className="text-lg">No hay partidos para mostrar</p>
+        <div className="text-center py-12 sm:py-16 text-white/40 glass-card rounded-xl">
+          <Calendar size={40} className="mx-auto mb-3 sm:mb-4 opacity-30" />
+          <p className="text-sm sm:text-lg">No hay partidos para mostrar</p>
         </div>
           )}
         </>

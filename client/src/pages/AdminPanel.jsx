@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Users, Trophy, Save, Calculator, ChevronDown, Trash2, UserCog, RefreshCw, Database, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Shield, Users, Trophy, Save, Calculator, ChevronDown, Trash2, RefreshCw, Database, Loader2, CheckCircle, AlertCircle, Clock, Zap, Info } from 'lucide-react';
 import api from '../services/api';
 import useToastStore from '../store/toastStore';
 import useAuthStore from '../store/authStore';
@@ -19,7 +19,6 @@ export default function AdminPanel() {
 
   const loadData = async () => {
     try {
-      const compParam = activeCompetition?.id ? `?competitionId=${activeCompetition.id}` : '';
       const [userRes, configRes] = await Promise.all([
         api.get('/admin/users').catch(() => ({ data: [] })),
         api.get('/admin/scoring/config').catch(() => ({ data: null })),
@@ -79,46 +78,51 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-500/20 text-red-400">
-          <Shield size={22} />
+        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center bg-red-500/20 text-red-400">
+          <Shield size={20} />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
-          <p className="text-white/50 text-sm">Gestionar resultados, usuarios y puntuación</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Admin Panel</h1>
+          <p className="text-white/50 text-xs sm:text-sm">Gestionar usuarios, puntuación y sincronización</p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-white/5 p-1 rounded-xl w-fit">
+      {/* Tabs — scroll on mobile */}
+      <div className="flex gap-1 bg-white/5 p-1 rounded-xl w-full sm:w-fit overflow-x-auto scrollbar-hide">
         {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border-none ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all cursor-pointer border-none whitespace-nowrap ${
               tab === t.id ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white/70 bg-transparent'
             }`}>
-            <t.icon size={16} /> {t.label}
+            <t.icon size={14} /> {t.label}
           </button>
         ))}
       </div>
 
-      {/* Admin Quick Actions */}
-      <div className="flex gap-4 border-b border-white/5 pb-4">
+      {/* Quick Action: Force Calculate */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center border-b border-white/5 pb-4">
          <button 
            onClick={triggerCalculateScores}
            disabled={saving}
-           className="flex items-center gap-2 px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-indigo-500/25 disabled:opacity-50 cursor-pointer border-none"
+           className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-indigo-500/25 disabled:opacity-50 cursor-pointer border-none text-xs sm:text-sm"
          >
-           {saving ? <Loader2 size={18} className="animate-spin" /> : <Calculator size={18} />}
-           {saving ? 'Calculando...' : 'Forzar Cálculo de Puntos (Batch Score)'}
+           {saving ? <Loader2 size={16} className="animate-spin" /> : <Calculator size={16} />}
+           {saving ? 'Calculando...' : 'Forzar Cálculo de Puntos'}
          </button>
+         <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-white/30">
+           <Clock size={12} />
+           <span>Se ejecuta automáticamente a las 00:00 y 06:00 hs</span>
+         </div>
       </div>
 
       {/* Users Tab */}
       {tab === 'users' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-base sm:text-lg font-semibold text-white">
               {users.length} usuarios registrados
             </h2>
           </div>
@@ -130,34 +134,36 @@ export default function AdminPanel() {
                 key={u.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`glass-card rounded-xl p-4 flex items-center gap-4 ${isMe ? 'border border-indigo-500/30' : ''}`}
+                className={`glass-card rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 ${isMe ? 'border border-indigo-500/30' : ''}`}
               >
-                {/* Avatar */}
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border ${
-                  u.role === 'SUPERADMIN' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
-                  u.role === 'ADMIN' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
-                  'bg-white/10 text-white/60 border-white/20'
-                }`}>
-                  {u.displayName.charAt(0).toUpperCase()}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-white truncate">{u.displayName}</span>
-                    <span className="text-xs text-white/30">@{u.username}</span>
-                    {isMe && <span className="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-400 rounded text-[10px] font-semibold">TÚ</span>}
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {/* Avatar */}
+                  <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm border shrink-0 ${
+                    u.role === 'SUPERADMIN' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                    u.role === 'ADMIN' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                    'bg-white/10 text-white/60 border-white/20'
+                  }`}>
+                    {u.displayName.charAt(0).toUpperCase()}
                   </div>
-                  <div className="text-xs text-white/30 mt-0.5">{u.email} • Registrado {new Date(u.createdAt).toLocaleDateString('es-AR')}</div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                      <span className="text-xs sm:text-sm font-medium text-white truncate">{u.displayName}</span>
+                      <span className="text-[10px] sm:text-xs text-white/30">@{u.username}</span>
+                      {isMe && <span className="px-1 py-0.5 bg-indigo-500/20 text-indigo-400 rounded text-[9px] sm:text-[10px] font-semibold">TÚ</span>}
+                    </div>
+                    <div className="text-[10px] sm:text-xs text-white/30 mt-0.5 truncate">{u.email} • {new Date(u.createdAt).toLocaleDateString('es-AR')}</div>
+                  </div>
                 </div>
 
                 {/* Role Selector */}
                 {!isMe ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 ml-12 sm:ml-0">
                     <select
                       value={u.role}
                       onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                      className="bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-xs font-medium text-white cursor-pointer focus:outline-none focus:border-indigo-500 appearance-none"
+                      className="bg-white/10 border border-white/20 rounded-lg px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium text-white cursor-pointer focus:outline-none focus:border-indigo-500 appearance-none"
                       style={{ backgroundImage: 'none' }}
                     >
                       <option value="PLAYER" className="bg-slate-800">PLAYER</option>
@@ -169,11 +175,11 @@ export default function AdminPanel() {
                       className="p-1.5 rounded-lg text-red-400/50 hover:text-red-400 hover:bg-red-500/10 transition-all bg-transparent border-none cursor-pointer"
                       title="Eliminar usuario"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 ) : (
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                  <span className={`ml-12 sm:ml-0 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold ${
                     u.role === 'SUPERADMIN' ? 'bg-red-500/20 text-red-400' :
                     u.role === 'ADMIN' ? 'bg-amber-500/20 text-amber-400' :
                     'bg-white/10 text-white/50'
@@ -198,93 +204,50 @@ export default function AdminPanel() {
   );
 }
 
-function MatchResultEditor({ match, onSave, saving }) {
-  const [result, setResult] = useState({
-    homeGoals: match.homeGoals ?? '',
-    awayGoals: match.awayGoals ?? '',
-    homeShots: match.homeShots ?? '',
-    awayShots: match.awayShots ?? '',
-    homeCorners: match.homeCorners ?? '',
-    awayCorners: match.awayCorners ?? '',
-  });
-  const [expanded, setExpanded] = useState(false);
-
-  const isFinished = match.status === 'FINISHED';
-
-  return (
-    <div className={`glass-card rounded-xl p-4 ${isFinished ? 'border-l-4 border-l-green-500/50' : ''}`}>
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
-        <div className="flex items-center gap-2 w-full sm:flex-1 min-w-0 justify-center sm:justify-start">
-          <span className="text-base sm:text-lg">{match.homeFlag}</span>
-          <span className="text-xs sm:text-sm text-white font-medium truncate max-w-[80px] sm:max-w-none">{match.homeTeam}</span>
-          <div className="flex items-center gap-1">
-            <input type="number" min="0" value={result.homeGoals}
-              onChange={(e) => setResult({...result, homeGoals: e.target.value})}
-              className="w-10 h-8 text-center bg-white/10 border border-white/20 rounded text-white text-sm focus:outline-none focus:border-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-            <span className="text-white/30">-</span>
-            <input type="number" min="0" value={result.awayGoals}
-              onChange={(e) => setResult({...result, awayGoals: e.target.value})}
-              className="w-10 h-8 text-center bg-white/10 border border-white/20 rounded text-white text-sm focus:outline-none focus:border-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-          </div>
-          <span className="text-xs sm:text-sm text-white font-medium truncate max-w-[80px] sm:max-w-none">{match.awayTeam}</span>
-          <span className="text-base sm:text-lg">{match.awayFlag}</span>
-        </div>
-        <div className="flex items-center gap-2 ml-3">
-          <button onClick={() => setExpanded(!expanded)}
-            className="text-white/30 hover:text-white/60 bg-transparent border-none cursor-pointer">
-            <ChevronDown size={16} className={`transition-transform ${expanded ? 'rotate-180' : ''}`} />
-          </button>
-          <button onClick={() => onSave(match.id, {
-              homeGoals: Number(result.homeGoals), awayGoals: Number(result.awayGoals),
-              homeShots: result.homeShots !== '' ? Number(result.homeShots) : null,
-              awayShots: result.awayShots !== '' ? Number(result.awayShots) : null,
-              homeCorners: result.homeCorners !== '' ? Number(result.homeCorners) : null,
-              awayCorners: result.awayCorners !== '' ? Number(result.awayCorners) : null,
-            })}
-            disabled={saving || result.homeGoals === '' || result.awayGoals === ''}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer border-none text-white disabled:opacity-30 hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}>
-            <Save size={12} />
-          </button>
-        </div>
-      </div>
-
-      {expanded && (
-        <div className="mt-3 pt-3 border-t border-white/5 grid grid-cols-2 gap-3">
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-white/40 w-20">Remates</label>
-            <input type="number" min="0" value={result.homeShots} onChange={(e) => setResult({...result, homeShots: e.target.value})}
-              className="w-12 h-7 text-center bg-white/10 border border-white/20 rounded text-white text-xs focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-            <span className="text-white/20">-</span>
-            <input type="number" min="0" value={result.awayShots} onChange={(e) => setResult({...result, awayShots: e.target.value})}
-              className="w-12 h-7 text-center bg-white/10 border border-white/20 rounded text-white text-xs focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-white/40 w-20">Córners</label>
-            <input type="number" min="0" value={result.homeCorners} onChange={(e) => setResult({...result, homeCorners: e.target.value})}
-              className="w-12 h-7 text-center bg-white/10 border border-white/20 rounded text-white text-xs focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-            <span className="text-white/20">-</span>
-            <input type="number" min="0" value={result.awayCorners} onChange={(e) => setResult({...result, awayCorners: e.target.value})}
-              className="w-12 h-7 text-center bg-white/10 border border-white/20 rounded text-white text-xs focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function ScoringConfigEditor({ config, onUpdate }) {
   const [form, setForm] = useState({ ...config });
   const [saving, setSaving] = useState(false);
 
-  const fields = [
-    { key: 'exactScore', label: 'Resultado Exacto', desc: 'Acertar goles de local y visitante' },
-    { key: 'correctWinner', label: 'Ganador / Empate', desc: 'Acertar quién gana o empata' },
-    { key: 'doubleChance', label: 'Doble Oportunidad', desc: '1X, 2X, 12 - menos riesgo' },
-    { key: 'btts', label: 'Ambos Anotan (BTTS)', desc: '¿Los dos equipos hacen gol?' },
-    { key: 'overUnder', label: 'Más/Menos 2.5', desc: 'Total de goles over o under' },
-    { key: 'moreShots', label: 'Más Remates', desc: 'Quién remata más al arco' },
-    { key: 'moreCorners', label: 'Más Córners', desc: 'Quién saca más córners' },
+  const activeFields = [
+    { 
+      key: 'exactScore', 
+      label: 'Resultado Exacto', 
+      desc: 'Acertar los goles de ambos equipos (ej: 2-1)',
+      example: 'Si predecís 2-1 y el resultado es 2-1',
+      icon: '🎯',
+      color: 'emerald',
+    },
+    { 
+      key: 'correctWinner', 
+      label: 'Ganador Correcto', 
+      desc: 'Acertar quién gana o si empatan (sin importar goles)',
+      example: 'Si predecís 3-0 y el resultado es 1-0 (ambos ganan Local)',
+      note: 'Mutuamente excluyente con Resultado Exacto — solo suma uno u otro',
+      icon: '✅',
+      color: 'blue',
+    },
+    { 
+      key: 'moreShots', 
+      label: 'Más Remates', 
+      desc: 'Acertar qué equipo realizó más disparos al arco',
+      example: 'Si elegís "Local" y el Local tuvo 15 tiros vs 8 del Visitante',
+      icon: '🔫',
+      color: 'violet',
+    },
+    { 
+      key: 'moreCorners', 
+      label: 'Más Córners', 
+      desc: 'Acertar qué equipo sacó más córners',
+      example: 'Si elegís "Visitante" y el Visitante tuvo 7 córners vs 3',
+      icon: '🚩',
+      color: 'amber',
+    },
+  ];
+
+  const legacyFields = [
+    { key: 'doubleChance', label: 'Doble Oportunidad', desc: 'Legacy — No se usa actualmente en el cálculo' },
+    { key: 'btts', label: 'Ambos Anotan (BTTS)', desc: 'Legacy — No se usa actualmente en el cálculo' },
+    { key: 'overUnder', label: 'Más/Menos 2.5', desc: 'Legacy — No se usa actualmente en el cálculo' },
   ];
 
   const handleSave = async () => {
@@ -298,25 +261,118 @@ function ScoringConfigEditor({ config, onUpdate }) {
     finally { setSaving(false); }
   };
 
+  // Calculate example totals for preview
+  const exampleExact = form.exactScore + form.moreShots + form.moreCorners;
+  const exampleWinner = form.correctWinner + form.moreShots + form.moreCorners;
+  const exampleExactJoker = exampleExact * 2;
+
+  const colorMap = {
+    emerald: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+    blue: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
+    violet: 'bg-violet-500/10 border-violet-500/20 text-violet-400',
+    amber: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
+  };
+
   return (
-    <div className="glass-card rounded-2xl p-6 space-y-4">
-      <h3 className="text-lg font-semibold text-white">Configuración de Puntos</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {fields.map(({ key, label, desc }) => (
-          <div key={key} className="flex items-center justify-between bg-white/[0.03] rounded-xl p-3">
-            <div>
-              <div className="text-sm text-white font-medium">{label}</div>
-              <div className="text-xs text-white/30">{desc}</div>
-            </div>
-            <input type="number" min="0" value={form[key]}
-              onChange={(e) => setForm({...form, [key]: Number(e.target.value)})}
-              className="w-14 h-9 text-center bg-white/10 border border-white/20 rounded-lg text-white font-semibold focus:outline-none focus:border-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+    <div className="space-y-4 sm:space-y-6">
+      {/* Info Banner */}
+      <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-indigo-500/20">
+        <div className="flex items-start gap-3">
+          <Info size={18} className="text-indigo-400 shrink-0 mt-0.5" />
+          <div>
+            <h3 className="text-sm sm:text-base font-semibold text-white mb-1">¿Cómo funciona el scoring?</h3>
+            <ul className="text-xs sm:text-sm text-white/50 space-y-1">
+              <li>• Si acertás el <strong className="text-emerald-400">resultado exacto</strong> sumás esos puntos. Si no, pero acertás el <strong className="text-blue-400">ganador</strong>, sumás esos otros.</li>
+              <li>• <strong className="text-violet-400">Remates</strong> y <strong className="text-amber-400">Córners</strong> son independientes — se suman siempre.</li>
+              <li>• El <strong className="text-amber-300">Comodín x2</strong> multiplica TODOS los puntos del partido ×2.</li>
+              <li>• Si un mercado tiene <strong>0 pts</strong>, no suma (pero sigue disponible para predecir).</li>
+            </ul>
           </div>
-        ))}
+        </div>
       </div>
+
+      {/* Preview Card */}
+      <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-5">
+        <h3 className="text-xs sm:text-sm font-semibold text-white/60 uppercase tracking-wider mb-3">Vista previa — Máximos posibles</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 sm:p-4 text-center">
+            <div className="text-2xl sm:text-3xl font-black text-emerald-400">{exampleExact}</div>
+            <div className="text-[10px] sm:text-xs text-white/40 mt-1">Exacto + Remates + Córners</div>
+            <div className="text-[9px] text-white/20 mt-0.5">Mejor caso sin comodín</div>
+          </div>
+          <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-3 sm:p-4 text-center">
+            <div className="text-2xl sm:text-3xl font-black text-blue-400">{exampleWinner}</div>
+            <div className="text-[10px] sm:text-xs text-white/40 mt-1">Ganador + Remates + Córners</div>
+            <div className="text-[9px] text-white/20 mt-0.5">Caso parcial sin comodín</div>
+          </div>
+          <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 sm:p-4 text-center">
+            <div className="text-2xl sm:text-3xl font-black text-amber-400">{exampleExactJoker}</div>
+            <div className="text-[10px] sm:text-xs text-white/40 mt-1">Todo perfecto + Comodín x2</div>
+            <div className="text-[9px] text-white/20 mt-0.5">Máximo absoluto</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Active Scoring Fields */}
+      <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-6">
+        <h3 className="text-sm sm:text-lg font-semibold text-white mb-4">Configuración de Puntos Activos</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+          {activeFields.map(({ key, label, desc, example, note, icon, color }) => (
+            <div key={key} className={`rounded-xl p-3 sm:p-4 border ${colorMap[color]}`} style={{ background: undefined }}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">{icon}</span>
+                    <span className="text-sm sm:text-base text-white font-semibold">{label}</span>
+                  </div>
+                  <p className="text-[10px] sm:text-xs text-white/40 mb-1.5">{desc}</p>
+                  <p className="text-[10px] sm:text-xs text-white/25 italic">Ej: {example}</p>
+                  {note && (
+                    <p className="text-[10px] text-amber-400/60 mt-1.5 flex items-start gap-1">
+                      <Zap size={10} className="shrink-0 mt-0.5" /> {note}
+                    </p>
+                  )}
+                </div>
+                <div className="shrink-0">
+                  <input 
+                    type="number" min="0" max="99" value={form[key]}
+                    onChange={(e) => setForm({...form, [key]: Number(e.target.value)})}
+                    className="w-14 sm:w-16 h-10 sm:h-12 text-center bg-black/30 border border-white/20 rounded-xl text-white text-lg sm:text-xl font-black focus:outline-none focus:border-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                  />
+                  <div className="text-[9px] text-center text-white/30 mt-1">pts</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Legacy Fields (collapsed) */}
+      <details className="glass-card rounded-xl sm:rounded-2xl overflow-hidden">
+        <summary className="p-4 sm:p-5 cursor-pointer text-xs sm:text-sm text-white/40 font-medium hover:text-white/60 transition-colors flex items-center gap-2">
+          <ChevronDown size={14} /> Campos Legacy (no activos en el cálculo)
+        </summary>
+        <div className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-3 border-t border-white/5 pt-3">
+          <p className="text-[10px] sm:text-xs text-white/25">Estos campos existen en la BD pero no se utilizan en el cálculo actual. Si los activás en el código de scoring, empezarían a puntuar.</p>
+          {legacyFields.map(({ key, label, desc }) => (
+            <div key={key} className="flex items-center justify-between bg-white/[0.02] rounded-xl p-3 opacity-50">
+              <div>
+                <div className="text-xs sm:text-sm text-white/50 font-medium">{label}</div>
+                <div className="text-[10px] sm:text-xs text-white/20">{desc}</div>
+              </div>
+              <input type="number" min="0" value={form[key]}
+                onChange={(e) => setForm({...form, [key]: Number(e.target.value)})}
+                className="w-12 sm:w-14 h-8 sm:h-9 text-center bg-white/5 border border-white/10 rounded-lg text-white/50 text-sm font-semibold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+            </div>
+          ))}
+        </div>
+      </details>
+
+      {/* Save Button */}
       <button onClick={handleSave} disabled={saving}
-        className="px-6 py-2.5 rounded-xl text-white font-medium text-sm cursor-pointer border-none hover:opacity-90"
+        className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-bold text-sm cursor-pointer border-none hover:opacity-90 disabled:opacity-50 shadow-lg"
         style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}>
+        {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
         {saving ? 'Guardando...' : 'Guardar Configuración'}
       </button>
     </div>
@@ -328,7 +384,6 @@ function SyncPanel({ onSyncComplete }) {
   const [results, setResults] = useState({});
   const [apiStatus, setApiStatus] = useState(null);
   const [teams, setTeams] = useState([]);
-  const [selectedTeam, setSelectedTeam] = useState('');
   const [leagueId, setLeagueId] = useState('1');
   const [season, setSeason] = useState('2022');
   const { activeCompetition } = useCompetitionStore();
@@ -353,13 +408,11 @@ function SyncPanel({ onSyncComplete }) {
   };
 
   const runSync = async (action, body = {}) => {
-    // Para teams, fixtures, results: pasar leagueId y season
     const syncBody = { ...body };
     if (['teams', 'fixtures', 'results'].includes(action)) {
       syncBody.leagueId = Number(leagueId);
       syncBody.season = Number(season);
     }
-    // Para squads: pasar competitionId del último sync
     if (['squads'].includes(action) && activeCompetition?.id) {
       syncBody.competitionId = activeCompetition.id;
     }
@@ -381,57 +434,57 @@ function SyncPanel({ onSyncComplete }) {
   };
 
   const syncActions = [
-    { id: 'teams', label: 'Sync Equipos', desc: 'Descarga selecciones con logos y banderas', icon: '🏟️', callsUsed: 1 },
-    { id: 'fixtures', label: 'Sync Partidos', desc: 'Descarga calendario, estadios y resultados', icon: '⚽', callsUsed: 1 },
-    { id: 'results', label: 'Actualizar Resultados', desc: 'Actualiza goles y estados de partidos', icon: '📊', callsUsed: 1 },
+    { id: 'teams', label: 'Sync Equipos', desc: 'Selecciones con logos y banderas', icon: '🏟️', callsUsed: 1 },
+    { id: 'fixtures', label: 'Sync Partidos', desc: 'Calendario, estadios y resultados', icon: '⚽', callsUsed: 1 },
+    { id: 'results', label: 'Actualizar Resultados', desc: 'Goles y estados de partidos', icon: '📊', callsUsed: 1 },
   ];
 
   return (
     <div className="space-y-4">
       {/* API Status Card */}
       {apiStatus && (
-        <div className="glass-card rounded-2xl p-5">
-          <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-3">Estado de API</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white/[0.03] rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-white">{apiStatus.requests?.current ?? '—'}</div>
-              <div className="text-xs text-white/40 mt-1">Requests hoy</div>
+        <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-5">
+          <h3 className="text-xs sm:text-sm font-semibold text-white/60 uppercase tracking-wider mb-3">Estado de API</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+            <div className="bg-white/[0.03] rounded-xl p-2.5 sm:p-3 text-center">
+              <div className="text-xl sm:text-2xl font-bold text-white">{apiStatus.requests?.current ?? '—'}</div>
+              <div className="text-[10px] sm:text-xs text-white/40 mt-0.5 sm:mt-1">Requests hoy</div>
             </div>
-            <div className="bg-white/[0.03] rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-white">{apiStatus.requests?.limit_day ?? '—'}</div>
-              <div className="text-xs text-white/40 mt-1">Límite diario</div>
+            <div className="bg-white/[0.03] rounded-xl p-2.5 sm:p-3 text-center">
+              <div className="text-xl sm:text-2xl font-bold text-white">{apiStatus.requests?.limit_day ?? '—'}</div>
+              <div className="text-[10px] sm:text-xs text-white/40 mt-0.5 sm:mt-1">Límite diario</div>
             </div>
-            <div className="bg-white/[0.03] rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-emerald-400">
+            <div className="bg-white/[0.03] rounded-xl p-2.5 sm:p-3 text-center">
+              <div className="text-xl sm:text-2xl font-bold text-emerald-400">
                 {apiStatus.requests?.limit_day && apiStatus.requests?.current
                   ? apiStatus.requests.limit_day - apiStatus.requests.current
                   : '—'}
               </div>
-              <div className="text-xs text-white/40 mt-1">Restantes</div>
+              <div className="text-[10px] sm:text-xs text-white/40 mt-0.5 sm:mt-1">Restantes</div>
             </div>
-            <div className="bg-white/[0.03] rounded-xl p-3 text-center">
-              <div className="text-sm font-medium text-white/70">{apiStatus.subscription?.plan ?? '—'}</div>
-              <div className="text-xs text-white/40 mt-1">Plan</div>
+            <div className="bg-white/[0.03] rounded-xl p-2.5 sm:p-3 text-center">
+              <div className="text-xs sm:text-sm font-medium text-white/70">{apiStatus.subscription?.plan ?? '—'}</div>
+              <div className="text-[10px] sm:text-xs text-white/40 mt-0.5 sm:mt-1">Plan</div>
             </div>
           </div>
         </div>
       )}
 
       {/* League/Season Selector */}
-      <div className="glass-card rounded-2xl p-5">
-        <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-3">Liga & Temporada</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-5">
+        <h3 className="text-xs sm:text-sm font-semibold text-white/60 uppercase tracking-wider mb-3">Liga & Temporada</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
           <div>
-            <label className="block text-xs text-white/40 mb-1">League ID (API-Football)</label>
+            <label className="block text-[10px] sm:text-xs text-white/40 mb-1">League ID (API-Football)</label>
             <input
               type="number" value={leagueId}
               onChange={(e) => setLeagueId(e.target.value)}
               className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500"
-              placeholder="Ej: 1 (Mundial), 128 (Liga Arg)"
+              placeholder="Ej: 1 (Mundial)"
             />
           </div>
           <div>
-            <label className="block text-xs text-white/40 mb-1">Temporada</label>
+            <label className="block text-[10px] sm:text-xs text-white/40 mb-1">Temporada</label>
             <input
               type="number" value={season}
               onChange={(e) => setSeason(e.target.value)}
@@ -441,77 +494,77 @@ function SyncPanel({ onSyncComplete }) {
           </div>
           {activeCompetition && (
             <div className="flex items-end">
-              <div className="bg-white/[0.03] rounded-lg px-3 py-2 flex items-center gap-2">
-                {activeCompetition.logo && <img src={activeCompetition.logo} alt="" className="w-5 h-5 object-contain" />}
-                <span className="text-sm text-white/70">Activa: <strong className="text-white">{activeCompetition.name}</strong></span>
+              <div className="bg-white/[0.03] rounded-lg px-3 py-2 flex items-center gap-2 w-full">
+                {activeCompetition.logo && <img src={activeCompetition.logo} alt="" className="w-5 h-5 object-contain shrink-0" />}
+                <span className="text-xs sm:text-sm text-white/70 truncate">Activa: <strong className="text-white">{activeCompetition.name}</strong></span>
               </div>
             </div>
           )}
         </div>
-        <p className="text-xs text-white/30 mt-2">IDs comunes: 1=Mundial, 128=Liga Argentina, 13=Libertadores, 2=Champions</p>
+        <p className="text-[10px] sm:text-xs text-white/30 mt-2">IDs comunes: 1=Mundial, 128=Liga Argentina, 13=Libertadores, 2=Champions</p>
       </div>
 
       {/* Sync Actions */}
-      <div className="glass-card rounded-2xl p-5">
-        <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-3">Sincronización</h3>
-        <div className="space-y-3">
+      <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-5">
+        <h3 className="text-xs sm:text-sm font-semibold text-white/60 uppercase tracking-wider mb-3">Sincronización</h3>
+        <div className="space-y-2 sm:space-y-3">
           {syncActions.map(action => (
-            <div key={action.id} className="flex items-center justify-between bg-white/[0.03] rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{action.icon}</span>
+            <div key={action.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 bg-white/[0.03] rounded-xl p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className="text-xl sm:text-2xl">{action.icon}</span>
                 <div>
-                  <div className="text-sm font-medium text-white">{action.label}</div>
-                  <div className="text-xs text-white/40">{action.desc} • {action.callsUsed} call</div>
+                  <div className="text-xs sm:text-sm font-medium text-white">{action.label}</div>
+                  <div className="text-[10px] sm:text-xs text-white/40">{action.desc} • {action.callsUsed} call</div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 ml-8 sm:ml-0">
                 {results[action.id] && (
                   results[action.id].success
-                    ? <CheckCircle size={16} className="text-emerald-400" />
-                    : <AlertCircle size={16} className="text-red-400" />
+                    ? <CheckCircle size={14} className="text-emerald-400" />
+                    : <AlertCircle size={14} className="text-red-400" />
                 )}
                 <button
                   onClick={() => runSync(action.id)}
                   disabled={loading[action.id]}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer border-none text-white hover:opacity-90 disabled:opacity-40"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium cursor-pointer border-none text-white hover:opacity-90 disabled:opacity-40"
                   style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}
                 >
                   {loading[action.id]
-                    ? <Loader2 size={14} className="animate-spin" />
-                    : <RefreshCw size={14} />
+                    ? <Loader2 size={12} className="animate-spin" />
+                    : <RefreshCw size={12} />
                   }
-                  {loading[action.id] ? 'Sincronizando...' : 'Sync'}
+                  {loading[action.id] ? 'Sync...' : 'Sync'}
                 </button>
               </div>
             </div>
           ))}
 
-          {/* Squad sync with team selector */}
-          <div className="bg-white/[0.03] rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">👤</span>
+          {/* Squad sync */}
+          <div className="bg-white/[0.03] rounded-xl p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 mb-2 sm:mb-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className="text-xl sm:text-2xl">👤</span>
                 <div>
-                  <div className="text-sm font-medium text-white">Sync Planteles</div>
-                  <div className="text-xs text-white/40">Descarga jugadores de los equipos • 1 call por equipo</div>
+                  <div className="text-xs sm:text-sm font-medium text-white">Sync Planteles</div>
+                  <div className="text-[10px] sm:text-xs text-white/40">Jugadores de los equipos • 1 call/equipo</div>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ml-8 sm:ml-0">
               <button
                 onClick={() => runSync('squads', { batchSize: 10 })}
                 disabled={loading.squads}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer border-none text-white hover:opacity-90 disabled:opacity-40"
+                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium cursor-pointer border-none text-white hover:opacity-90 disabled:opacity-40"
                 style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}
               >
                 {loading.squads
-                  ? <Loader2 size={14} className="animate-spin" />
-                  : <RefreshCw size={14} />
+                  ? <Loader2 size={12} className="animate-spin" />
+                  : <RefreshCw size={12} />
                 }
                 {loading.squads ? 'Sincronizando...' : 'Sync 10 equipos'}
               </button>
               {results.squads?.success && (
-                <span className="text-xs text-emerald-400">{results.squads.data.message}</span>
+                <span className="text-[10px] sm:text-xs text-emerald-400">{results.squads.data.message}</span>
               )}
             </div>
           </div>
@@ -520,14 +573,16 @@ function SyncPanel({ onSyncComplete }) {
 
       {/* Results detail */}
       {Object.entries(results).filter(([, r]) => r?.success && r.data).length > 0 && (
-        <div className="glass-card rounded-2xl p-5">
-          <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-3">Últimos resultados</h3>
-          <div className="space-y-2 text-sm text-white/70">
+        <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-5">
+          <h3 className="text-xs sm:text-sm font-semibold text-white/60 uppercase tracking-wider mb-3">Últimos resultados</h3>
+          <div className="space-y-2 text-xs sm:text-sm text-white/70">
             {Object.entries(results).map(([key, r]) => r?.success && (
-              <div key={key} className="flex items-center gap-2 bg-white/[0.03] rounded-lg p-3">
-                <CheckCircle size={14} className="text-emerald-400" />
-                <span className="font-medium text-white">{key}:</span>
-                <span>{JSON.stringify(r.data).substring(0, 120)}...</span>
+              <div key={key} className="flex items-start gap-2 bg-white/[0.03] rounded-lg p-2.5 sm:p-3">
+                <CheckCircle size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <span className="font-medium text-white">{key}: </span>
+                  <span className="break-all text-[10px] sm:text-xs">{JSON.stringify(r.data).substring(0, 120)}...</span>
+                </div>
               </div>
             ))}
           </div>
