@@ -2,8 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import { Bot, X, Send, User as UserIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
+import useAuthStore from '../../store/authStore';
 
 export default function GuruChat() {
+  const { user } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { role: 'guru', text: '¿Qué onda genio? Soy el Gurú Colorado. Decime qué andás necesitando saber de tu prode.' }
@@ -11,6 +13,8 @@ export default function GuruChat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const endRef = useRef(null);
+
+  if (!user) return null; // Ocultar el Guru a visitantes no autenticados (Guest Mode)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
