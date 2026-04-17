@@ -228,9 +228,9 @@ function ScoringConfigEditor({ config, onUpdate }) {
     },
     { 
       key: 'moreShots', 
-      label: 'Más Remates', 
-      desc: 'Acertar qué equipo realizó más disparos al arco',
-      example: 'Si elegís "Local" y el Local tuvo 15 tiros vs 8 del Visitante',
+      label: 'Más Remates al Arco', 
+      desc: 'Acertar qué equipo tuvo más remates al arco (shots on goal)',
+      example: 'Si elegís "Local" y el Local tuvo 8 remates al arco vs 3 del Visitante',
       icon: '🔫',
       color: 'violet',
     },
@@ -283,7 +283,7 @@ function ScoringConfigEditor({ config, onUpdate }) {
             <h3 className="text-sm sm:text-base font-semibold text-white mb-1">¿Cómo funciona el scoring?</h3>
             <ul className="text-xs sm:text-sm text-white/50 space-y-1">
               <li>• Si acertás el <strong className="text-emerald-400">resultado exacto</strong> sumás esos puntos. Si no, pero acertás el <strong className="text-blue-400">ganador</strong>, sumás esos otros.</li>
-              <li>• <strong className="text-violet-400">Remates</strong> y <strong className="text-amber-400">Córners</strong> son independientes — se suman siempre.</li>
+              <li>• <strong className="text-violet-400">Remates al Arco</strong> y <strong className="text-amber-400">Córners</strong> son independientes — se suman siempre.</li>
               <li>• El <strong className="text-amber-300">Comodín x2</strong> multiplica TODOS los puntos del partido ×2.</li>
               <li>• Si un mercado tiene <strong>0 pts</strong>, no suma (pero sigue disponible para predecir).</li>
             </ul>

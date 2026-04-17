@@ -10,12 +10,14 @@ function getMatchResult(homeGoals, awayGoals) {
 
 export function calculatePredictionPoints(prediction, fixtureData, config) {
   let points = 0;
+  let moreShotsHit = null;
+  let moreCornersHit = null;
 
   const actualHomeGoals = fixtureData.goals.home;
   const actualAwayGoals = fixtureData.goals.away;
 
   // If match doesn't have homeGoals/awayGoals recorded, we return 0.
-  if (actualHomeGoals === null || actualAwayGoals === null) return 0;
+  if (actualHomeGoals === null || actualAwayGoals === null) return { points: 0, moreShotsHit: null, moreCornersHit: null };
 
   // Only calculate result points if prediction actually put goals.
   if (prediction.homeGoals !== null && prediction.awayGoals !== null) {
@@ -32,21 +34,19 @@ export function calculatePredictionPoints(prediction, fixtureData, config) {
     }
   }
 
-  // Stats handling (if applicable API returns stats)
-  // To keep it simple, if no stats are provided, we don't score them.
-  // In API-Football v3, stats are in a different endpoint. 
-  // If we don't have them in fixtureData, we skip prop markets for now.
+  // Stats handling
   const homeShots = fixtureData.homeShots ?? null;
   const awayShots = fixtureData.awayShots ?? null;
   const homeCorners = fixtureData.homeCorners ?? null;
   const awayCorners = fixtureData.awayCorners ?? null;
 
-  // 2. Prop: More Shots (If API delivered the stat)
+  // 2. Prop: More Shots on Goal (If API delivered the stat)
   if (prediction.moreShots && homeShots !== null && awayShots !== null) {
     const actual =
       homeShots > awayShots ? 'HOME' :
       homeShots < awayShots ? 'AWAY' : 'EQUAL';
-    if (prediction.moreShots === actual) {
+    moreShotsHit = prediction.moreShots === actual;
+    if (moreShotsHit) {
       points += config.moreShots;
     }
   }
@@ -56,7 +56,8 @@ export function calculatePredictionPoints(prediction, fixtureData, config) {
     const actual =
       homeCorners > awayCorners ? 'HOME' :
       homeCorners < awayCorners ? 'AWAY' : 'EQUAL';
-    if (prediction.moreCorners === actual) {
+    moreCornersHit = prediction.moreCorners === actual;
+    if (moreCornersHit) {
       points += config.moreCorners;
     }
   }
@@ -66,7 +67,7 @@ export function calculatePredictionPoints(prediction, fixtureData, config) {
     points *= 2;
   }
 
-  return points;
+  return { points, moreShotsHit, moreCornersHit };
 }
 
 /**
@@ -133,8 +134,8 @@ export async function scorePendingPredictions() {
           return s && s.value !== null ? Number(s.value) : null;
         };
 
-        fixtureData.homeShots = getStat(homeStats, 'Total Shots');
-        fixtureData.awayShots = getStat(awayStats, 'Total Shots');
+        fixtureData.homeShots = getStat(homeStats, 'Shots on Goal');
+        fixtureData.awayShots = getStat(awayStats, 'Shots on Goal');
         fixtureData.homeCorners = getStat(homeStats, 'Corner Kicks');
         fixtureData.awayCorners = getStat(awayStats, 'Corner Kicks');
       }
@@ -146,10 +147,15 @@ export async function scorePendingPredictions() {
 
       // Calculate and update
       for (const prediction of fixturePredictions) {
-        const points = calculatePredictionPoints(prediction, fixtureData, config);
+        const result = calculatePredictionPoints(prediction, fixtureData, config);
         await prisma.prediction.update({
           where: { id: prediction.id },
-          data: { pointsEarned: points, isCalculated: true },
+          data: { 
+            pointsEarned: result.points, 
+            moreShotsHit: result.moreShotsHit,
+            moreCornersHit: result.moreCornersHit,
+            isCalculated: true 
+          },
         });
         totalCalculated++;
       }

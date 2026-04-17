@@ -272,7 +272,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
         >
           {/* More Shots */}
           <div>
-            <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Remates</label>
+            <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Remates al Arco</label>
             <div className="flex gap-1.5 sm:gap-2">
               <ToggleButton field="moreShots" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
               <ToggleButton field="moreShots" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
@@ -317,7 +317,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
             <div className="flex items-center justify-between bg-white/[0.03] rounded-lg p-2.5 sm:p-3">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <Crosshair size={13} className="text-violet-400/60" />
-                <span className="text-[10px] sm:text-xs text-white/40">Más Remates</span>
+                <span className="text-[10px] sm:text-xs text-white/40">Más Remates al Arco</span>
               </div>
               <span className="text-[10px] sm:text-xs font-semibold text-violet-300 bg-violet-500/10 px-2 py-0.5 rounded border border-violet-500/20">
                 {getMarketLabel(existingPrediction.moreShots)}

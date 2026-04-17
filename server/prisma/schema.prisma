@@ -151,6 +151,8 @@ model Prediction {
   isJoker         Boolean   @default(false)
   
   pointsEarned    Int       @default(0)
+  moreShotsHit    Boolean?  // null=not calculated, true=correct, false=wrong
+  moreCornersHit  Boolean?  // null=not calculated, true=correct, false=wrong
   isCalculated    Boolean   @default(false)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

@@ -10,12 +10,26 @@ export default function PredictionHistory({ predictions, matches }) {
     return { ...p, match };
   }).filter(p => p.match);
 
-  const correctPreds = predsWithMatch.filter(p => p.pointsEarned > 0);
-  const wrongPreds = predsWithMatch.filter(p => p.match.status === 'FINISHED' && p.pointsEarned === 0);
+  // Helper to determine if prediction is a main hit (exact or winner correct)
+  const isMainHit = (p) => {
+    const m = p.match;
+    if (m.status !== 'FINISHED') return false;
+    const pH = Number(p.homeGoals), pA = Number(p.awayGoals);
+    const mH = Number(m.homeGoals), mA = Number(m.awayGoals);
+    if (pH === mH && pA === mA) return true; // exact
+    // Winner check
+    const predResult = pH > pA ? 'HOME' : pH < pA ? 'AWAY' : 'DRAW';
+    const actualResult = mH > mA ? 'HOME' : mH < mA ? 'AWAY' : 'DRAW';
+    return predResult === actualResult;
+  };
+
+  const correctPreds = predsWithMatch.filter(p => isMainHit(p));
+  const wrongPreds = predsWithMatch.filter(p => p.match.status === 'FINISHED' && !isMainHit(p));
   const pendingPreds = predsWithMatch.filter(p => p.match.status !== 'FINISHED');
   const totalPoints = predsWithMatch.reduce((s, p) => s + (p.pointsEarned || 0), 0);
-  const accuracy = predsWithMatch.filter(p => p.match.status === 'FINISHED').length > 0
-    ? Math.round((correctPreds.length / predsWithMatch.filter(p => p.match.status === 'FINISHED').length) * 100)
+  const finishedCount = predsWithMatch.filter(p => p.match.status === 'FINISHED').length;
+  const accuracy = finishedCount > 0
+    ? Math.round((correctPreds.length / finishedCount) * 100)
     : 0;
 
   const filteredPreds = predFilter === 'correct' ? correctPreds
@@ -87,9 +101,20 @@ export default function PredictionHistory({ predictions, matches }) {
             const m = pred.match;
             if (!m) return null;
             const isFinished = m.status === 'FINISHED';
-            const isCorrect = pred.pointsEarned > 0;
-            const isExact = pred.pointsEarned >= 5;
             const hasExtras = pred.moreShots || pred.moreCorners;
+
+            // Determine result label by comparing actual scores, NOT points
+            const pH = Number(pred.homeGoals), pA = Number(pred.awayGoals);
+            const mH = Number(m.homeGoals), mA = Number(m.awayGoals);
+            const isExact = isFinished && pH === mH && pA === mA;
+            
+            // Check if predicted the correct winner/draw
+            const predResult = pH > pA ? 'HOME' : pH < pA ? 'AWAY' : 'DRAW';
+            const actualResult = mH > mA ? 'HOME' : mH < mA ? 'AWAY' : 'DRAW';
+            const isWinnerCorrect = isFinished && !isExact && predResult === actualResult;
+            
+            // For border: green if exact or winner correct, red if missed main prediction
+            const mainHit = isExact || isWinnerCorrect;
             
             return (
               <motion.div
@@ -97,7 +122,7 @@ export default function PredictionHistory({ predictions, matches }) {
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={`glass-card rounded-xl p-3 sm:p-4 border-l-[3px] ${
-                  !isFinished ? 'border-l-amber-500/50' : isCorrect ? 'border-l-emerald-500' : 'border-l-red-500/50'
+                  !isFinished ? 'border-l-amber-500/50' : mainHit ? 'border-l-emerald-500' : pred.pointsEarned > 0 ? 'border-l-blue-500/50' : 'border-l-red-500/50'
                 }`}
               >
                 {/* Top row: Match info + Score Prediction + Result */}
@@ -135,8 +160,10 @@ export default function PredictionHistory({ predictions, matches }) {
                         <>
                           <div className="text-[9px] sm:text-[10px] text-white/40 uppercase tracking-wider mb-0.5 sm:mb-1">Resultado</div>
                           <div className="text-xs sm:text-sm font-bold text-white mb-1">{m.homeGoals} - {m.awayGoals}</div>
-                          <div className={`text-[9px] sm:text-[10px] font-bold ${isExact ? 'text-emerald-400' : isCorrect ? 'text-blue-400' : 'text-red-400'}`}>
-                            {isExact ? 'EXACTO' : isCorrect ? 'ACIERTO' : 'FALLÓ'}
+                          <div className={`text-[9px] sm:text-[10px] font-bold ${
+                            isExact ? 'text-emerald-400' : isWinnerCorrect ? 'text-blue-400' : pred.pointsEarned > 0 ? 'text-violet-400' : 'text-red-400'
+                          }`}>
+                            {isExact ? 'EXACTO' : isWinnerCorrect ? 'GANADOR' : pred.pointsEarned > 0 ? 'BONUS' : 'FALLÓ'}
                             <span className="ml-1 opacity-70">+{pred.pointsEarned}pts</span>
                           </div>
                         </>
@@ -153,10 +180,15 @@ export default function PredictionHistory({ predictions, matches }) {
                     {pred.moreShots && (
                       <div className="flex items-center gap-1.5">
                         <Crosshair size={11} className="text-violet-400/60 shrink-0" />
-                        <span className="text-[9px] sm:text-[10px] text-white/30">Remates:</span>
+                        <span className="text-[9px] sm:text-[10px] text-white/30">Remates al Arco:</span>
                         <span className="text-[9px] sm:text-[10px] font-semibold text-violet-300 bg-violet-500/10 px-1.5 py-0.5 rounded border border-violet-500/20">
                           {getMarketLabel(pred.moreShots, m)}
                         </span>
+                        {pred.moreShotsHit !== null && pred.moreShotsHit !== undefined && (
+                          <span className={`text-[9px] font-bold ${pred.moreShotsHit ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {pred.moreShotsHit ? '✓' : '✗'}
+                          </span>
+                        )}
                       </div>
                     )}
                     {pred.moreCorners && (
@@ -166,6 +198,11 @@ export default function PredictionHistory({ predictions, matches }) {
                         <span className="text-[9px] sm:text-[10px] font-semibold text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
                           {getMarketLabel(pred.moreCorners, m)}
                         </span>
+                        {pred.moreCornersHit !== null && pred.moreCornersHit !== undefined && (
+                          <span className={`text-[9px] font-bold ${pred.moreCornersHit ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {pred.moreCornersHit ? '✓' : '✗'}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
