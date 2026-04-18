@@ -388,16 +388,22 @@ export default function LiveMatch() {
                   return (
                     <div key={stat.type}>
                       <div className="flex items-center justify-between text-xs text-white/50 mb-1.5">
-                        <span className="font-bold text-white w-10">{homeStat?.value ?? 0}</span>
+                        <span className={`font-bold w-10 ${homeNum > awayNum ? 'text-emerald-400' : homeNum < awayNum ? 'text-white/50' : 'text-white'}`}>{homeStat?.value ?? 0}</span>
                         <span className="text-[10px] uppercase font-semibold tracking-wider text-white/30 text-center flex-1">{tStat(stat.type)}</span>
-                        <span className="font-bold text-white w-10 text-right">{awayStat?.value ?? 0}</span>
+                        <span className={`font-bold w-10 text-right ${awayNum > homeNum ? 'text-emerald-400' : awayNum < homeNum ? 'text-white/50' : 'text-white'}`}>{awayStat?.value ?? 0}</span>
                       </div>
                       <div className="flex gap-1.5 h-2">
                         <div className="rounded-full flex-1 flex justify-end overflow-hidden bg-white/5">
-                           <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${(homeNum / total) * 100}%`, background: 'var(--color-primary)' }} />
+                           <div className="h-full rounded-full transition-all duration-1000" style={{ 
+                             width: `${(homeNum / total) * 100}%`, 
+                             background: homeNum > awayNum ? 'rgb(52, 211, 153)' : homeNum === awayNum ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.15)' 
+                           }} />
                         </div>
                         <div className="rounded-full flex-1 overflow-hidden bg-white/5">
-                           <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${(awayNum / total) * 100}%`, background: 'rgba(255,255,255,0.2)' }} />
+                           <div className="h-full rounded-full transition-all duration-1000" style={{ 
+                             width: `${(awayNum / total) * 100}%`, 
+                             background: awayNum > homeNum ? 'rgb(52, 211, 153)' : awayNum === homeNum ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.15)' 
+                           }} />
                         </div>
                       </div>
                     </div>

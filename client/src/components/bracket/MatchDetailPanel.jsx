@@ -214,13 +214,23 @@ export default function MatchDetailPanel({ matchup, onClose }) {
                     return (
                       <div key={key} className="py-1.5">
                         <div className="flex justify-between text-xs mb-0.5">
-                          <span className="text-white/80 font-mono text-[11px]">{homeVal}</span>
+                          <span className={`font-mono text-[11px] font-bold ${homeNum > awayNum ? 'text-emerald-400' : homeNum < awayNum ? 'text-white/40' : 'text-white/80'}`}>{homeVal}</span>
                           <span className="text-slate-500 text-[9px] uppercase tracking-wider">{label}</span>
-                          <span className="text-white/80 font-mono text-[11px]">{awayVal}</span>
+                          <span className={`font-mono text-[11px] font-bold ${awayNum > homeNum ? 'text-emerald-400' : awayNum < homeNum ? 'text-white/40' : 'text-white/80'}`}>{awayVal}</span>
                         </div>
-                        <div className="flex gap-0.5 h-1 rounded-full overflow-hidden bg-slate-800">
-                          <div className="h-full rounded-full transition-all duration-700" style={{ width: `${homePct}%`, background: 'linear-gradient(90deg, #3b82f6, #6366f1)' }} />
-                          <div className="h-full rounded-full transition-all duration-700" style={{ width: `${awayPct}%`, background: 'linear-gradient(90deg, #8b5cf6, #a855f7)' }} />
+                        <div className="flex gap-1 h-1.5">
+                          <div className="rounded-full flex-1 flex justify-end overflow-hidden bg-slate-800">
+                            <div className="h-full rounded-full transition-all duration-700" style={{ 
+                              width: `${homePct}%`, 
+                              background: homeNum > awayNum ? 'rgb(52, 211, 153)' : homeNum === awayNum ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)' 
+                            }} />
+                          </div>
+                          <div className="rounded-full flex-1 overflow-hidden bg-slate-800">
+                            <div className="h-full rounded-full transition-all duration-700" style={{ 
+                              width: `${awayPct}%`, 
+                              background: awayNum > homeNum ? 'rgb(52, 211, 153)' : awayNum === homeNum ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)' 
+                            }} />
+                          </div>
                         </div>
                       </div>
                     );
