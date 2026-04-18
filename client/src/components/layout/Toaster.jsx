@@ -1,5 +1,5 @@
 import { CheckCircle2, XCircle, Info, AlertTriangle, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import useToastStore from '../../store/toastStore';
 
 const icons = {
@@ -25,7 +25,7 @@ export default function Toaster() {
       <div className="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none">
         <AnimatePresence>
           {toasts.map((toast) => (
-            <motion.div
+            <m.div
               key={toast.id}
               initial={{ opacity: 0, scale: 0.8, x: 50 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
@@ -41,7 +41,7 @@ export default function Toaster() {
               >
                 <X size={16} />
               </button>
-            </motion.div>
+            </m.div>
           ))}
         </AnimatePresence>
       </div>
@@ -51,7 +51,7 @@ export default function Toaster() {
         {confirmDialog && (
            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
              {/* Cortina oscura de fondo */}
-             <motion.div 
+             <m.div 
                initial={{ opacity: 0 }} 
                animate={{ opacity: 1 }} 
                exit={{ opacity: 0 }} 
@@ -60,7 +60,7 @@ export default function Toaster() {
              />
              
              {/* Tarjeta central */}
-             <motion.div 
+             <m.div 
                initial={{ opacity: 0, scale: 0.9, y: 20 }}
                animate={{ opacity: 1, scale: 1, y: 0 }}
                exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -91,7 +91,7 @@ export default function Toaster() {
                    </button>
                  </div>
                </div>
-             </motion.div>
+             </m.div>
            </div>
         )}
       </AnimatePresence>

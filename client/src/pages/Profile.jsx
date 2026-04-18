@@ -5,7 +5,9 @@ import useThemeStore from '../store/themeStore';
 import api from '../services/api';
 
 export default function Profile() {
-  const { user, fetchProfile, logout } = useAuthStore();
+  const user = useAuthStore(state => state.user);
+  const fetchProfile = useAuthStore(state => state.fetchProfile);
+  const logout = useAuthStore(state => state.logout);
   const { setPersonalTheme } = useThemeStore();
   const [form, setForm] = useState({
     displayName: user?.displayName || '',

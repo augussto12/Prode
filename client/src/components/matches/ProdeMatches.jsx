@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Calendar, ChevronDown, Star, BarChart3, List } from 'lucide-react';
 import api from '../../services/api';
 import MatchCard from './MatchCard';
@@ -249,7 +249,7 @@ export default function ProdeMatches({ competitionId, initialTab = 'matches' }) 
 
       <AnimatePresence>
         {showFavPicker && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -269,7 +269,7 @@ export default function ProdeMatches({ competitionId, initialTab = 'matches' }) 
                     }`}
                   >
                     {team.logo ? (
-                      <img src={team.logo} alt="" className="w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain" />
+                      <img src={team.logo} alt="" className="w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
                     ) : (
                       <span>⚽</span>
                     )}
@@ -278,7 +278,7 @@ export default function ProdeMatches({ competitionId, initialTab = 'matches' }) 
                 ))}
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 

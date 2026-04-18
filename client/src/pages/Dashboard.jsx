@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Calendar, Star, Filter, ChevronDown } from 'lucide-react';
 import api from '../services/api';
 import useCompetitionStore from '../store/competitionStore';
@@ -13,7 +13,7 @@ export default function Dashboard() {
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [showFavPicker, setShowFavPicker] = useState(false);
-  const { activeCompetition } = useCompetitionStore();
+  const activeCompetition = useCompetitionStore(state => state.activeCompetition);
 
   useEffect(() => {
     if (activeCompetition?.id) loadData();
@@ -133,7 +133,7 @@ export default function Dashboard() {
       {/* Favorite Team Picker */}
       <AnimatePresence>
         {showFavPicker && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -159,7 +159,7 @@ export default function Dashboard() {
                 ))}
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 

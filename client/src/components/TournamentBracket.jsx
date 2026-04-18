@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { tRound } from '../utils/translations';
 
@@ -148,7 +148,7 @@ export default function TournamentBracket({ fixtures }) {
   }));
   
   return (
-    <motion.div 
+    <m.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="space-y-1"
@@ -178,7 +178,7 @@ export default function TournamentBracket({ fixtures }) {
           ))}
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -248,7 +248,7 @@ function TeamRow({ team, goals, isWinner, isLoser, navigate }) {
         isWinner ? 'bg-emerald-500/[0.06]' : isLoser ? 'opacity-40' : ''
       }`}
     >
-      <img src={team.logo} alt="" className="w-5 h-5 object-contain shrink-0" />
+      <img src={team.logo} alt="" className="w-5 h-5 object-contain shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
       <span className={`flex-1 text-xs font-medium truncate ${
         isWinner ? 'text-emerald-300' : 'text-white'
       }`}>

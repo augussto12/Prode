@@ -17,6 +17,7 @@
     "@google/genai": "^1.50.0",
     "@prisma/client": "^5.22.0",
     "bcrypt": "^6.0.0",
+    "compression": "^1.8.1",
     "cookie": "^1.1.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",

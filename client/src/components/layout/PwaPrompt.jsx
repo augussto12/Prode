@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Share, PlusSquare, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 
 export default function PwaPrompt() {
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
@@ -34,7 +34,7 @@ export default function PwaPrompt() {
   return (
     <AnimatePresence>
       {showInstallPrompt && (
-        <motion.div 
+        <m.div 
           initial={{ y: 200, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 200, opacity: 0 }}
@@ -66,7 +66,7 @@ export default function PwaPrompt() {
             {/* The little arrow pointing down for iOS */}
             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#1e1b4b]/90 border-b border-r border-indigo-500/30 rotate-45"></div>
           </div>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

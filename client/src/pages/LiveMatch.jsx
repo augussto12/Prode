@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { ArrowLeft, Clock, MapPin } from 'lucide-react';
 import api from '../services/api';
 import { tStat, tEvent, tRound, tMarket, tOddValue, tInjury } from '../utils/translations';
@@ -148,7 +148,7 @@ export default function LiveMatch() {
         {/* League & Venue Info */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/5 mb-2">
-            {league?.logo && <img src={league.logo} alt="" className="w-4 h-4 object-contain" />}
+            {league?.logo && <img src={league.logo} alt="" className="w-4 h-4 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
             <span className="text-xs font-medium text-white/70">{league?.name}</span>
             <span className="text-white/20 px-1">•</span>
             <span className="text-xs text-white/40">{tRound(league?.round)}</span>
@@ -166,7 +166,7 @@ export default function LiveMatch() {
           {/* Home Team */}
           <div className="flex-1 flex flex-col items-center text-center cursor-pointer group" onClick={() => navigate(`/equipo/${teams?.home?.id}`)}>
             {teams?.home?.logo ? (
-              <img src={teams.home.logo} alt="" className="w-16 h-16 md:w-32 md:h-32 mb-2 md:mb-4 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" />
+              <img src={teams.home.logo} alt="" className="w-16 h-16 md:w-32 md:h-32 mb-2 md:mb-4 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
             ) : (
               <div className="w-16 h-16 md:w-32 md:h-32 rounded-full bg-white/5 flex items-center justify-center mb-2 md:mb-4 text-2xl md:text-4xl group-hover:bg-white/10 transition-colors">{teams?.home?.name?.[0]}</div>
             )}
@@ -238,7 +238,7 @@ export default function LiveMatch() {
           {/* Away Team */}
           <div className="flex-1 flex flex-col items-center text-center cursor-pointer group" onClick={() => navigate(`/equipo/${teams?.away?.id}`)}>
             {teams?.away?.logo ? (
-              <img src={teams.away.logo} alt="" className="w-16 h-16 md:w-32 md:h-32 mb-2 md:mb-4 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" />
+              <img src={teams.away.logo} alt="" className="w-16 h-16 md:w-32 md:h-32 mb-2 md:mb-4 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
             ) : (
               <div className="w-16 h-16 md:w-32 md:h-32 rounded-full bg-white/5 flex items-center justify-center mb-2 md:mb-4 text-2xl md:text-4xl group-hover:bg-white/10 transition-colors">{teams?.away?.name?.[0]}</div>
             )}
@@ -309,7 +309,7 @@ export default function LiveMatch() {
           
           {/* Live Odds / Pre-Match Odds */}
           {liveOdds.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl p-6 ring-1 ring-amber-400/20">
+            <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl p-6 ring-1 ring-amber-400/20">
               <h3 className="text-sm font-bold text-amber-400/80 uppercase tracking-widest mb-4 flex items-center justify-center gap-2"><span className="text-amber-400/50">📈</span> {['1H', '2H', 'HT', 'ET', 'BT', 'P', 'LIVE'].includes(match?.status?.short) ? 'Live Cuotas' : 'Cuotas Pre-Partido'}</h3>
               <div className="space-y-4">
                 {(() => {
@@ -345,7 +345,7 @@ export default function LiveMatch() {
                       </div>
 
                       {/* Active Market Content */}
-                      <motion.div 
+                      <m.div 
                          key={currentIndex}
                          initial={{ opacity: 0, x: -10 }}
                          animate={{ opacity: 1, x: 0 }}
@@ -360,7 +360,7 @@ export default function LiveMatch() {
                              </div>
                           ))}
                         </div>
-                      </motion.div>
+                      </m.div>
                     </div>
                   );
                 })()}
@@ -368,12 +368,12 @@ export default function LiveMatch() {
               <div className="text-center mt-4 text-[9px] font-mono text-white/20 uppercase tracking-widest">
                  {liveOdds[0]?.bookmakers ? `Vía ${liveOdds[0].bookmakers[0]?.name}` : 'Live Odds Auto'}
               </div>
-            </motion.div>
+            </m.div>
           )}
 
           {/* Statistics */}
           {statistics.length >= 2 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl p-6">
+            <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl p-6">
               <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center justify-center gap-2"><span className="text-white/30">📊</span> Estadísticas</h3>
               <div className="space-y-4">
                 {(statistics[0]?.statistics || []).map((stat, i) => {
@@ -404,12 +404,12 @@ export default function LiveMatch() {
                   );
                 })}
               </div>
-            </motion.div>
+            </m.div>
           )}
 
           {/* Injuries / Hospital */}
           {injuries.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl p-6">
+            <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl p-6">
               <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center justify-center gap-2"><span className="text-white/30">🏥</span> Enfemería / Bajas</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 {/* Home Injuries */}
@@ -451,12 +451,12 @@ export default function LiveMatch() {
                   {injuries.filter(i => i.team.id === teams?.away?.id).length === 0 && <span className="text-[10px] text-white/20 italic block text-right">Plantel a disposición</span>}
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           )}
 
           {/* Events Timeline */}
           {events.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl p-6">
+            <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl p-6">
               <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center justify-center gap-2"><span className="text-white/30">⚡</span> Cronología</h3>
               <div className="relative flex flex-col space-y-3 py-2">
                 {/* Central Line */}
@@ -517,7 +517,7 @@ export default function LiveMatch() {
                   );
                 })}
               </div>
-            </motion.div>
+            </m.div>
           )}
 
           {/* No data */}
@@ -559,9 +559,9 @@ const LineupCard = memo(function LineupCard({ lineup, align, navigate }) {
   const sortedRows = Object.keys(gridRows).sort((a, b) => Number(b) - Number(a));
 
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-card rounded-3xl p-5 border border-white/5">
+    <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-card rounded-3xl p-5 border border-white/5">
       <div className={`flex items-center gap-3 mb-5 pb-4 border-b border-white/5 ${align === 'right' ? 'flex-row-reverse' : ''}`}>
-        {lineup.team?.logo && <img src={lineup.team.logo} alt="" className="w-10 h-10 object-contain drop-shadow-lg" />}
+        {lineup.team?.logo && <img src={lineup.team.logo} alt="" className="w-10 h-10 object-contain drop-shadow-lg" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
         <div className={`flex-1 ${align === 'right' ? 'text-right' : ''}`}>
           <div className="text-base font-black text-white tracking-tight">{lineup.team?.name}</div>
           {lineup.formation && <div className="text-[10px] text-amber-400 font-mono tracking-widest bg-amber-400/10 px-2 py-0.5 rounded-full inline-block mt-1">{lineup.formation}</div>}
@@ -571,7 +571,7 @@ const LineupCard = memo(function LineupCard({ lineup, align, navigate }) {
       {lineup.coach && (
         <div className={`flex items-center gap-2 mb-5 px-1 bg-white/[0.02] rounded-xl p-2 border border-white/5 ${align === 'right' ? 'flex-row-reverse' : ''}`}>
           {lineup.coach.photo ? (
-            <img src={lineup.coach.photo} alt="" className="w-8 h-8 rounded-full object-cover border border-white/10" />
+            <img src={lineup.coach.photo} alt="" className="w-8 h-8 rounded-full object-cover border border-white/10" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
           ) : (
             <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-white/50 border border-white/5">DT</div>
           )}
@@ -611,7 +611,7 @@ const LineupCard = memo(function LineupCard({ lineup, align, navigate }) {
                    const shortName = names.length > 1 ? `${names[0][0]}. ${names.pop()}` : p.player.name;
                    
                    return (
-                     <motion.div 
+                     <m.div 
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
@@ -646,7 +646,7 @@ const LineupCard = memo(function LineupCard({ lineup, align, navigate }) {
                         <div className="mt-1.5 text-[9px] text-white font-bold bg-black/70 px-2 py-0.5 rounded-full backdrop-blur-md max-w-[85px] truncate text-center shadow-md border border-white/10 group-hover/player:bg-indigo-600 transition-colors">
                            {shortName}
                         </div>
-                     </motion.div>
+                     </m.div>
                    );
                 })}
              </div>
@@ -682,6 +682,6 @@ const LineupCard = memo(function LineupCard({ lineup, align, navigate }) {
           </div>
         </>
       )}
-    </motion.div>
+    </m.div>
   );
 });

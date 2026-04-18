@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trophy, LogIn, Eye, EyeOff } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 
 export default function Login() {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login: doLogin, loading, error } = useAuthStore();
+  const doLogin = useAuthStore(state => state.login);
+  const loading = useAuthStore(state => state.loading);
+  const error = useAuthStore(state => state.error);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -30,7 +32,7 @@ export default function Login() {
         <div className="absolute top-[40%] left-[50%] -translate-x-1/2 w-[800px] h-[300px] bg-amber-500/10 rounded-[100%] blur-[100px] mix-blend-screen" />
       </div>
 
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -38,7 +40,7 @@ export default function Login() {
       >
         {/* Logo */}
         <div className="text-center mb-10">
-          <motion.div
+          <m.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
@@ -48,7 +50,7 @@ export default function Login() {
             {/* Shimmer effect on logo */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
             <Trophy size={48} className="text-white relative z-10" />
-          </motion.div>
+          </m.div>
           <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-white to-purple-300 mb-2 tracking-tight">Prode Mundial</h1>
           <p className="text-white/60 text-base font-medium">El estadio virtual para tus pronósticos</p>
         </div>
@@ -60,13 +62,13 @@ export default function Login() {
           
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm"
               >
                 {error}
-              </motion.div>
+              </m.div>
             )}
 
             <div>
@@ -136,7 +138,7 @@ export default function Login() {
             </Link>
           </div>
         </div>
-      </motion.div>
+      </m.div>
     </div>
   );
 }

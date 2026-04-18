@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { ArrowLeft, Trophy, ArrowRightLeft, BarChart3, Calendar } from 'lucide-react';
 import api from '../services/api';
 import { tCountry } from '../utils/translations';
@@ -55,7 +55,7 @@ export default function PlayerProfile() {
         <div className="absolute inset-0 opacity-10 pointer-events-none bg-gradient-to-r from-indigo-600 to-purple-600" />
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 w-full">
           {player?.photo ? (
-            <img src={player.photo} alt={player.name} className="w-28 h-28 rounded-2xl object-cover bg-white/10 border-2 border-white/20" />
+            <img src={player.photo} alt={player.name} className="w-28 h-28 rounded-2xl object-cover bg-white/10 border-2 border-white/20" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
           ) : (
             <div className="w-28 h-28 rounded-2xl bg-white/10 flex items-center justify-center text-4xl font-bold text-white/30">
               {player?.name?.charAt(0)}
@@ -96,10 +96,10 @@ export default function PlayerProfile() {
       {tab === 'stats' && (
         <div className="space-y-4">
           {allStats.map((s, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+            <m.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
               className="glass-card rounded-2xl p-5">
               <div className="flex items-center gap-3 mb-4 pb-3 border-b border-white/5">
-                {s.team?.logo && <img src={s.team.logo} alt="" className="w-8 h-8 object-contain" />}
+                {s.team?.logo && <img src={s.team.logo} alt="" className="w-8 h-8 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                 <div>
                   <div className="text-sm font-semibold text-white">{s.team?.name}</div>
                   <div className="text-xs text-white/30">{s.league?.name} — {s.league?.season}</div>
@@ -126,7 +126,7 @@ export default function PlayerProfile() {
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </m.div>
           ))}
         </div>
       )}
@@ -139,7 +139,7 @@ export default function PlayerProfile() {
           ) : (
             <div className="space-y-2">
               {trophies.map((t, i) => (
-                <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
+                <m.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
                   className="flex items-center gap-4 p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] transition-all">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                     t.place === 'Winner' ? 'bg-amber-500/20 text-amber-400' : 'bg-white/10 text-white/40'
@@ -155,7 +155,7 @@ export default function PlayerProfile() {
                   }`}>
                     {t.place === 'Winner' ? '🏆 Campeón' : t.place}
                   </span>
-                </motion.div>
+                </m.div>
               ))}
             </div>
           )}
@@ -170,18 +170,18 @@ export default function PlayerProfile() {
           ) : (
             <div className="space-y-3">
               {transfers.map((t, i) => (
-                <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+                <m.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
                   className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02]">
                   <div className="text-xs text-white/30 w-16 shrink-0 text-center">
                     {t.date ? new Date(t.date).toLocaleDateString('es-AR', { month: 'short', year: 'numeric' }) : '—'}
                   </div>
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {t.teams?.out?.logo && <img src={t.teams.out.logo} alt="" className="w-6 h-6 object-contain" />}
+                    {t.teams?.out?.logo && <img src={t.teams.out.logo} alt="" className="w-6 h-6 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                     <span className="text-xs text-white/60 truncate">{t.teams?.out?.name}</span>
                   </div>
                   <ArrowRightLeft size={14} className="text-white/20 shrink-0" />
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {t.teams?.in?.logo && <img src={t.teams.in.logo} alt="" className="w-6 h-6 object-contain" />}
+                    {t.teams?.in?.logo && <img src={t.teams.in.logo} alt="" className="w-6 h-6 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                     <span className="text-xs text-white font-medium truncate">{t.teams?.in?.name}</span>
                   </div>
                   <span className={`text-xs shrink-0 px-2 py-1 rounded ${
@@ -191,7 +191,7 @@ export default function PlayerProfile() {
                   }`}>
                     {t.type === 'Free' ? 'Libre' : t.type === 'Loan' ? 'Préstamo' : t.type || '—'}
                   </span>
-                </motion.div>
+                </m.div>
               ))}
             </div>
           )}

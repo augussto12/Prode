@@ -12,7 +12,7 @@ const TABS = [
 
 export default function Competition() {
   const [tab, setTab] = useState('matches');
-  const { activeCompetition } = useCompetitionStore();
+  const activeCompetition = useCompetitionStore(state => state.activeCompetition);
 
   return (
     <div className="space-y-6">

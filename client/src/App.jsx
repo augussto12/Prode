@@ -24,7 +24,7 @@ const TeamView = lazy(() => import('./pages/TeamView'));
 const Profile = lazy(() => import('./pages/Profile'));
 
 function PrivateRoute({ children }) {
-  const { user } = useAuthStore();
+  const user = useAuthStore(state => state.user);
 
   if (!user) {
     // Invocar directo al store fuera del ciclo de render — evita toast spam en re-renders
@@ -35,21 +35,21 @@ function PrivateRoute({ children }) {
 }
 
 function AdminRoute({ children }) {
-  const { user } = useAuthStore();
+  const user = useAuthStore(state => state.user);
   if (!user) return <Navigate to="/login" replace />;
   if (!['ADMIN', 'SUPERADMIN'].includes(user?.role)) return <Navigate to="/explorar" replace />;
   return children;
 }
 
 function PublicRoute({ children }) {
-  const { user } = useAuthStore();
+  const user = useAuthStore(state => state.user);
   return user ? <Navigate to="/explorar" replace /> : children;
 }
 
 export default function App() {
-  const { user } = useAuthStore();
+  const user = useAuthStore(state => state.user);
   const { setPersonalTheme } = useThemeStore();
-  const { fetchCompetitions } = useCompetitionStore();
+  const fetchCompetitions = useCompetitionStore(state => state.fetchCompetitions);
 
   // Cargar competencias una sola vez al montar
   useEffect(() => {

@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bot, X, Send, User as UserIcon } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 
 export default function GuruChat() {
-  const { user } = useAuthStore();
+  const user = useAuthStore(state => state.user);
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { role: 'guru', text: '¿Qué onda genio? Soy el Gurú Colorado. Decime qué andás necesitando saber de tu prode.' }
@@ -47,24 +47,24 @@ export default function GuruChat() {
       {/* Botón Flotante */}
       <AnimatePresence>
         {!isOpen && (
-           <motion.button 
+           <m.button 
              initial={{ scale: 0 }} 
              animate={{ scale: 1 }} 
              exit={{ scale: 0 }}
              onClick={() => setIsOpen(true)}
-             className="fixed bottom-6 right-6 w-14 h-14 bg-rose-600 hover:bg-rose-500 rounded-full flex items-center justify-center cursor-pointer shadow-[0_0_20px_rgba(225,29,72,0.6)] z-50 transition-colors border-none group"
+             className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 bg-rose-600 hover:bg-rose-500 rounded-full flex items-center justify-center cursor-pointer shadow-[0_0_20px_rgba(225,29,72,0.6)] z-50 transition-colors border-none group"
            >
-             <Bot size={28} className="text-white group-hover:animate-bounce" />
+             <Bot className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:animate-bounce" />
              {/* Indicador de badge opcional */}
-             <span className="absolute top-0 right-0 w-3 h-3 bg-white rounded-full border-2 border-rose-600 animate-pulse"></span>
-           </motion.button>
+             <span className="absolute top-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-white rounded-full border-2 border-rose-600 animate-pulse"></span>
+           </m.button>
         )}
       </AnimatePresence>
 
       {/* Ventana de Chat */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div 
+          <m.div 
              initial={{ opacity: 0, y: 50, scale: 0.9 }}
              animate={{ opacity: 1, y: 0, scale: 1 }}
              exit={{ opacity: 0, y: 50, scale: 0.9 }}
@@ -135,7 +135,7 @@ export default function GuruChat() {
                   <Send size={18} />
                 </button>
              </form>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </>

@@ -131,6 +131,7 @@ const EVENT_TYPES = {
 const ROUND_LABELS = {
   'Regular Season': 'Fecha',
   'Group Stage': 'Fase de Grupos',
+  'Round of 32': '16avos de Final',
   'Round of 16': 'Octavos de Final',
   'Quarter-finals': 'Cuartos de Final',
   'Semi-finals': 'Semifinal',
@@ -139,6 +140,7 @@ const ROUND_LABELS = {
   'Preliminary Round': 'Ronda Preliminar',
   'Qualification': 'Clasificación',
   'Play-offs': 'Repechaje',
+  'Knockout Round Play-offs': 'Repechaje KO',
 };
 
 const MARKET_NAMES = {

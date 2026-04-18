@@ -3,7 +3,11 @@ import { ChevronDown } from 'lucide-react';
 import useCompetitionStore from '../../store/competitionStore';
 
 export default function CompetitionSelector() {
-  const { competitions, activeCompetition, fetchCompetitions, setActive, loading } = useCompetitionStore();
+  const competitions = useCompetitionStore(state => state.competitions);
+  const activeCompetition = useCompetitionStore(state => state.activeCompetition);
+  const fetchCompetitions = useCompetitionStore(state => state.fetchCompetitions);
+  const setActive = useCompetitionStore(state => state.setActive);
+  const loading = useCompetitionStore(state => state.loading);
 
   useEffect(() => {
     fetchCompetitions();
@@ -16,7 +20,7 @@ export default function CompetitionSelector() {
     return (
       <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5">
         {activeCompetition?.logo && (
-          <img src={activeCompetition.logo} alt="" className="w-5 h-5 object-contain" />
+          <img src={activeCompetition.logo} alt="" className="w-5 h-5 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
         )}
         <span className="text-white/80 text-sm font-medium">{activeCompetition?.name}</span>
       </div>

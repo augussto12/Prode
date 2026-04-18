@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { LayoutDashboard, Save, Check } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import useCompetitionStore from '../store/competitionStore';
 import Pitch from '../components/dreamteam/Pitch';
@@ -18,7 +18,7 @@ export default function DreamTeam() {
   
   const [filter, setFilter] = useState('ALL');
   const [saving, setSaving] = useState(false);
-  const { activeCompetition } = useCompetitionStore();
+  const activeCompetition = useCompetitionStore(state => state.activeCompetition);
 
   useEffect(() => {
     if (activeCompetition?.id) loadData();
@@ -230,7 +230,7 @@ export default function DreamTeam() {
                           }}
                         >
                           <div className="flex items-center gap-3">
-                            <img src={p.image || 'https://cdn-icons-png.flaticon.com/512/3112/3112946.png'} loading="lazy" className="w-10 h-10 rounded-full bg-black/50 border border-white/20 object-cover" />
+                            <img src={p.image || 'https://cdn-icons-png.flaticon.com/512/3112/3112946.png'} loading="lazy" className="w-10 h-10 rounded-full bg-black/50 border border-white/20 object-cover" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
                             <div>
                               <div className="text-sm font-bold text-white/90">{p.name}</div>
                               <div className="text-[10px] text-white/40 uppercase tracking-widest">{p.position} • {p.country}</div>

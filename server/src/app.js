@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
+import compression from 'compression';
 import { errorHandler } from './middleware/errorHandler.js';
 
 import authRoutes from './routes/auth.routes.js';
@@ -28,6 +29,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 // Confiar en el proxy (vital si usás Docker/Nginx, evita el error ERR_ERL_UNEXPECTED_X_FORWARDED_FOR)
 app.set('trust proxy', 1);
+
+app.use(compression());
 
 // Headers de seguridad con configuración explícita
 app.use(helmet({

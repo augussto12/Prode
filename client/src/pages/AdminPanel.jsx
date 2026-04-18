@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Shield, Users, Trophy, Save, Calculator, ChevronDown, Trash2, RefreshCw, Database, Loader2, CheckCircle, AlertCircle, Clock, Zap, Info } from 'lucide-react';
 import api from '../services/api';
 import useToastStore from '../store/toastStore';
@@ -13,7 +13,8 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const currentUser = useAuthStore(s => s.user);
-  const { activeCompetition, fetchCompetitions } = useCompetitionStore();
+  const activeCompetition = useCompetitionStore(state => state.activeCompetition);
+  const fetchCompetitions = useCompetitionStore(state => state.fetchCompetitions);
 
   useEffect(() => { loadData(); }, []);
 
@@ -130,7 +131,7 @@ export default function AdminPanel() {
           {users.map((u) => {
             const isMe = u.id === currentUser?.id;
             return (
-              <motion.div
+              <m.div
                 key={u.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -185,7 +186,7 @@ export default function AdminPanel() {
                     'bg-white/10 text-white/50'
                   }`}>{u.role}</span>
                 )}
-              </motion.div>
+              </m.div>
             );
           })}
         </div>
@@ -386,7 +387,7 @@ function SyncPanel({ onSyncComplete }) {
   const [teams, setTeams] = useState([]);
   const [leagueId, setLeagueId] = useState('1');
   const [season, setSeason] = useState('2022');
-  const { activeCompetition } = useCompetitionStore();
+  const activeCompetition = useCompetitionStore(state => state.activeCompetition);
 
   useEffect(() => {
     loadApiStatus();
@@ -495,7 +496,7 @@ function SyncPanel({ onSyncComplete }) {
           {activeCompetition && (
             <div className="flex items-end">
               <div className="bg-white/[0.03] rounded-lg px-3 py-2 flex items-center gap-2 w-full">
-                {activeCompetition.logo && <img src={activeCompetition.logo} alt="" className="w-5 h-5 object-contain shrink-0" />}
+                {activeCompetition.logo && <img src={activeCompetition.logo} alt="" className="w-5 h-5 object-contain shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                 <span className="text-xs sm:text-sm text-white/70 truncate">Activa: <strong className="text-white">{activeCompetition.name}</strong></span>
               </div>
             </div>

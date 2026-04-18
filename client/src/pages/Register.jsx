@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trophy, UserPlus, Eye, EyeOff } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 
 export default function Register() {
   const [form, setForm] = useState({ email: '', username: '', password: '', displayName: '' });
   const [showPassword, setShowPassword] = useState(false);
-  const { register: doRegister, loading, error } = useAuthStore();
+  const doRegister = useAuthStore(state => state.register);
+  const loading = useAuthStore(state => state.loading);
+  const error = useAuthStore(state => state.error);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -24,26 +26,26 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden bg-[#0a0a0a]">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 z-0">
-        <motion.div
+        <m.div
           animate={{ x: [-20, 20, -20], y: [-20, 20, -20], rotate: [0, 90, 0] }}
           transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
           className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-indigo-600/30 rounded-full blur-[120px] mix-blend-screen"
         />
-        <motion.div
+        <m.div
           animate={{ x: [20, -20, 20], y: [20, -20, 20], rotate: [0, -90, 0] }}
           transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
           className="absolute bottom-[10%] right-[20%] w-[600px] h-[600px] bg-purple-600/30 rounded-full blur-[150px] mix-blend-screen"
         />
       </div>
 
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
         className="w-full max-w-md relative z-10"
       >
         <div className="text-center mb-10">
-          <motion.div
+          <m.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
@@ -52,7 +54,7 @@ export default function Register() {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
             <Trophy size={48} className="text-white relative z-10" />
-          </motion.div>
+          </m.div>
           <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-white to-purple-300 mb-2 tracking-tight">Crear Cuenta</h1>
           <p className="text-white/60 text-base font-medium">Unite al Prode Mundial 2026</p>
         </div>
@@ -114,7 +116,7 @@ export default function Register() {
             <Link to="/login" className="text-indigo-400 hover:text-indigo-300 no-underline font-medium">Ingresá</Link>
           </div>
         </div>
-      </motion.div>
+      </m.div>
     </div>
   );
 }

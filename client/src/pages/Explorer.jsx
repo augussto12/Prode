@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Search, Trophy, Globe, ChevronDown, ChevronRight, MapPin, Loader2, Users } from 'lucide-react';
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
@@ -26,7 +26,7 @@ export default function Explorer() {
   const [loading, setLoading] = useState(true);
   const [loadingToday, setLoadingToday] = useState(true);
 
-  const { user } = useAuthStore();
+  const user = useAuthStore(state => state.user);
   const [search, setSearch] = useState('');
   const [expandedCountry, setExpandedCountry] = useState(null);
   const [visibleCountries, setVisibleCountries] = useState(COUNTRIES_PER_PAGE);
@@ -149,7 +149,7 @@ export default function Explorer() {
       {/* World Cup Banner Hero */}
       {data.topLeagues.find(l => l.league.id === 1) && (
         <Link to="/liga/1" className="block no-underline">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             className="relative rounded-3xl overflow-hidden group cursor-pointer shadow-[0_10px_30px_#b8860b33]"
             style={{ background: 'linear-gradient(135deg, #b8860b, #daa520, #ffd700)' }}
@@ -172,7 +172,7 @@ export default function Explorer() {
                 <ChevronRight size={24} className="text-white" />
               </div>
             </div>
-          </motion.div>
+          </m.div>
         </Link>
       )}
 
@@ -252,7 +252,7 @@ export default function Explorer() {
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 {l.league.logo ? (
-                  <img src={l.league.logo} alt={l.league.name} loading="lazy" className="w-12 h-12 object-contain group-hover:scale-110 group-hover:-translate-y-1 transition-all z-10 drop-shadow-lg" />
+                  <img src={l.league.logo} alt={l.league.name} loading="lazy" className="w-12 h-12 object-contain group-hover:scale-110 group-hover:-translate-y-1 transition-all z-10 drop-shadow-lg" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center z-10">
                     <Trophy size={20} className="text-white/40" />
@@ -261,7 +261,7 @@ export default function Explorer() {
                 <div className="text-center z-10 w-full mt-1">
                   <div className="text-xs font-bold text-white/90 truncate">{l.league.name}</div>
                   <div className="text-[9px] font-medium text-white/50 flex items-center justify-center gap-1 mt-1 uppercase tracking-wider">
-                    {l.country?.flag && <img src={l.country.flag} alt="" loading="lazy" className="w-3 h-2 object-contain rounded-sm" />}
+                    {l.country?.flag && <img src={l.country.flag} alt="" loading="lazy" className="w-3 h-2 object-contain rounded-sm" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                     {tCountry(l.country?.name)}
                   </div>
                 </div>
@@ -303,7 +303,7 @@ export default function Explorer() {
 
 // ─── Today Matches grouped by league ───
 const TodayMatchesRow = ({ data }) => (
-  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+  <m.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
     className="glass-card rounded-2xl p-4 border border-white/5">
     <div className="flex items-center gap-2 mb-3">
       <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
@@ -313,9 +313,9 @@ const TodayMatchesRow = ({ data }) => (
       {(data.grouped || []).map(group => (
         <div key={group.league.id} className="pt-2">
           <div className="flex items-center gap-2.5 mb-2 pl-1 border-l-[3px] border-amber-500/50">
-            {group.league.logo && <img src={group.league.logo} alt="" loading="lazy" className="w-6 h-6 object-contain ml-2" />}
+            {group.league.logo && <img src={group.league.logo} alt="" loading="lazy" className="w-6 h-6 object-contain ml-2" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
             <span className="text-sm text-white/90 font-bold uppercase tracking-wider">{group.league.name}</span>
-            {group.league.flag && <img src={group.league.flag} alt="" className="w-5 h-4 object-contain opacity-70" />}
+            {group.league.flag && <img src={group.league.flag} alt="" className="w-5 h-4 object-contain opacity-70" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/10">
             {group.matches.map(m => {
@@ -346,7 +346,7 @@ const TodayMatchesRow = ({ data }) => (
                     {/* Teams and Score */}
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        {m.teams?.home?.logo && <img src={m.teams.home.logo} alt="" loading="lazy" className="w-6 h-6 object-contain" />}
+                        {m.teams?.home?.logo && <img src={m.teams.home.logo} alt="" loading="lazy" className="w-6 h-6 object-contain" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                         <span className="text-sm text-white font-semibold truncate">{m.teams?.home?.name}</span>
                       </div>
                       <div className="text-base font-black text-white px-2 text-center w-8">
@@ -355,7 +355,7 @@ const TodayMatchesRow = ({ data }) => (
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        {m.teams?.away?.logo && <img src={m.teams.away.logo} alt="" loading="lazy" className="w-6 h-6 object-contain" />}
+                        {m.teams?.away?.logo && <img src={m.teams.away.logo} alt="" loading="lazy" className="w-6 h-6 object-contain" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                         <span className="text-sm text-white font-semibold truncate">{m.teams?.away?.name}</span>
                       </div>
                       <div className="text-base font-black text-white px-2 text-center w-8">
@@ -411,7 +411,7 @@ const TodayMatchesRow = ({ data }) => (
         </div>
       ))}
     </div>
-  </motion.div>
+  </m.div>
 );
 
 // ─── Country Accordion (memoized, renders only when expanded) ───
@@ -424,7 +424,7 @@ function CountryAccordion({ country: c, expanded, onToggle }) {
       >
         <div className="flex items-center gap-3">
           {c.flag ? (
-            <img src={c.flag} alt="" loading="lazy" className="w-6 h-4 object-contain rounded-sm" />
+            <img src={c.flag} alt="" loading="lazy" className="w-6 h-4 object-contain rounded-sm" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
           ) : (
             <MapPin size={16} className="text-white/30" />
           )}
@@ -438,7 +438,7 @@ function CountryAccordion({ country: c, expanded, onToggle }) {
       </button>
       <AnimatePresence>
         {expanded && (
-          <motion.div
+          <m.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -453,7 +453,7 @@ function CountryAccordion({ country: c, expanded, onToggle }) {
                   className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/5 transition-all no-underline"
                 >
                   {l.league.logo ? (
-                    <img src={l.league.logo} alt="" loading="lazy" className="w-8 h-8 object-contain" />
+                    <img src={l.league.logo} alt="" loading="lazy" className="w-8 h-8 object-contain" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
                   ) : (
                     <div className="w-8 h-8 rounded bg-white/10 flex items-center justify-center">
                       <Trophy size={14} className="text-white/30" />
@@ -466,7 +466,7 @@ function CountryAccordion({ country: c, expanded, onToggle }) {
                 </Link>
               ))}
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

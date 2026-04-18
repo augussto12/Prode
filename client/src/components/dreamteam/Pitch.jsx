@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 
 export default function Pitch({ formation, players, onRemove }) {
   // A helper to place players on the pitch relative to %. 
@@ -53,11 +53,11 @@ export default function Pitch({ formation, players, onRemove }) {
         }}
       >
         {pInfo ? (
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="relative">
+          <m.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="relative">
             <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full border-2 shadow-xl bg-slate-800 ${
               role === 'GK' ? 'border-amber-400' : 'border-indigo-400'
             } overflow-hidden`}>
-              <img src={pInfo.image || 'https://cdn-icons-png.flaticon.com/512/3112/3112946.png'} alt={pInfo.name} className="w-full h-full object-cover" />
+              <img src={pInfo.image || 'https://cdn-icons-png.flaticon.com/512/3112/3112946.png'} alt={pInfo.name} className="w-full h-full object-cover" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
             </div>
             
             <div className="absolute -bottom-2 -left-4 -right-4 bg-[#0f172a]/90 backdrop-blur-sm border border-white/10 rounded-md text-[9px] md:text-[10px] text-white font-bold tracking-tight text-center truncate px-1 shadow-lg">
@@ -67,7 +67,7 @@ export default function Pitch({ formation, players, onRemove }) {
             <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                <span className="text-white text-xs font-bold leading-none">&times;</span>
             </div>
-          </motion.div>
+          </m.div>
         ) : (
           <div className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-dashed border-white/30 bg-white/5 flex items-center justify-center shadow-lg backdrop-blur-sm relative group">
             <span className="text-white/30 text-xs font-bold font-mono group-hover:text-white/60 transition-colors uppercase">{role}</span>

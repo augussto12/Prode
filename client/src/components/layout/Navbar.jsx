@@ -5,7 +5,8 @@ import useAuthStore from '../../store/authStore';
 import api from '../../services/api';
 
 export default function Navbar() {
-  const { user, logout } = useAuthStore();
+  const user = useAuthStore(state => state.user);
+  const logout = useAuthStore(state => state.logout);
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);

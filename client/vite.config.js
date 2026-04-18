@@ -5,7 +5,11 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      babel: {
+        plugins: ['babel-plugin-react-compiler']
+      }
+    }),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -28,6 +32,33 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    target: ['es2020', 'chrome90', 'firefox88', 'safari14', 'edge90'],
+    cssMinify: true,
+    reportCompressedSize: false,
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/react-router-dom/')) {
+            return 'react-vendor';
+          }
+          if (id.includes('node_modules/framer-motion/')) {
+            return 'motion';
+          }
+          if (id.includes('node_modules/socket.io-client/')) {
+            return 'socket';
+          }
+          if (id.includes('node_modules/zustand/')) {
+            return 'zustand';
+          }
+        }
+      }
+    }
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'framer-motion', 'zustand']
+  },
   server: {
     proxy: {
       '/api': 'http://localhost:5000',

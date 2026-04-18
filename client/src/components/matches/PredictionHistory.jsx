@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { BarChart3, Crosshair, Flag } from 'lucide-react';
 
 export default function PredictionHistory({ predictions, matches }) {
@@ -117,7 +117,7 @@ export default function PredictionHistory({ predictions, matches }) {
             const mainHit = isExact || isWinnerCorrect;
             
             return (
-              <motion.div
+              <m.div
                 key={pred.id}
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -135,11 +135,11 @@ export default function PredictionHistory({ predictions, matches }) {
                       <span className="shrink-0">{new Date(m.matchDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}</span>
                     </div>
                     <div className="flex items-center gap-2 sm:gap-3">
-                      {m.homeTeamLogo && <img src={m.homeTeamLogo} alt="" className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0" />}
+                      {m.homeTeamLogo && <img src={m.homeTeamLogo} alt="" className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                       <span className="text-xs sm:text-sm font-medium text-white truncate">{m.homeTeam}</span>
                       <span className="text-[10px] sm:text-xs text-white/30 shrink-0">vs</span>
                       <span className="text-xs sm:text-sm font-medium text-white truncate">{m.awayTeam}</span>
-                      {m.awayTeamLogo && <img src={m.awayTeamLogo} alt="" className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0" />}
+                      {m.awayTeamLogo && <img src={m.awayTeamLogo} alt="" className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                     </div>
                   </div>
 
@@ -207,7 +207,7 @@ export default function PredictionHistory({ predictions, matches }) {
                     )}
                   </div>
                 )}
-              </motion.div>
+              </m.div>
             );
           })
         )}

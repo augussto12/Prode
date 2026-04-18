@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Plus, Users, LogIn, Copy, Check, Globe, Loader2 } from 'lucide-react';
 import api from '../services/api';
 import useToastStore from '../store/toastStore';
@@ -21,7 +21,8 @@ export default function GroupList() {
     bgGradientFrom: '#0f172a', bgGradientTo: '#1e1b4b',
   });
   const navigate = useNavigate();
-  const { activeCompetition, competitions } = useCompetitionStore();
+  const activeCompetition = useCompetitionStore(state => state.activeCompetition);
+  const competitions = useCompetitionStore(state => state.competitions);
 
   useEffect(() => { loadGroups(); }, []);
 
@@ -95,7 +96,7 @@ export default function GroupList() {
 
       {/* Create Form */}
       {showCreate && (
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-2xl p-6">
+        <m.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-2xl p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Nuevo Grupo</h3>
           <form onSubmit={handleCreate} className="space-y-4">
             {/* Tournament Selector */}
@@ -118,7 +119,7 @@ export default function GroupList() {
                           : 'bg-white/[0.03] border-white/10 hover:border-white/25 hover:bg-white/[0.06]'
                       }`}
                     >
-                      {comp.logo && <img src={comp.logo} alt="" className="w-8 h-8 object-contain shrink-0" />}
+                      {comp.logo && <img src={comp.logo} alt="" className="w-8 h-8 object-contain shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                       <div className="min-w-0">
                         <div className={`text-sm font-semibold truncate ${createForm.competitionId === comp.id ? 'text-indigo-300' : 'text-white/80'}`}>{comp.name}</div>
                         <div className="text-[10px] text-white/30">Temporada {comp.season}</div>
@@ -178,12 +179,12 @@ export default function GroupList() {
               {isCreating ? 'Creando...' : 'Crear Grupo'}
             </button>
           </form>
-        </motion.div>
+        </m.div>
       )}
 
       {/* Join Form */}
       {showJoin && (
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-2xl p-6">
+        <m.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-2xl p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Unirme con código</h3>
           <form onSubmit={handleJoin} className="flex gap-3">
             <input type="text" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} required placeholder="Pegar código de invitación"
@@ -191,13 +192,13 @@ export default function GroupList() {
             <button type="submit" className="px-6 py-2.5 rounded-xl text-white font-medium text-sm cursor-pointer border-none hover:opacity-90"
               style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}>Unirme</button>
           </form>
-        </motion.div>
+        </m.div>
       )}
 
       {/* My Groups */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {myGroups.map((group, i) => (
-          <motion.div key={group.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+          <m.div key={group.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
             <Link to={`/groups/${group.id}`} className="block glass-card rounded-2xl p-5 hover:bg-white/[0.08] transition-all no-underline group">
               <div className="flex items-start justify-between mb-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white" style={{ background: `linear-gradient(135deg, ${group.primaryColor}, ${group.secondaryColor})` }}>
@@ -216,12 +217,12 @@ export default function GroupList() {
               </div>
               {group.competition && (
                 <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-white/5">
-                  {group.competition.logo && <img src={group.competition.logo} alt="" className="w-4 h-4 object-contain" />}
+                  {group.competition.logo && <img src={group.competition.logo} alt="" className="w-4 h-4 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                   <span className="text-[10px] text-white/30 uppercase tracking-wider">{group.competition.name}</span>
                 </div>
               )}
             </Link>
-          </motion.div>
+          </m.div>
         ))}
       </div>
 

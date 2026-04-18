@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Star, Clock, Check, ChevronDown, ChevronUp, Lock, Crosshair, Flag } from 'lucide-react';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
@@ -10,7 +10,7 @@ const MARKET_LABELS = { HOME: 'Local', AWAY: 'Visitante', EQUAL: 'Igual' };
 
 export default memo(function MatchCard({ match, isFavorite, existingPrediction: existingProp, onPredictionSaved, hideStage = false }) {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore(state => state.user);
   const addToast = useToastStore(state => state.addToast);
   const [expanded, setExpanded] = useState(false);
   const [prediction, setPrediction] = useState({
@@ -134,7 +134,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
   const hasExtraMarkets = existingPrediction && (existingPrediction.moreShots || existingPrediction.moreCorners);
 
   return (
-    <motion.div
+    <m.div
       layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -179,7 +179,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
             onClick={() => match.homeTeamId && navigate(`/equipo/${match.homeTeamId}`)}
           >
             {match.homeTeamLogo
-              ? <img src={match.homeTeamLogo} alt={match.homeTeam} className={`w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 object-contain ${match.homeTeamId ? 'group-hover:scale-110 transition-transform' : ''}`} />
+              ? <img src={match.homeTeamLogo} alt={match.homeTeam} className={`w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 object-contain ${match.homeTeamId ? 'group-hover:scale-110 transition-transform' : ''}`} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
               : <div className="text-xl sm:text-2xl mb-1">{match.homeFlag || '🏳️'}</div>
             }
             <div className={`text-[11px] sm:text-sm font-semibold text-white truncate px-0.5 ${match.homeTeamId ? 'group-hover:text-indigo-300 transition-colors' : ''}`}>{match.homeTeam}</div>
@@ -229,7 +229,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
             onClick={() => match.awayTeamId && navigate(`/equipo/${match.awayTeamId}`)}
           >
             {match.awayTeamLogo
-              ? <img src={match.awayTeamLogo} alt={match.awayTeam} className={`w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 object-contain ${match.awayTeamId ? 'group-hover:scale-110 transition-transform' : ''}`} />
+              ? <img src={match.awayTeamLogo} alt={match.awayTeam} className={`w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 object-contain ${match.awayTeamId ? 'group-hover:scale-110 transition-transform' : ''}`} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
               : <div className="text-xl sm:text-2xl mb-1">{match.awayFlag || '🏳️'}</div>
             }
             <div className={`text-[11px] sm:text-sm font-semibold text-white truncate px-0.5 ${match.awayTeamId ? 'group-hover:text-indigo-300 transition-colors' : ''}`}>{match.awayTeam}</div>
@@ -265,7 +265,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
 
       {/* Expanded Markets — EDITABLE (future matches) */}
       {expanded && !isPast && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2.5 sm:space-y-3 border-t border-white/5 pt-2.5 sm:pt-3"
@@ -292,7 +292,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
 
           {/* Save button — only show when there are changes */}
           {hasChanges && (
-            <motion.button
+            <m.button
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               onClick={handleSave}
@@ -301,14 +301,14 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
               style={{ background: saved ? '#22c55e' : 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}
             >
               {saving ? 'Guardando...' : saved ? '✓ Guardado' : 'Guardar Predicción'}
-            </motion.button>
+            </m.button>
           )}
-        </motion.div>
+        </m.div>
       )}
 
       {/* Expanded Markets — READ-ONLY (past/live matches with existing predictions) */}
       {expanded && isPast && hasExtraMarkets && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2 border-t border-white/5 pt-2.5 sm:pt-3"
@@ -335,13 +335,13 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
               </span>
             </div>
           )}
-        </motion.div>
+        </m.div>
       )}
 
       {/* Quick save for score-only — only when NOT expanded and there are changes */}
       {!expanded && !isPast && hasChanges && (
         <div className="px-3 sm:px-4 pb-2.5 sm:pb-3">
-          <motion.button
+          <m.button
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             onClick={handleSave}
@@ -350,10 +350,10 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
             style={{ background: saved ? '#22c55e' : 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}
           >
             {saving ? 'Guardando...' : saved ? '✓ Guardado' : 'Guardar resultado'}
-          </motion.button>
+          </m.button>
         </div>
       )}
-    </motion.div>
+    </m.div>
   );
 });
 

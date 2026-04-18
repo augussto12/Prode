@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Share2, Check, Users, Settings, LogOut, Trophy, Trash2, ShieldBan, ShieldCheck, Loader2, Edit3, X, Calendar } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
@@ -12,7 +12,7 @@ import ProdeMatches from '../components/matches/ProdeMatches';
 export default function GroupView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore(state => state.user);
   const { setTheme, resetTheme } = useThemeStore();
 
   const [group, setGroup] = useState(null);
@@ -186,7 +186,7 @@ export default function GroupView() {
             <div className="flex flex-wrap items-center gap-2 mt-3 text-xs sm:text-sm">
               {group.competition && (
                 <span className="flex items-center gap-1.5 text-white/80 bg-white/5 px-2.5 py-1 rounded-full">
-                  {group.competition.logo && <img src={group.competition.logo} alt="" className="w-4 h-4 object-contain" />}
+                  {group.competition.logo && <img src={group.competition.logo} alt="" className="w-4 h-4 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                   <span className="truncate max-w-[120px] sm:max-w-none">{group.competition.name}</span>
                 </span>
               )}
@@ -242,10 +242,15 @@ export default function GroupView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-        
+      <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 sm:gap-6 relative items-start">
+
+        {/* CHAT (Renderizado primero para mobile sticky preview, reordenado con grid en desktop) */}
+        <div className="w-full lg:col-span-4 xl:col-span-3 lg:col-start-9 xl:col-start-10 lg:row-start-1 lg:h-[calc(100vh-180px)] lg:sticky lg:top-24 sticky top-14 z-[45]">
+          <GroupChat groupId={Number(id)} initialMessages={group.messages || []} />
+        </div>
+
         {/* LEADERBOARD / PREDICTIONS / BANNED */}
-        <div className="lg:col-span-8 xl:col-span-9 space-y-4 min-w-0">
+        <div className="w-full lg:col-span-8 xl:col-span-9 lg:col-start-1 lg:row-start-1 space-y-4 min-w-0">
           
           {/* Tabs — horizontal scroll on mobile */}
           <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
@@ -285,7 +290,7 @@ export default function GroupView() {
 
           <AnimatePresence mode="wait">
             {activeTab === 'leaderboard' && (
-              <motion.div
+              <m.div
                 key="leaderboard"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -295,7 +300,7 @@ export default function GroupView() {
                 {leaderboard.map((entry) => {
                   const isMe = entry.userId === user.id;
                   return (
-                    <motion.div 
+                    <m.div 
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       key={entry.userId}
@@ -353,7 +358,7 @@ export default function GroupView() {
                           </button>
                         )}
                       </div>
-                    </motion.div>
+                    </m.div>
                   );
                 })}
 
@@ -363,11 +368,11 @@ export default function GroupView() {
                     <p className="text-sm">Todavía no hay puntajes</p>
                   </div>
                 )}
-              </motion.div>
+              </m.div>
             )}
 
             {activeTab === 'banned' && group.isAdmin && (
-              <motion.div
+              <m.div
                 key="banned"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -382,7 +387,7 @@ export default function GroupView() {
                   </div>
                 ) : (
                   bannedList.map((entry) => (
-                    <motion.div
+                    <m.div
                       key={entry.userId}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -409,14 +414,14 @@ export default function GroupView() {
                       >
                         <ShieldCheck size={12} /> Desbanear
                       </button>
-                    </motion.div>
+                    </m.div>
                   ))
                 )}
-              </motion.div>
+              </m.div>
             )}
 
             {activeTab === 'predictions' && (
-              <motion.div
+              <m.div
                 key="predictions"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -427,7 +432,7 @@ export default function GroupView() {
                 {group.competition && (
                   <div className="flex items-center gap-2.5 sm:gap-3 mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10">
                     {group.competition.logo ? (
-                      <img src={group.competition.logo} alt={group.competition.name} className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow-md shrink-0" />
+                      <img src={group.competition.logo} alt={group.competition.name} className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow-md shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
                     ) : (
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 flex items-center justify-center text-lg sm:text-xl shrink-0">🏆</div>
                     )}
@@ -439,21 +444,16 @@ export default function GroupView() {
                 )}
                 
                 <ProdeMatches competitionId={group.competitionId} />
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
-        </div>
-
-        {/* CHAT */}
-        <div className="lg:col-span-4 xl:col-span-3 h-[350px] sm:h-[450px] lg:h-[calc(100vh-180px)] lg:sticky lg:top-24 pb-4">
-          <GroupChat groupId={Number(id)} initialMessages={group.messages || []} />
         </div>
       </div>
 
       {/* MODAL: EDITAR GRUPO */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-card rounded-xl sm:rounded-2xl w-full max-w-lg border border-white/10 shadow-2xl overflow-hidden relative my-auto">
+          <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-card rounded-xl sm:rounded-2xl w-full max-w-lg border border-white/10 shadow-2xl overflow-hidden relative my-auto">
             <div className="bg-white/5 p-3 sm:p-4 border-b border-white/10 flex items-center justify-between">
               <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
                 <Edit3 size={18} className="text-indigo-400" /> Editar Grupo
@@ -505,7 +505,7 @@ export default function GroupView() {
                 </button>
               </div>
             </form>
-          </motion.div>
+          </m.div>
         </div>
       )}
     </div>

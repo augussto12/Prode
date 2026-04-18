@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { ArrowLeft, User, Calendar, MapPin } from 'lucide-react';
 import api from '../services/api';
 import PlayerAvatar from '../components/shared/PlayerAvatar';
@@ -165,9 +165,9 @@ export default function TeamView() {
       </button>
 
       {/* HEADER */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
+      <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
         <div className="w-32 h-32 md:w-40 md:h-40 rounded-3xl bg-white/5 p-4 flex items-center justify-center border border-white/10 shadow-xl shrink-0">
-          <img src={team.logo} alt={team.name} className="w-full h-full object-contain" />
+          <img src={team.logo} alt={team.name} className="w-full h-full object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
         </div>
         <div className="flex-1 text-center md:text-left space-y-2">
           <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">{team.name}</h1>
@@ -190,7 +190,7 @@ export default function TeamView() {
             </div>
           )}
         </div>
-      </motion.div>
+      </m.div>
 
       {/* TABS */}
       <div className="flex gap-2 p-1 bg-white/5 rounded-2xl border border-white/10 overflow-x-auto scrollbar-none">
@@ -224,7 +224,7 @@ export default function TeamView() {
 
       {/* SQUAD AREA */}
       {activeTab === 'squad' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
           {squad.length === 0 ? (
             <div className="text-center py-10 text-white/40 glass-card rounded-2xl">No hay información del plantel</div>
           ) : (
@@ -263,12 +263,12 @@ export default function TeamView() {
               )}
             </>
           )}
-        </motion.div>
+        </m.div>
       )}
 
       {/* FIXTURES AREA */}
       {activeTab === 'fixtures' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
           {fixtures.length === 0 ? (
             <div className="text-center py-10 text-white/40 glass-card rounded-2xl">No hay historial de partidos</div>
           ) : (() => {
@@ -309,7 +309,7 @@ export default function TeamView() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-white/50">{isHome ? 'vs' : '@'}</span>
-                      <img src={opponent.logo} alt={opponent.name} className="w-5 h-5 object-contain" />
+                      <img src={opponent.logo} alt={opponent.name} className="w-5 h-5 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
                       <span className="font-bold text-sm text-white truncate">{opponent.name}</span>
                     </div>
                   </div>
@@ -326,11 +326,11 @@ export default function TeamView() {
               <FixtureSections upcoming={upcoming} played={played} renderFixture={renderFixture} initialShow={INITIAL_SHOW} />
             );
           })()}
-        </motion.div>
+        </m.div>
       )}
       {/* STATISTICS AREA */}
       {activeTab === 'statistics' && statistics && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
           <div className="glass-card rounded-2xl p-5 border border-white/10">
             <div className="text-xs uppercase tracking-widest text-indigo-400 font-bold mb-3 flex items-center justify-between">
               <span>Rendimiento Global ({statistics.league?.name})</span>
@@ -388,12 +388,12 @@ export default function TeamView() {
               </div>
             )}
           </div>
-        </motion.div>
+        </m.div>
       )}
 
       {/* TRANSFERS AREA */}
       {activeTab === 'transfers' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
 
           {/* Filters */}
           {allTransfers.length > 0 && (
@@ -442,7 +442,7 @@ export default function TeamView() {
 
                       <div className="flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-end bg-black/20 sm:bg-transparent rounded-lg p-2 sm:p-0">
                         <span className="text-white/50 text-xs font-medium">{isIncoming ? 'Desde:' : 'Hacia:'}</span>
-                        <img src={otherTeam.logo} alt="" className="w-8 h-8 object-contain" />
+                        <img src={otherTeam.logo} alt="" className="w-8 h-8 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
                         <span className="text-white font-bold text-sm truncate max-w-[120px]">{otherTeam.name}</span>
                       </div>
                     </div>
@@ -474,7 +474,7 @@ export default function TeamView() {
               </button>
             </div>
           )}
-        </motion.div>
+        </m.div>
       )}
 
     </div>
