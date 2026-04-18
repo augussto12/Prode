@@ -47,7 +47,7 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 border-b border-white/10 shadow-lg backdrop-blur-md" style={{ background: 'color-mix(in srgb, var(--color-bg-start) 80%, transparent)' }}>
-      <div className="max-w-[1600px] mx-auto px-4 md:px-8">
+      <div className="relative z-50 max-w-[1600px] mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
           <Link to="/explorar" className="flex items-center gap-2 text-white no-underline">
@@ -133,7 +133,7 @@ export default function Navbar() {
       {mobileOpen && (
         <>
           <div className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <div className="md:hidden absolute top-[72px] left-0 right-0 z-50 bg-[#0f0c29]/95 backdrop-blur-md border-b border-white/10 px-4 pb-4 pt-2 shadow-2xl">
+          <div className="md:hidden absolute top-full left-0 right-0 z-50 bg-[#0f0c29]/95 backdrop-blur-md border-b border-white/10 px-4 pb-4 pt-2 shadow-2xl">
             {links.map((link) => (
               <Link
                 key={link.to}
@@ -145,11 +145,6 @@ export default function Navbar() {
               >
                 <link.icon size={18} />
                 {link.label}
-                {link.badge && (
-                  <span className="ml-auto w-5 h-5 rounded-full bg-red-500 text-[10px] font-bold flex items-center justify-center text-white">
-                    {link.badge}
-                  </span>
-                )}
               </Link>
             ))}
             {user ? (

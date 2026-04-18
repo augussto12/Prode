@@ -148,11 +148,22 @@ model Prediction {
   overUnder25     String?
   moreShots       String?
   moreCorners     String?   // HOME, AWAY, EQUAL
+  morePossession  String?   // HOME, AWAY, EQUAL
+  moreFouls       String?   // HOME, AWAY, EQUAL
+  moreCards       String?   // HOME, AWAY, EQUAL
+  moreOffsides    String?   // HOME, AWAY, EQUAL
+  moreSaves       String?   // HOME, AWAY, EQUAL
+
   isJoker         Boolean   @default(false)
   
   pointsEarned    Int       @default(0)
   moreShotsHit    Boolean?  // null=not calculated, true=correct, false=wrong
-  moreCornersHit  Boolean?  // null=not calculated, true=correct, false=wrong
+  moreCornersHit  Boolean?
+  morePossessionHit Boolean?
+  moreFoulsHit    Boolean?
+  moreCardsHit    Boolean?
+  moreOffsidesHit Boolean?
+  moreSavesHit    Boolean?
   isCalculated    Boolean   @default(false)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -187,6 +198,11 @@ model ScoringConfig {
   btts          Int      @default(0) // Legacy
   moreShots     Int      @default(1)
   moreCorners   Int      @default(1)
+  morePossession Int     @default(1)
+  moreFouls     Int      @default(1)
+  moreCards     Int      @default(1)
+  moreOffsides  Int      @default(1)
+  moreSaves     Int      @default(1)
   overUnder     Int      @default(0) // Legacy
 }
 

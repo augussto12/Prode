@@ -243,6 +243,46 @@ function ScoringConfigEditor({ config, onUpdate }) {
       icon: '🚩',
       color: 'amber',
     },
+    { 
+      key: 'morePossession', 
+      label: 'Posesión (% de Pelota)', 
+      desc: 'Acertar qué equipo finalizará con más Posesión (0pts lo desactiva)',
+      example: 'Si gana Local el partido pero Visitante tuvo el 60% de posesión',
+      icon: '⚽',
+      color: 'emerald',
+    },
+    { 
+      key: 'moreFouls', 
+      label: 'Faltas Cometidas', 
+      desc: 'Acertar qué equipo hizo más faltas (0pts lo desactiva)',
+      example: 'El que mas faltas marque',
+      icon: '🦵',
+      color: 'blue',
+    },
+    { 
+      key: 'moreCards', 
+      label: 'Tarjetas (Amarillas+Rojas)', 
+      desc: 'Acertar qué equipo acumula más tarjetas en el partido (0pts lo desactiva)',
+      example: 'Si elegís Equipos, sumamos las amonestaciones de cada uno',
+      icon: '🟨',
+      color: 'amber',
+    },
+    { 
+      key: 'moreOffsides', 
+      label: 'Fueras de Juego', 
+      desc: 'Acertar qué equipo quedará atrapado más veces en fuera de juego',
+      example: 'Si ambos tienen 0 es EQUAL',
+      icon: '🏁',
+      color: 'violet',
+    },
+    { 
+      key: 'moreSaves', 
+      label: 'Atajadas del Arquero', 
+      desc: 'Acertar qué arquero tuvo que realizar más atajadas que el adversario',
+      example: '',
+      icon: '🧤',
+      color: 'emerald',
+    },
   ];
 
   const legacyFields = [

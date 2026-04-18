@@ -9,15 +9,30 @@ function getMatchResult(homeGoals, awayGoals) {
 }
 
 export function calculatePredictionPoints(prediction, fixtureData, config) {
-  let points = 0;
   let moreShotsHit = null;
   let moreCornersHit = null;
+  let morePossessionHit = null;
+  let moreFoulsHit = null;
+  let moreCardsHit = null;
+  let moreOffsidesHit = null;
+  let moreSavesHit = null;
 
   const actualHomeGoals = fixtureData.goals.home;
   const actualAwayGoals = fixtureData.goals.away;
 
   // If match doesn't have homeGoals/awayGoals recorded, we return 0.
-  if (actualHomeGoals === null || actualAwayGoals === null) return { points: 0, moreShotsHit: null, moreCornersHit: null };
+  if (actualHomeGoals === null || actualAwayGoals === null) {
+    return { 
+      points: 0, 
+      moreShotsHit: null, 
+      moreCornersHit: null,
+      morePossessionHit: null,
+      moreFoulsHit: null,
+      moreCardsHit: null,
+      moreOffsidesHit: null,
+      moreSavesHit: null
+    };
+  }
 
   // Only calculate result points if prediction actually put goals.
   if (prediction.homeGoals !== null && prediction.awayGoals !== null) {
@@ -39,35 +54,49 @@ export function calculatePredictionPoints(prediction, fixtureData, config) {
   const awayShots = fixtureData.awayShots ?? null;
   const homeCorners = fixtureData.homeCorners ?? null;
   const awayCorners = fixtureData.awayCorners ?? null;
+  const homePossession = fixtureData.homePossession ?? null;
+  const awayPossession = fixtureData.awayPossession ?? null;
+  const homeFouls = fixtureData.homeFouls ?? null;
+  const awayFouls = fixtureData.awayFouls ?? null;
+  const homeCards = fixtureData.homeCards ?? null;
+  const awayCards = fixtureData.awayCards ?? null;
+  const homeOffsides = fixtureData.homeOffsides ?? null;
+  const awayOffsides = fixtureData.awayOffsides ?? null;
+  const homeSaves = fixtureData.homeSaves ?? null;
+  const awaySaves = fixtureData.awaySaves ?? null;
 
-  // 2. Prop: More Shots on Goal (If API delivered the stat)
-  if (prediction.moreShots && homeShots !== null && awayShots !== null) {
-    const actual =
-      homeShots > awayShots ? 'HOME' :
-      homeShots < awayShots ? 'AWAY' : 'EQUAL';
-    moreShotsHit = prediction.moreShots === actual;
-    if (moreShotsHit) {
-      points += config.moreShots;
-    }
-  }
+  // Generic stat checker
+  const checkStat = (predictionValue, hVal, aVal, pointReward) => {
+    if (!predictionValue || hVal === null || aVal === null) return null;
+    const actual = hVal > aVal ? 'HOME' : hVal < aVal ? 'AWAY' : 'EQUAL';
+    const hit = predictionValue === actual;
+    if (hit) points += pointReward;
+    return hit;
+  };
 
-  // 3. Prop: More Corners (If API delivered the stat)
-  if (prediction.moreCorners && homeCorners !== null && awayCorners !== null) {
-    const actual =
-      homeCorners > awayCorners ? 'HOME' :
-      homeCorners < awayCorners ? 'AWAY' : 'EQUAL';
-    moreCornersHit = prediction.moreCorners === actual;
-    if (moreCornersHit) {
-      points += config.moreCorners;
-    }
-  }
-
+  // Extras execution
+  moreShotsHit = checkStat(prediction.moreShots, homeShots, awayShots, config.moreShots);
+  moreCornersHit = checkStat(prediction.moreCorners, homeCorners, awayCorners, config.moreCorners);
+  morePossessionHit = checkStat(prediction.morePossession, homePossession, awayPossession, config.morePossession);
+  moreFoulsHit = checkStat(prediction.moreFouls, homeFouls, awayFouls, config.moreFouls);
+  moreCardsHit = checkStat(prediction.moreCards, homeCards, awayCards, config.moreCards);
+  moreOffsidesHit = checkStat(prediction.moreOffsides, homeOffsides, awayOffsides, config.moreOffsides);
+  moreSavesHit = checkStat(prediction.moreSaves, homeSaves, awaySaves, config.moreSaves);
   // Joker Multiplier (x2)
   if (prediction.isJoker) {
     points *= 2;
   }
 
-  return { points, moreShotsHit, moreCornersHit };
+  return { 
+    points, 
+    moreShotsHit, 
+    moreCornersHit,
+    morePossessionHit,
+    moreFoulsHit,
+    moreCardsHit,
+    moreOffsidesHit,
+    moreSavesHit
+  };
 }
 
 /**
@@ -119,7 +148,7 @@ export async function scorePendingPredictions() {
     if (isFinished) {
       // 3. Fetch stats if we need to score shots/corners
       // Ideally we would only fetch this if the config awards > 0 points to avoid unnecessary API calls
-      if (config.moreShots > 0 || config.moreCorners > 0) {
+      if (config.moreShots > 0 || config.moreCorners > 0 || config.morePossession > 0 || config.moreFouls > 0 || config.moreCards > 0 || config.moreOffsides > 0 || config.moreSaves > 0) {
         const statsData = await cachedApiCall(`fixture-stats:${externalFixtureId}`, 86400, async () => {
           const result = await footballApi.fetchFixtureStats(externalFixtureId);
           return result.response || [];
@@ -131,13 +160,34 @@ export async function scorePendingPredictions() {
         
         const getStat = (arr, type) => {
           const s = arr.find(x => x.type === type);
-          return s && s.value !== null ? Number(s.value) : null;
+          if (!s || s.value === null) return null;
+          // Clean percentage if string
+          const valStr = String(s.value).replace('%', '');
+          return Number(valStr);
         };
 
         fixtureData.homeShots = getStat(homeStats, 'Shots on Goal');
         fixtureData.awayShots = getStat(awayStats, 'Shots on Goal');
         fixtureData.homeCorners = getStat(homeStats, 'Corner Kicks');
         fixtureData.awayCorners = getStat(awayStats, 'Corner Kicks');
+        fixtureData.homePossession = getStat(homeStats, 'Ball Possession');
+        fixtureData.awayPossession = getStat(awayStats, 'Ball Possession');
+        fixtureData.homeFouls = getStat(homeStats, 'Fouls');
+        fixtureData.awayFouls = getStat(awayStats, 'Fouls');
+        
+        // Sum Yellow + Red Cards
+        const homeY = getStat(homeStats, 'Yellow Cards') || 0;
+        const homeR = getStat(homeStats, 'Red Cards') || 0;
+        fixtureData.homeCards = homeY + homeR;
+        
+        const awayY = getStat(awayStats, 'Yellow Cards') || 0;
+        const awayR = getStat(awayStats, 'Red Cards') || 0;
+        fixtureData.awayCards = awayY + awayR;
+
+        fixtureData.homeOffsides = getStat(homeStats, 'Offsides');
+        fixtureData.awayOffsides = getStat(awayStats, 'Offsides');
+        fixtureData.homeSaves = getStat(homeStats, 'Goalkeeper Saves');
+        fixtureData.awaySaves = getStat(awayStats, 'Goalkeeper Saves');
       }
 
       // Fetch all predictions for this fixture
@@ -154,6 +204,11 @@ export async function scorePendingPredictions() {
             pointsEarned: result.points, 
             moreShotsHit: result.moreShotsHit,
             moreCornersHit: result.moreCornersHit,
+            morePossessionHit: result.morePossessionHit,
+            moreFoulsHit: result.moreFoulsHit,
+            moreCardsHit: result.moreCardsHit,
+            moreOffsidesHit: result.moreOffsidesHit,
+            moreSavesHit: result.moreSavesHit,
             isCalculated: true 
           },
         });

@@ -43,14 +43,20 @@ export default function GroupPredictionsModal({ isOpen, onClose, groupId, match 
                 <Users size={16} className="text-indigo-400" /> Predicciones del Grupo
               </h3>
               {match && (
-                <div className="text-[10px] text-white/50 mt-1 flex items-center gap-2">
-                  <span className="flex items-center gap-1">
-                    {match.homeTeamLogo && <img src={match.homeTeamLogo} alt="" className="w-3 h-3 object-contain" loading="lazy" onError={(e) => e.target.src='/placeholder-team.svg'} />}
+                <div className="text-[10px] sm:text-xs text-white/50 mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                  <span className="flex items-center gap-1 font-medium text-white/80">
+                    {match.homeTeamLogo && <img src={match.homeTeamLogo} alt="" className="w-3.5 h-3.5 object-contain" loading="lazy" onError={(e) => e.target.src='/placeholder-team.svg'} />}
                     {match.homeTeam}
                   </span>
-                  <span>vs</span>
-                  <span className="flex items-center gap-1">
-                    {match.awayTeamLogo && <img src={match.awayTeamLogo} alt="" className="w-3 h-3 object-contain" loading="lazy" onError={(e) => e.target.src='/placeholder-team.svg'} />}
+                  {(match.status === 'FINISHED' || match.status === 'LIVE' || typeof match.homeGoals === 'number') ? (
+                    <span className="px-1.5 py-0.5 rounded bg-white/10 text-white font-bold text-[11px] shadow-sm">
+                      {match.homeGoals} - {match.awayGoals}
+                    </span>
+                  ) : (
+                    <span className="text-white/30 text-[10px]">vs</span>
+                  )}
+                  <span className="flex items-center gap-1 font-medium text-white/80">
+                    {match.awayTeamLogo && <img src={match.awayTeamLogo} alt="" className="w-3.5 h-3.5 object-contain" loading="lazy" onError={(e) => e.target.src='/placeholder-team.svg'} />}
                     {match.awayTeam}
                   </span>
                 </div>
@@ -70,14 +76,21 @@ export default function GroupPredictionsModal({ isOpen, onClose, groupId, match 
             ) : (
               data.map((item, idx) => {
                 const { user, prediction } = item;
-                const pH = prediction?.homeGoals !== null ? Number(prediction.homeGoals) : null;
-                const pA = prediction?.awayGoals !== null ? Number(prediction.awayGoals) : null;
+                const pH = (prediction && prediction.homeGoals !== null) ? Number(prediction.homeGoals) : null;
+                const pA = (prediction && prediction.awayGoals !== null) ? Number(prediction.awayGoals) : null;
                 
                 const mH = Number(match.homeGoals);
                 const mA = Number(match.awayGoals);
 
                 let badge = null;
                 let badgeColor = "text-white/30";
+                
+                const getMarketLabel = (value) => {
+                  if (value === 'HOME') return match.homeTeam.substring(0, 3).toUpperCase();
+                  if (value === 'AWAY') return match.awayTeam.substring(0, 3).toUpperCase();
+                  if (value === 'EQUAL') return '=';
+                  return '?';
+                };
                 
                 if (prediction) {
                   const isExact = pH === mH && pA === mA;
@@ -108,13 +121,25 @@ export default function GroupPredictionsModal({ isOpen, onClose, groupId, match 
                       </div>
                     </div>
 
-                    <div className="text-right shrink-0">
+                    <div className="text-right shrink-0 mt-1 sm:mt-0">
                       {prediction ? (
-                        <div className="px-2 py-1 bg-black/30 rounded-lg text-xs sm:text-sm font-bold text-white border border-white/10 text-center min-w-[50px]">
-                          {pH} - {pA}
+                        <div className="flex flex-col items-end gap-1.5">
+                          <div className="px-2 py-1 bg-black/30 rounded-lg text-xs sm:text-sm font-bold text-white border border-white/10 text-center min-w-[50px] shadow-inner inline-block">
+                            {pH} - {pA}
+                          </div>
+                          {/* list extras horizontally or vertically? Vertically maybe too much gap. Horizontally right aligned? */}
+                          <div className="flex items-center gap-1 flex-wrap justify-end max-w-[130px]">
+                            {prediction.moreShots && <span className="text-[9px] px-1 bg-violet-500/10 text-violet-300 rounded border border-violet-500/20" title="Más Remates">🔫 {getMarketLabel(prediction.moreShots)}</span>}
+                            {prediction.moreCorners && <span className="text-[9px] px-1 bg-amber-500/10 text-amber-300 rounded border border-amber-500/20" title="Más Córners">🚩 {getMarketLabel(prediction.moreCorners)}</span>}
+                            {prediction.morePossession && <span className="text-[9px] px-1 bg-emerald-500/10 text-emerald-300 rounded border border-emerald-500/20" title="Más Posesión">⚽ {getMarketLabel(prediction.morePossession)}</span>}
+                            {prediction.moreFouls && <span className="text-[9px] px-1 bg-blue-500/10 text-blue-300 rounded border border-blue-500/20" title="Más Faltas">🦵 {getMarketLabel(prediction.moreFouls)}</span>}
+                            {prediction.moreCards && <span className="text-[9px] px-1 bg-yellow-500/10 text-yellow-300 rounded border border-yellow-500/20" title="Más Tarjetas">🟨 {getMarketLabel(prediction.moreCards)}</span>}
+                            {prediction.moreOffsides && <span className="text-[9px] px-1 bg-fuchsia-500/10 text-fuchsia-300 rounded border border-fuchsia-500/20" title="Más Offsides">🏁 {getMarketLabel(prediction.moreOffsides)}</span>}
+                            {prediction.moreSaves && <span className="text-[9px] px-1 bg-teal-500/10 text-teal-300 rounded border border-teal-500/20" title="Más Atajadas">🧤 {getMarketLabel(prediction.moreSaves)}</span>}
+                          </div>
                         </div>
                       ) : (
-                        <div className="text-xs text-white/20 italic">-</div>
+                        <div className="text-xs text-white/20 italic mt-2">-</div>
                       )}
                     </div>
                   </div>

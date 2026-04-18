@@ -46,6 +46,11 @@ export const predictionSchema = z.object({
   overUnder25: z.enum(['OVER', 'UNDER']).optional().nullable(),
   moreShots: z.enum(['HOME', 'AWAY', 'EQUAL']).optional().nullable(),
   moreCorners: z.enum(['HOME', 'AWAY', 'EQUAL']).optional().nullable(),
+  morePossession: z.enum(['HOME', 'AWAY', 'EQUAL']).optional().nullable(),
+  moreFouls: z.enum(['HOME', 'AWAY', 'EQUAL']).optional().nullable(),
+  moreCards: z.enum(['HOME', 'AWAY', 'EQUAL']).optional().nullable(),
+  moreOffsides: z.enum(['HOME', 'AWAY', 'EQUAL']).optional().nullable(),
+  moreSaves: z.enum(['HOME', 'AWAY', 'EQUAL']).optional().nullable(),
   isJoker: z.boolean().optional().default(false),
 });
 
@@ -106,9 +111,14 @@ export const scoringConfigSchema = z.object({
   correctWinner: z.number().int().min(0).max(100),
   doubleChance: z.number().int().min(0).max(100),
   btts: z.number().int().min(0).max(100),
-  overUnder: z.number().int().min(0).max(100),
   moreShots: z.number().int().min(0).max(100),
   moreCorners: z.number().int().min(0).max(100),
+  morePossession: z.number().int().min(0).max(100),
+  moreFouls: z.number().int().min(0).max(100),
+  moreCards: z.number().int().min(0).max(100),
+  moreOffsides: z.number().int().min(0).max(100),
+  moreSaves: z.number().int().min(0).max(100),
+  overUnder: z.number().int().min(0).max(100),
 });
 
 // --- ROLE UPDATE ---

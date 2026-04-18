@@ -16,6 +16,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
   const [prediction, setPrediction] = useState({
     homeGoals: '', awayGoals: '', winner: '', doubleChance: '',
     btts: null, overUnder25: '', moreShots: '', moreCorners: '',
+    morePossession: '', moreFouls: '', moreCards: '', moreOffsides: '', moreSaves: '',
     isJoker: false,
   });
   const [saving, setSaving] = useState(false);
@@ -42,6 +43,11 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
         overUnder25: existingProp.overUnder25 || '',
         moreShots: existingProp.moreShots || '',
         moreCorners: existingProp.moreCorners || '',
+        morePossession: existingProp.morePossession || '',
+        moreFouls: existingProp.moreFouls || '',
+        moreCards: existingProp.moreCards || '',
+        moreOffsides: existingProp.moreOffsides || '',
+        moreSaves: existingProp.moreSaves || '',
         isJoker: existingProp.isJoker || false,
       });
     }
@@ -53,6 +59,9 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
     if (!existingProp) {
       return prediction.homeGoals !== '' || prediction.awayGoals !== '' || 
              prediction.moreShots !== '' || prediction.moreCorners !== '' ||
+             prediction.morePossession !== '' || prediction.moreFouls !== '' ||
+             prediction.moreCards !== '' || prediction.moreOffsides !== '' ||
+             prediction.moreSaves !== '' ||
              prediction.isJoker;
     }
     // If there's an existing prediction, compare each field
@@ -62,6 +71,11 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
       String(prediction.awayGoals) !== String(ep.awayGoals ?? '') ||
       (prediction.moreShots || '') !== (ep.moreShots || '') ||
       (prediction.moreCorners || '') !== (ep.moreCorners || '') ||
+      (prediction.morePossession || '') !== (ep.morePossession || '') ||
+      (prediction.moreFouls || '') !== (ep.moreFouls || '') ||
+      (prediction.moreCards || '') !== (ep.moreCards || '') ||
+      (prediction.moreOffsides || '') !== (ep.moreOffsides || '') ||
+      (prediction.moreSaves || '') !== (ep.moreSaves || '') ||
       (prediction.isJoker || false) !== (ep.isJoker || false)
     );
   }, [prediction, existingProp]);
@@ -78,6 +92,11 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
         awayGoals: prediction.awayGoals !== '' ? Number(prediction.awayGoals) : null,
         moreShots: prediction.moreShots || null,
         moreCorners: prediction.moreCorners || null,
+        morePossession: prediction.morePossession || null,
+        moreFouls: prediction.moreFouls || null,
+        moreCards: prediction.moreCards || null,
+        moreOffsides: prediction.moreOffsides || null,
+        moreSaves: prediction.moreSaves || null,
         isJoker: prediction.isJoker || false
       };
       
@@ -131,7 +150,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
   };
 
   // Whether the card has existing extra market predictions to show on past matches
-  const hasExtraMarkets = existingPrediction && (existingPrediction.moreShots || existingPrediction.moreCorners);
+  const hasExtraMarkets = existingPrediction && (existingPrediction.moreShots || existingPrediction.moreCorners || existingPrediction.morePossession || existingPrediction.moreFouls || existingPrediction.moreCards || existingPrediction.moreOffsides || existingPrediction.moreSaves);
 
   return (
     <m.div
@@ -290,6 +309,58 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
             </div>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Possession */}
+            <div>
+              <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Posesión</label>
+              <div className="flex gap-1.5 sm:gap-2">
+                <ToggleButton field="morePossession" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="morePossession" value="EQUAL" label="=" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="morePossession" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+              </div>
+            </div>
+
+            {/* Fouls */}
+            <div>
+              <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Faltas</label>
+              <div className="flex gap-1.5 sm:gap-2">
+                <ToggleButton field="moreFouls" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreFouls" value="EQUAL" label="=" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreFouls" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+              </div>
+            </div>
+
+            {/* Cards */}
+            <div>
+              <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Tarjetas (Am+R)</label>
+              <div className="flex gap-1.5 sm:gap-2">
+                <ToggleButton field="moreCards" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreCards" value="EQUAL" label="=" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreCards" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+              </div>
+            </div>
+
+            {/* Offsides */}
+            <div>
+              <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Offsides</label>
+              <div className="flex gap-1.5 sm:gap-2">
+                <ToggleButton field="moreOffsides" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreOffsides" value="EQUAL" label="=" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreOffsides" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+              </div>
+            </div>
+
+            {/* Saves */}
+            <div>
+              <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Atajadas</label>
+              <div className="flex gap-1.5 sm:gap-2">
+                <ToggleButton field="moreSaves" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreSaves" value="EQUAL" label="=" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreSaves" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+              </div>
+            </div>
+          </div>
+
           {/* Save button — only show when there are changes */}
           {hasChanges && (
             <m.button
@@ -332,6 +403,61 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
               </div>
               <span className="text-[10px] sm:text-xs font-semibold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
                 {getMarketLabel(existingPrediction.moreCorners)}
+              </span>
+            </div>
+          )}
+          {existingPrediction.morePossession && (
+            <div className="flex items-center justify-between bg-white/[0.03] rounded-lg p-2.5 sm:p-3">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-emerald-400/60 text-[13px]">⚽</span>
+                <span className="text-[10px] sm:text-xs text-white/40">Más Posesión</span>
+              </div>
+              <span className="text-[10px] sm:text-xs font-semibold text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                {getMarketLabel(existingPrediction.morePossession)}
+              </span>
+            </div>
+          )}
+          {existingPrediction.moreFouls && (
+            <div className="flex items-center justify-between bg-white/[0.03] rounded-lg p-2.5 sm:p-3">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-blue-400/60 text-[13px]">🦵</span>
+                <span className="text-[10px] sm:text-xs text-white/40">Más Faltas</span>
+              </div>
+              <span className="text-[10px] sm:text-xs font-semibold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                {getMarketLabel(existingPrediction.moreFouls)}
+              </span>
+            </div>
+          )}
+          {existingPrediction.moreCards && (
+            <div className="flex items-center justify-between bg-white/[0.03] rounded-lg p-2.5 sm:p-3">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-yellow-400/60 text-[13px]">🟨</span>
+                <span className="text-[10px] sm:text-xs text-white/40">Más Tarjetas</span>
+              </div>
+              <span className="text-[10px] sm:text-xs font-semibold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">
+                {getMarketLabel(existingPrediction.moreCards)}
+              </span>
+            </div>
+          )}
+          {existingPrediction.moreOffsides && (
+            <div className="flex items-center justify-between bg-white/[0.03] rounded-lg p-2.5 sm:p-3">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-violet-400/60 text-[13px]">🏁</span>
+                <span className="text-[10px] sm:text-xs text-white/40">Más Offsides</span>
+              </div>
+              <span className="text-[10px] sm:text-xs font-semibold text-violet-300 bg-violet-500/10 px-2 py-0.5 rounded border border-violet-500/20">
+                {getMarketLabel(existingPrediction.moreOffsides)}
+              </span>
+            </div>
+          )}
+          {existingPrediction.moreSaves && (
+            <div className="flex items-center justify-between bg-white/[0.03] rounded-lg p-2.5 sm:p-3">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-emerald-400/60 text-[13px]">🧤</span>
+                <span className="text-[10px] sm:text-xs text-white/40">Más Atajadas</span>
+              </div>
+              <span className="text-[10px] sm:text-xs font-semibold text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                {getMarketLabel(existingPrediction.moreSaves)}
               </span>
             </div>
           )}
