@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { m } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Clock, MapPin } from 'lucide-react';
 import api from '../services/api';
 import { tStat, tEvent, tRound, tMarket, tOddValue, tInjury } from '../utils/translations';
