@@ -360,16 +360,49 @@ export default function Explorer() {
 // ─── Today Matches grouped by league ───
 const TodayMatchesRow = ({ data }) => {
   const [collapsedLeagues, setCollapsedLeagues] = useState({});
+  const [liveOnly, setLiveOnly] = useState(false);
+
+  const LIVE_STATUSES = ['1H', '2H', 'HT', 'ET', 'BT', 'P'];
+
+  // Count total live matches across all leagues
+  const liveCount = (data.grouped || []).reduce((acc, g) =>
+    acc + g.matches.filter(m => LIVE_STATUSES.includes(m.fixture.status.short)).length, 0
+  );
+
+  // Filter groups when liveOnly is active
+  const displayGroups = liveOnly
+    ? (data.grouped || [])
+        .map(g => ({
+          ...g,
+          matches: g.matches.filter(m => LIVE_STATUSES.includes(m.fixture.status.short)),
+        }))
+        .filter(g => g.matches.length > 0)
+    : (data.grouped || []);
 
   return (
     <m.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
       className="glass-card rounded-2xl p-4 border border-white/5">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-        <span className="text-sm font-bold text-white/50 uppercase tracking-wider">Partidos de Hoy — {data.total} encuentros</span>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+          <span className="text-sm font-bold text-white/50 uppercase tracking-wider">Partidos de Hoy — {data.total} encuentros</span>
+        </div>
+        {liveCount > 0 && (
+          <button
+            onClick={() => setLiveOnly(prev => !prev)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer ${
+              liveOnly
+                ? 'bg-red-500/20 text-red-400 border-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.2)]'
+                : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10 hover:text-white/60'
+            }`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${liveOnly ? 'bg-red-400 animate-pulse' : 'bg-white/30'}`} />
+            En Vivo ({liveCount})
+          </button>
+        )}
       </div>
       <div className="space-y-3">
-        {(data.grouped || []).map(group => {
+        {displayGroups.map(group => {
           const isCollapsed = collapsedLeagues[group.league.id];
           return (
             <div key={group.league.id} className="pt-2">

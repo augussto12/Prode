@@ -16,6 +16,64 @@ function getCurrentSeason() {
   return new Date().getFullYear();
 }
 
+/**
+ * Strip unused fields from API Football match objects.
+ * Reduces JSON payload ~60% by keeping only what the frontend renders.
+ */
+function trimMatch(m) {
+  return {
+    fixture: {
+      id: m.fixture.id,
+      date: m.fixture.date,
+      status: {
+        short: m.fixture.status?.short,
+        elapsed: m.fixture.status?.elapsed,
+      },
+    },
+    league: {
+      id: m.league?.id,
+      name: m.league?.name,
+      logo: m.league?.logo,
+      flag: m.league?.flag,
+      round: m.league?.round,
+    },
+    teams: {
+      home: { id: m.teams?.home?.id, name: m.teams?.home?.name, logo: m.teams?.home?.logo },
+      away: { id: m.teams?.away?.id, name: m.teams?.away?.name, logo: m.teams?.away?.logo },
+    },
+    goals: m.goals,
+    // Penalty score needed by useBracket to determine knockout winners
+    score: m.score?.penalty?.home != null ? { penalty: m.score.penalty } : undefined,
+  };
+}
+
+/**
+ * Trim for team fixtures — keeps score.fulltime needed by TeamView
+ * to determine W/D/L result badges.
+ */
+function trimTeamFixture(m) {
+  return {
+    fixture: {
+      id: m.fixture.id,
+      date: m.fixture.date,
+      status: {
+        short: m.fixture.status?.short,
+        elapsed: m.fixture.status?.elapsed,
+      },
+    },
+    league: {
+      id: m.league?.id,
+      name: m.league?.name,
+    },
+    teams: {
+      home: { id: m.teams?.home?.id, name: m.teams?.home?.name, logo: m.teams?.home?.logo },
+      away: { id: m.teams?.away?.id, name: m.teams?.away?.name, logo: m.teams?.away?.logo },
+    },
+    goals: m.goals,
+    score: { fulltime: m.score?.fulltime },
+  };
+}
+
 // ═══════════════════════════════════════
 // LEAGUES & COUNTRIES
 // ═══════════════════════════════════════
@@ -145,7 +203,7 @@ router.get('/leagues/:id/fixtures', async (req, res, next) => {
       return result.response;
     });
 
-    res.json(data);
+    res.json((data || []).map(trimMatch));
   } catch (err) { next(err); }
 });
 
@@ -228,7 +286,7 @@ router.get('/live', async (req, res, next) => {
           matches: [],
         };
       }
-      byLeague[key].matches.push(m);
+      byLeague[key].matches.push(trimMatch(m));
     });
 
     const grouped = Object.values(byLeague).sort((a, b) => {
@@ -269,7 +327,7 @@ router.get('/today', async (req, res, next) => {
           matches: [],
         };
       }
-      byLeague[key].matches.push(m);
+      byLeague[key].matches.push(trimMatch(m));
     });
 
     const grouped = Object.values(byLeague).sort((a, b) => {
@@ -555,7 +613,7 @@ router.get('/teams/:id/fixtures', async (req, res, next) => {
       });
     });
 
-    res.json(data);
+    res.json((data || []).map(trimTeamFixture));
   } catch (err) { next(err); }
 });
 
