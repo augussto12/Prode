@@ -39,13 +39,7 @@ export default function PredictionHistory({ predictions, matches, groupId }) {
     : predFilter === 'pending' ? pendingPreds
     : predsWithMatch;
 
-  // Helper to show market label with team name
-  const getMarketLabel = (value, match) => {
-    if (value === 'HOME') return match.homeTeam;
-    if (value === 'AWAY') return match.awayTeam;
-    if (value === 'EQUAL') return 'Igual';
-    return '—';
-  };
+
 
   return (
     <div className="space-y-3 sm:space-y-4">
@@ -176,39 +170,7 @@ export default function PredictionHistory({ predictions, matches, groupId }) {
                   </div>
                 </div>
 
-                {/* Extra Markets Row — shown below when moreShots or moreCorners exist */}
-                {hasExtras && (
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 pt-2 border-t border-white/5">
-                    {pred.moreShots && (
-                      <div className="flex items-center gap-1.5">
-                        <Crosshair size={11} className="text-violet-400/60 shrink-0" />
-                        <span className="text-[9px] sm:text-[10px] text-white/30">Remates al Arco:</span>
-                        <span className="text-[9px] sm:text-[10px] font-semibold text-violet-300 bg-violet-500/10 px-1.5 py-0.5 rounded border border-violet-500/20">
-                          {getMarketLabel(pred.moreShots, matchObj)}
-                        </span>
-                        {pred.moreShotsHit !== null && pred.moreShotsHit !== undefined && (
-                          <span className={`text-[9px] font-bold ${pred.moreShotsHit ? 'text-emerald-400' : 'text-red-400'}`}>
-                            {pred.moreShotsHit ? '✓' : '✗'}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    {pred.moreCorners && (
-                      <div className="flex items-center gap-1.5">
-                        <Flag size={11} className="text-amber-400/60 shrink-0" />
-                        <span className="text-[9px] sm:text-[10px] text-white/30">Córners:</span>
-                        <span className="text-[9px] sm:text-[10px] font-semibold text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-                          {getMarketLabel(pred.moreCorners, matchObj)}
-                        </span>
-                        {pred.moreCornersHit !== null && pred.moreCornersHit !== undefined && (
-                          <span className={`text-[9px] font-bold ${pred.moreCornersHit ? 'text-emerald-400' : 'text-red-400'}`}>
-                            {pred.moreCornersHit ? '✓' : '✗'}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+
                 {/* Botón predicciones grupales */}
                 {groupId && isFinished && (
                   <div className="mt-3 pt-3 flex justify-end border-t border-white/5">

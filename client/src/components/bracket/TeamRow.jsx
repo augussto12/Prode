@@ -24,7 +24,10 @@ export default function TeamRow({ team, goals, isWinner, isLoser }) {
       <img         src={team.logo}
         alt=""
         className="w-6 h-6 object-contain shrink-0"
+        width={24}
+        height={24}
         loading="lazy"
+        decoding="async"
       onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
       <span
         className={`flex-1 text-xs font-semibold truncate ${

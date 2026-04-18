@@ -52,9 +52,10 @@ export default function GuruChat() {
              animate={{ scale: 1 }} 
              exit={{ scale: 0 }}
              onClick={() => setIsOpen(true)}
+             aria-label="Abrir chat del Gurú"
              className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 bg-rose-600 hover:bg-rose-500 rounded-full flex items-center justify-center cursor-pointer shadow-[0_0_20px_rgba(225,29,72,0.6)] z-50 transition-colors border-none group"
            >
-             <Bot className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:animate-bounce" />
+             <Bot className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:animate-bounce" aria-hidden="true" />
              {/* Indicador de badge opcional */}
              <span className="absolute top-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-white rounded-full border-2 border-rose-600 animate-pulse"></span>
            </m.button>
@@ -84,8 +85,8 @@ export default function GuruChat() {
                      </p>
                    </div>
                 </div>
-                <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white bg-transparent border-none cursor-pointer">
-                  <X size={20} />
+                <button onClick={() => setIsOpen(false)} aria-label="Cerrar chat" className="text-white/80 hover:text-white bg-transparent border-none cursor-pointer">
+                  <X size={20} aria-hidden="true" />
                 </button>
              </div>
 
@@ -130,9 +131,10 @@ export default function GuruChat() {
                 <button 
                   type="submit"
                   disabled={loading || !input.trim()}
+                  aria-label="Enviar mensaje"
                   className="w-10 h-10 rounded-xl bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center border-none cursor-pointer disabled:opacity-50 transition-colors"
                 >
-                  <Send size={18} />
+                  <Send size={18} aria-hidden="true" />
                 </button>
              </form>
           </m.div>

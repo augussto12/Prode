@@ -186,7 +186,7 @@ export default function GroupView() {
             <div className="flex flex-wrap items-center gap-2 mt-3 text-xs sm:text-sm">
               {group.competition && (
                 <span className="flex items-center gap-1.5 text-white/80 bg-white/5 px-2.5 py-1 rounded-full">
-                  {group.competition.logo && <img src={group.competition.logo} alt="" className="w-4 h-4 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                  {group.competition.logo && <img src={group.competition.logo} alt="" width={16} height={16} className="w-4 h-4 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                   <span className="truncate max-w-[120px] sm:max-w-none">{group.competition.name}</span>
                 </span>
               )}
@@ -204,10 +204,10 @@ export default function GroupView() {
           {/* Bottom: Invite code + Actions — horizontal on mobile */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             {/* Invite code — compact on mobile */}
-            <div className="bg-black/20 rounded-xl p-2.5 sm:p-3 border border-white/5 flex items-center gap-3 sm:flex-col sm:text-center sm:min-w-[200px]">
+            <div className="bg-black/20 rounded-xl p-2.5 sm:p-3 border border-white/5 flex items-center gap-3 sm:flex-col sm:text-center sm:min-w-[200px] min-w-0">
               <div className="text-[10px] sm:text-xs text-white/40 shrink-0">Código</div>
-              <div className="flex items-center gap-2 flex-1 justify-center">
-                <span className="font-mono text-sm sm:text-lg text-white font-bold tracking-wider truncate">{group.inviteCode}</span>
+              <div className="flex items-center gap-2 flex-1 justify-center min-w-0 mb-1 sm:mb-0">
+                <span className="font-mono text-sm sm:text-base text-white font-bold tracking-wider truncate bg-white/5 px-2 py-1 rounded inline-block max-w-full overflow-hidden text-ellipsis">{group.inviteCode}</span>
                 <button 
                   onClick={copyCode}
                   className="p-1.5 text-indigo-400 hover:text-indigo-300 hover:bg-white/5 rounded-lg transition-colors cursor-pointer border-none bg-transparent shrink-0"
@@ -338,14 +338,14 @@ export default function GroupView() {
                             <span className="px-1 py-0.5 bg-indigo-500/20 text-indigo-400 rounded text-[9px] sm:text-[10px] font-semibold shrink-0">TÚ</span>
                           )}
                         </div>
-                        <div className="text-[10px] sm:text-xs text-white/30 truncate">@{entry.username}</div>
+                        <div className="text-[10px] sm:text-xs text-white/40 truncate">@{entry.username}</div>
                       </div>
 
                       {/* Score & Actions */}
                       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                         <div className="text-right">
                           <div className="text-base sm:text-lg font-bold" style={{ color: 'var(--color-accent)' }}>{entry.totalPoints}</div>
-                          <div className="text-[9px] sm:text-[10px] text-white/30 uppercase tracking-wider">pts</div>
+                          <div className="text-[9px] sm:text-[10px] text-white/40 uppercase tracking-wider">pts</div>
                         </div>
                         
                         {/* Admin Actions */}
@@ -401,7 +401,7 @@ export default function GroupView() {
                       {/* User */}
                       <div className="flex-1 min-w-0">
                         <div className="text-xs sm:text-sm font-medium text-white truncate">{entry.displayName}</div>
-                        <div className="text-[10px] sm:text-xs text-white/30 truncate">@{entry.username}</div>
+                        <div className="text-[10px] sm:text-xs text-white/40 truncate">@{entry.username}</div>
                         <div className="text-[10px] text-red-400/60 mt-0.5">
                           Baneado {entry.bannedAt ? new Date(entry.bannedAt).toLocaleDateString('es-AR') : ''}
                         </div>
@@ -432,7 +432,7 @@ export default function GroupView() {
                 {group.competition && (
                   <div className="flex items-center gap-2.5 sm:gap-3 mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10">
                     {group.competition.logo ? (
-                      <img src={group.competition.logo} alt={group.competition.name} className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow-md shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+                      <img src={group.competition.logo} alt={group.competition.name} width={32} height={32} className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow-md shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
                     ) : (
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 flex items-center justify-center text-lg sm:text-xl shrink-0">🏆</div>
                     )}

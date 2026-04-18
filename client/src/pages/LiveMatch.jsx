@@ -148,7 +148,7 @@ export default function LiveMatch() {
         {/* League & Venue Info */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/5 mb-2">
-            {league?.logo && <img src={league.logo} alt="" className="w-4 h-4 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+            {league?.logo && <img src={league.logo} alt="" width={16} height={16} className="w-4 h-4 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
             <span className="text-xs font-medium text-white/70">{league?.name}</span>
             <span className="text-white/20 px-1">•</span>
             <span className="text-xs text-white/40">{tRound(league?.round)}</span>
@@ -162,20 +162,20 @@ export default function LiveMatch() {
         </div>
 
         {/* Main Scoreboard */}
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
+        <div className="flex items-center justify-center gap-2 sm:gap-6 md:gap-12 max-w-4xl mx-auto">
           {/* Home Team */}
           <div className="flex-1 flex flex-col items-center text-center cursor-pointer group" onClick={() => navigate(`/equipo/${teams?.home?.id}`)}>
             {teams?.home?.logo ? (
-              <img src={teams.home.logo} alt="" className="w-16 h-16 md:w-32 md:h-32 mb-2 md:mb-4 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+              <img src={teams.home.logo} alt="" width={48} height={48} className="w-12 h-12 md:w-24 md:h-24 mb-1 md:mb-4 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
             ) : (
-              <div className="w-16 h-16 md:w-32 md:h-32 rounded-full bg-white/5 flex items-center justify-center mb-2 md:mb-4 text-2xl md:text-4xl group-hover:bg-white/10 transition-colors">{teams?.home?.name?.[0]}</div>
+              <div className="w-12 h-12 md:w-24 md:h-24 rounded-full bg-white/5 flex items-center justify-center mb-1 md:mb-4 text-xl md:text-3xl group-hover:bg-white/10 transition-colors">{teams?.home?.name?.[0]}</div>
             )}
-            <div className="text-lg md:text-2xl font-bold text-white tracking-tight group-hover:text-indigo-300 transition-colors">{teams?.home?.name}</div>
+            <div className="text-sm md:text-2xl font-bold text-white tracking-tight group-hover:text-indigo-300 transition-colors max-w-[90px] md:max-w-[200px] leading-tight">{teams?.home?.name}</div>
           </div>
 
           {/* Score Center */}
-          <div className="px-4 md:px-10 text-center flex flex-col items-center">
-            <div className="text-5xl md:text-7xl font-black text-white tracking-tighter" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
+          <div className="px-2 md:px-6 text-center flex flex-col items-center shrink-0">
+            <div className="text-3xl sm:text-5xl md:text-7xl font-black text-white tracking-tighter whitespace-nowrap" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
               {goals?.home ?? 0} <span className="text-white/20 font-normal mx-1 md:mx-3">-</span> {goals?.away ?? 0}
             </div>
 
@@ -200,12 +200,12 @@ export default function LiveMatch() {
               const idaScoreText = `${idaGoalsForCurrentAway ?? 0} - ${idaGoalsForCurrentHome ?? 0}`;
 
               return (
-                <div className="mt-2 space-y-1">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20">
-                    <span className="text-[10px] uppercase tracking-widest font-bold text-indigo-400/70">Agregado</span>
-                    <span className="text-sm font-black text-indigo-300">{aggHome} - {aggAway}</span>
+                <div className="mt-1 md:mt-2 space-y-1">
+                  <div className="inline-flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+                    <span className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold text-indigo-400/70">Agregado</span>
+                    <span className="text-xs md:text-sm font-black text-indigo-300">{aggHome} - {aggAway}</span>
                   </div>
-                  <div className="text-[10px] text-white/30 font-medium">
+                  <div className="text-[9px] md:text-[10px] text-white/30 font-medium hidden sm:block">
                     Ida: <span className="text-white/50 font-bold">{idaScoreText}</span>
                     <span className="text-white/20 ml-1">({firstLeg.teams?.home?.name})</span>
                   </div>
@@ -213,22 +213,22 @@ export default function LiveMatch() {
               );
             })()}
             
-            <div className="mt-4">
+            <div className="mt-2 md:mt-4">
               {isLive ? (
-                <div className="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20">
-                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  <span className="text-sm text-red-500 font-bold">{match.status.elapsed}'</span>
-                  {match.status.short === 'HT' && <span className="text-xs text-red-500/70 ml-1">(Entretiempo)</span>}
+                <div className="inline-flex items-center justify-center gap-1.5 md:gap-2 px-2 md:px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 whitespace-nowrap">
+                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-xs md:text-sm text-red-500 font-bold">{match.status.elapsed}'</span>
+                  {match.status.short === 'HT' && <span className="text-[10px] md:text-xs text-red-500/70 ml-1">(MT)</span>}
                 </div>
               ) : isFinished ? (
-                <span className="px-4 py-1.5 bg-white/10 text-white/70 rounded-full text-xs font-semibold uppercase tracking-widest inline-block border border-white/5">
+                <span className="px-3 md:px-4 py-1 md:py-1.5 bg-white/10 text-white/70 rounded-full text-[10px] md:text-xs font-semibold uppercase tracking-widest inline-block border border-white/5 whitespace-nowrap">
                   {match.status.short === 'PEN' ? 'Penales' : match.status.short === 'AET' ? 'Alargue' : 'Final'}
                 </span>
               ) : (
-                <div className="inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full bg-white/5 text-white/50 border border-white/5">
-                  <Clock size={12} />
-                  <span className="text-xs font-medium">
-                    {new Date(match.date).toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                <div className="inline-flex items-center justify-center gap-1 md:gap-1.5 px-3 md:px-4 py-1 md:py-1.5 rounded-full bg-white/5 text-white/50 border border-white/5 whitespace-nowrap">
+                  <Clock size={12} className="shrink-0" />
+                  <span className="text-[10px] md:text-xs font-medium">
+                    {new Date(match.date).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })} • {new Date(match.date).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
               )}
@@ -238,11 +238,11 @@ export default function LiveMatch() {
           {/* Away Team */}
           <div className="flex-1 flex flex-col items-center text-center cursor-pointer group" onClick={() => navigate(`/equipo/${teams?.away?.id}`)}>
             {teams?.away?.logo ? (
-              <img src={teams.away.logo} alt="" className="w-16 h-16 md:w-32 md:h-32 mb-2 md:mb-4 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+              <img src={teams.away.logo} alt="" width={48} height={48} className="w-12 h-12 md:w-24 md:h-24 mb-1 md:mb-4 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
             ) : (
-              <div className="w-16 h-16 md:w-32 md:h-32 rounded-full bg-white/5 flex items-center justify-center mb-2 md:mb-4 text-2xl md:text-4xl group-hover:bg-white/10 transition-colors">{teams?.away?.name?.[0]}</div>
+              <div className="w-12 h-12 md:w-24 md:h-24 rounded-full bg-white/5 flex items-center justify-center mb-1 md:mb-4 text-xl md:text-3xl group-hover:bg-white/10 transition-colors">{teams?.away?.name?.[0]}</div>
             )}
-            <div className="text-lg md:text-2xl font-bold text-white tracking-tight group-hover:text-indigo-300 transition-colors">{teams?.away?.name}</div>
+            <div className="text-sm md:text-2xl font-bold text-white tracking-tight group-hover:text-indigo-300 transition-colors max-w-[90px] md:max-w-[200px] leading-tight">{teams?.away?.name}</div>
           </div>
         </div>
 
@@ -411,44 +411,46 @@ export default function LiveMatch() {
           {injuries.length > 0 && (
             <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl p-6">
               <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center justify-center gap-2"><span className="text-white/30">🏥</span> Enfemería / Bajas</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div className="relative flex justify-between gap-2 md:gap-6">
+                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/10 -translate-x-1/2" />
+                
                 {/* Home Injuries */}
-                <div className="space-y-4">
-                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-3 border-b border-white/10 pb-2">{teams?.home?.name}</div>
+                <div className="w-1/2 pr-2 md:pr-4 space-y-3 md:space-y-4">
+                  <div className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2 md:mb-3 border-b border-white/10 pb-1 md:pb-2 truncate">{teams?.home?.name}</div>
                   {injuries.filter(i => i.team.id === teams?.home?.id).map((inj, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                       <div className="w-6 h-6 md:w-8 md:h-8 rounded-full overflow-hidden bg-white/5 shrink-0 border border-white/10">
-                         <img src={`https://media.api-sports.io/football/players/${inj.player.id}.png`} alt="" loading="lazy" className="w-full h-full object-cover bg-white/10" onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />
-                         <div className="w-full h-full items-center justify-center text-[10px] font-bold text-white/50" style={{display:'none'}}>{inj.player.name[0]}</div>
+                    <div key={idx} className="flex items-center gap-1.5 md:gap-2">
+                       <div className="w-5 h-5 md:w-8 md:h-8 rounded-full overflow-hidden bg-white/5 shrink-0 border border-white/10">
+                         <img src={`https://media.api-sports.io/football/players/${inj.player.id}.png`} alt="" loading="lazy" width={20} height={20} className="w-full h-full object-cover bg-white/10" onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />
+                         <div className="w-full h-full items-center justify-center text-[9px] md:text-[10px] font-bold text-white/50" style={{display:'none'}}>{inj.player.name[0]}</div>
                        </div>
                        <div className="flex-1 min-w-0">
-                         <div className="text-xs font-bold text-white truncate leading-tight">{inj.player.name}</div>
+                         <div className="text-[10px] md:text-xs font-bold text-white truncate leading-tight">{inj.player.name}</div>
                          <div className={`text-[8px] md:text-[9px] uppercase tracking-wider font-bold truncate ${inj.player.type === 'Missing Fixture' ? 'text-red-400' : 'text-amber-400'}`}>
                            {tInjury(inj.player.reason?.split('(')[0]?.trim()) || tInjury(inj.player.type) || 'En duda'}
                          </div>
                        </div>
                     </div>
                   ))}
-                  {injuries.filter(i => i.team.id === teams?.home?.id).length === 0 && <span className="text-[10px] text-white/20 italic block">Plantel a disposición</span>}
+                  {injuries.filter(i => i.team.id === teams?.home?.id).length === 0 && <span className="text-[9px] md:text-[10px] text-white/20 italic block">Plantel a disp.</span>}
                 </div>
                 {/* Away Injuries */}
-                <div className="space-y-4">
-                  <div className="text-[10px] text-right font-bold text-white/40 uppercase tracking-widest mb-3 border-b border-white/10 pb-2">{teams?.away?.name}</div>
+                <div className="w-1/2 pl-2 md:pl-4 space-y-3 md:space-y-4">
+                  <div className="text-[9px] md:text-[10px] text-right font-bold text-white/40 uppercase tracking-widest mb-2 md:mb-3 border-b border-white/10 pb-1 md:pb-2 truncate">{teams?.away?.name}</div>
                   {injuries.filter(i => i.team.id === teams?.away?.id).map((inj, idx) => (
-                    <div key={idx} className="flex items-center gap-2 flex-row-reverse text-right">
-                       <div className="w-6 h-6 md:w-8 md:h-8 rounded-full overflow-hidden bg-white/5 shrink-0 border border-white/10">
-                         <img src={`https://media.api-sports.io/football/players/${inj.player.id}.png`} alt="" loading="lazy" className="w-full h-full object-cover bg-white/10" onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />
-                         <div className="w-full h-full items-center justify-center text-[10px] font-bold text-white/50" style={{display:'none'}}>{inj.player.name[0]}</div>
+                    <div key={idx} className="flex items-center gap-1.5 md:gap-2 flex-row-reverse text-right">
+                       <div className="w-5 h-5 md:w-8 md:h-8 rounded-full overflow-hidden bg-white/5 shrink-0 border border-white/10">
+                         <img src={`https://media.api-sports.io/football/players/${inj.player.id}.png`} alt="" loading="lazy" width={20} height={20} className="w-full h-full object-cover bg-white/10" onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />
+                         <div className="w-full h-full items-center justify-center text-[9px] md:text-[10px] font-bold text-white/50" style={{display:'none'}}>{inj.player.name[0]}</div>
                        </div>
                        <div className="flex-1 min-w-0">
-                         <div className="text-xs font-bold text-white truncate leading-tight">{inj.player.name}</div>
+                         <div className="text-[10px] md:text-xs font-bold text-white truncate leading-tight">{inj.player.name}</div>
                          <div className={`text-[8px] md:text-[9px] uppercase tracking-wider font-bold truncate ${inj.player.type === 'Missing Fixture' ? 'text-red-400' : 'text-amber-400'}`}>
                            {tInjury(inj.player.reason?.split('(')[0]?.trim()) || tInjury(inj.player.type) || 'En duda'}
                          </div>
                        </div>
                     </div>
                   ))}
-                  {injuries.filter(i => i.team.id === teams?.away?.id).length === 0 && <span className="text-[10px] text-white/20 italic block text-right">Plantel a disposición</span>}
+                  {injuries.filter(i => i.team.id === teams?.away?.id).length === 0 && <span className="text-[9px] md:text-[10px] text-white/20 italic block text-right">Plantel a disp.</span>}
                 </div>
               </div>
             </m.div>
@@ -561,7 +563,7 @@ const LineupCard = memo(function LineupCard({ lineup, align, navigate }) {
   return (
     <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-card rounded-3xl p-5 border border-white/5">
       <div className={`flex items-center gap-3 mb-5 pb-4 border-b border-white/5 ${align === 'right' ? 'flex-row-reverse' : ''}`}>
-        {lineup.team?.logo && <img src={lineup.team.logo} alt="" className="w-10 h-10 object-contain drop-shadow-lg" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+        {lineup.team?.logo && <img src={lineup.team.logo} alt="" width={40} height={40} className="w-10 h-10 object-contain drop-shadow-lg" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
         <div className={`flex-1 ${align === 'right' ? 'text-right' : ''}`}>
           <div className="text-base font-black text-white tracking-tight">{lineup.team?.name}</div>
           {lineup.formation && <div className="text-[10px] text-amber-400 font-mono tracking-widest bg-amber-400/10 px-2 py-0.5 rounded-full inline-block mt-1">{lineup.formation}</div>}
@@ -571,7 +573,7 @@ const LineupCard = memo(function LineupCard({ lineup, align, navigate }) {
       {lineup.coach && (
         <div className={`flex items-center gap-2 mb-5 px-1 bg-white/[0.02] rounded-xl p-2 border border-white/5 ${align === 'right' ? 'flex-row-reverse' : ''}`}>
           {lineup.coach.photo ? (
-            <img src={lineup.coach.photo} alt="" className="w-8 h-8 rounded-full object-cover border border-white/10" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+            <img src={lineup.coach.photo} alt="" width={32} height={32} className="w-8 h-8 rounded-full object-cover border border-white/10" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
           ) : (
             <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-white/50 border border-white/5">DT</div>
           )}

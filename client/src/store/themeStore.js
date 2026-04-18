@@ -34,6 +34,10 @@ const applyToCss = (theme) => {
   root.style.setProperty('--bg-start-color', theme.bgGradientFrom);
   root.style.setProperty('--bg-end-color', theme.bgGradientTo);
   
+  // Apply background colors to html and body directly to fix overscroll bounce color on mobile
+  document.documentElement.style.backgroundColor = theme.bgGradientTo;
+  document.body.style.backgroundColor = theme.bgGradientTo;
+
   // Actualizar meta theme-color para navegadores móviles (overscroll y status bar)
   const metaThemeColor = document.querySelector('meta[name="theme-color"]');
   if (metaThemeColor) {

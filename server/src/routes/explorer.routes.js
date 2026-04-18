@@ -73,6 +73,7 @@ router.get('/leagues', async (req, res, next) => {
         leagues: leagues.sort((a, b) => a.league.name.localeCompare(b.league.name)),
       }));
 
+    res.set('Cache-Control', 'public, max-age=3600');
     res.json({ topLeagues, byCountry: countries });
   } catch (err) { next(err); }
 });
@@ -84,6 +85,7 @@ router.get('/countries', async (req, res, next) => {
       const result = await footballApi.fetchCountries();
       return result.response;
     });
+    res.set('Cache-Control', 'public, max-age=86400');
     res.json(data);
   } catch (err) { next(err); }
 });
@@ -104,6 +106,7 @@ router.get('/leagues/:id', async (req, res, next) => {
       return result.response?.[0] || null;
     });
 
+    res.set('Cache-Control', 'public, max-age=7200');
     res.json({ ...data, currentSeason: season });
   } catch (err) { next(err); }
 });
@@ -120,6 +123,7 @@ router.get('/leagues/:id/standings', async (req, res, next) => {
       return result.response?.[0] || null;
     });
 
+    res.set('Cache-Control', 'public, max-age=3600');
     res.json(data);
   } catch (err) { next(err); }
 });
@@ -179,6 +183,7 @@ router.get('/leagues/:id/scorers', async (req, res, next) => {
       return result.response;
     });
 
+    res.set('Cache-Control', 'public, max-age=21600');
     res.json(data);
   } catch (err) { next(err); }
 });
@@ -195,6 +200,7 @@ router.get('/leagues/:id/assists', async (req, res, next) => {
       return result.response;
     });
 
+    res.set('Cache-Control', 'public, max-age=21600');
     res.json(data);
   } catch (err) { next(err); }
 });
@@ -275,6 +281,7 @@ router.get('/today', async (req, res, next) => {
       return a.league.name.localeCompare(b.league.name);
     });
 
+    res.set('Cache-Control', 'public, max-age=300');
     res.json({ total: filtered.length, grouped });
   } catch (err) { next(err); }
 });
@@ -362,6 +369,7 @@ router.get('/players/:id', async (req, res, next) => {
       };
     });
 
+    res.set('Cache-Control', 'public, max-age=21600');
     res.json(data);
   } catch (err) { next(err); }
 });
@@ -383,6 +391,7 @@ router.get('/h2h/:team1/:team2', async (req, res, next) => {
       return result.response;
     });
 
+    res.set('Cache-Control', 'public, max-age=86400');
     res.json(data);
   } catch (err) { next(err); }
 });
@@ -475,6 +484,7 @@ router.get('/teams/:id', async (req, res, next) => {
       return result.response?.[0] || null;
     });
 
+    res.set('Cache-Control', 'public, max-age=86400');
     res.json(data);
   } catch (err) { next(err); }
 });
@@ -491,6 +501,7 @@ router.get('/teams/:id/squad', async (req, res, next) => {
       return result.response?.[0]?.players || [];
     });
 
+    res.set('Cache-Control', 'public, max-age=86400');
     res.json(data);
   } catch (err) { next(err); }
 });
@@ -509,6 +520,7 @@ router.get('/teams/:id/coach', async (req, res, next) => {
       return result.response || [];
     });
 
+    res.set('Cache-Control', 'public, max-age=86400');
     res.json(data);
   } catch (err) { next(err); }
 });
@@ -579,6 +591,7 @@ router.get('/teams/:id/transfers', async (req, res, next) => {
       return result.response || [];
     });
 
+    res.set('Cache-Control', 'public, max-age=86400');
     res.json(data);
   } catch (err) { next(err); }
 });

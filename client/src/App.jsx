@@ -7,6 +7,7 @@ import useToastStore from './store/toastStore';
 import Layout from './components/layout/Layout';
 import PwaPrompt from './components/layout/PwaPrompt';
 import Toaster from './components/layout/Toaster';
+import PageSkeleton from './components/skeletons/PageSkeleton';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import './index.css';
@@ -63,16 +64,10 @@ export default function App() {
     }
   }, [user, setPersonalTheme]);
 
-  const LoadingFallback = () => (
-    <div className="flex items-center justify-center py-20">
-      <div className="w-8 h-8 border-3 border-white/20 border-t-indigo-500 rounded-full animate-spin" />
-    </div>
-  );
-
   return (
     <BrowserRouter>
       <Toaster />
-      <Suspense fallback={<LoadingFallback />}>
+      <Suspense fallback={<PageSkeleton />}>
         <Routes>
           {/* Public */}
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />

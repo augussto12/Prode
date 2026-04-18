@@ -27,6 +27,9 @@ export default function PlayerAvatar({ id, photo, name, size = 'md', className =
         src={imgUrl} 
         alt={name || 'Player'}
         loading="lazy"
+        decoding="async"
+        width={40}
+        height={40}
         className="w-full h-full object-cover bg-white/10"
         onError={() => setError(true)}
       />

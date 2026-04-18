@@ -138,7 +138,9 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
         </span>
       );
     }
-    return <span className="px-2 py-0.5 bg-white/10 text-white/50 rounded-full text-xs">{matchDate.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</span>;
+    return <span className="px-2 py-0.5 bg-white/10 text-white/50 rounded-full text-[11px] sm:text-xs">
+      {matchDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()}
+    </span>;
   };
 
   // Helper to show market label with team name
@@ -163,7 +165,11 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
       <div className="p-3 sm:p-4">
         <div className="flex items-center justify-between mb-2 sm:mb-3 gap-2">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            {!hideStage && match.stage && <span className="text-[10px] sm:text-xs text-white/40 font-medium truncate">{match.stage}</span>}
+            {!hideStage && match.stage && (
+              <span className="text-[10px] sm:text-xs text-white/40 font-medium truncate">
+                {match.stage.replace(/Regular Season - /i, 'Fecha ').replace(/Reg /i, 'Fecha ')}
+              </span>
+            )}
             {match.round && /2nd\s*Leg/i.test(match.round) && (
               <span className="px-1 sm:px-1.5 py-0.5 bg-indigo-500/15 text-indigo-400 rounded text-[8px] sm:text-[9px] font-bold uppercase tracking-wider border border-indigo-500/20 shrink-0">Vuelta</span>
             )}
@@ -198,7 +204,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
             onClick={() => match.homeTeamId && navigate(`/equipo/${match.homeTeamId}`)}
           >
             {match.homeTeamLogo
-              ? <img src={match.homeTeamLogo} alt={match.homeTeam} className={`w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 object-contain ${match.homeTeamId ? 'group-hover:scale-110 transition-transform' : ''}`} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+              ? <img src={match.homeTeamLogo} alt={match.homeTeam} width={32} height={32} className={`w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 object-contain ${match.homeTeamId ? 'group-hover:scale-110 transition-transform' : ''}`} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
               : <div className="text-xl sm:text-2xl mb-1">{match.homeFlag || '🏳️'}</div>
             }
             <div className={`text-[11px] sm:text-sm font-semibold text-white truncate px-0.5 ${match.homeTeamId ? 'group-hover:text-indigo-300 transition-colors' : ''}`}>{match.homeTeam}</div>
@@ -228,16 +234,16 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
                   onChange={(e) => setPrediction({ ...prediction, homeGoals: e.target.value })}
                   disabled={isPast}
                   placeholder="-"
-                  className="w-9 h-9 sm:w-10 sm:h-10 text-center bg-white/10 border border-white/20 rounded-lg text-white font-bold text-base sm:text-lg focus:outline-none focus:border-indigo-500 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-7 h-8 sm:w-9 sm:h-9 text-center bg-white/10 border border-white/20 rounded-lg text-white font-bold text-sm sm:text-base focus:outline-none focus:border-indigo-500 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-                <span className="text-white/30 font-bold">-</span>
+                <span className="text-white/30 font-bold mx-[-2px]">-</span>
                 <input
                   type="number" min="0" max="20"
                   value={prediction.awayGoals}
                   onChange={(e) => setPrediction({ ...prediction, awayGoals: e.target.value })}
                   disabled={isPast}
                   placeholder="-"
-                  className="w-9 h-9 sm:w-10 sm:h-10 text-center bg-white/10 border border-white/20 rounded-lg text-white font-bold text-base sm:text-lg focus:outline-none focus:border-indigo-500 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-7 h-8 sm:w-9 sm:h-9 text-center bg-white/10 border border-white/20 rounded-lg text-white font-bold text-sm sm:text-base focus:outline-none focus:border-indigo-500 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
             )}
@@ -248,7 +254,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
             onClick={() => match.awayTeamId && navigate(`/equipo/${match.awayTeamId}`)}
           >
             {match.awayTeamLogo
-              ? <img src={match.awayTeamLogo} alt={match.awayTeam} className={`w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 object-contain ${match.awayTeamId ? 'group-hover:scale-110 transition-transform' : ''}`} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+              ? <img src={match.awayTeamLogo} alt={match.awayTeam} width={32} height={32} className={`w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 object-contain ${match.awayTeamId ? 'group-hover:scale-110 transition-transform' : ''}`} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
               : <div className="text-xl sm:text-2xl mb-1">{match.awayFlag || '🏳️'}</div>
             }
             <div className={`text-[11px] sm:text-sm font-semibold text-white truncate px-0.5 ${match.awayTeamId ? 'group-hover:text-indigo-300 transition-colors' : ''}`}>{match.awayTeam}</div>
@@ -315,7 +321,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
               <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Posesión</label>
               <div className="flex gap-1.5 sm:gap-2">
                 <ToggleButton field="morePossession" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-                <ToggleButton field="morePossession" value="EQUAL" label="=" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="morePossession" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
                 <ToggleButton field="morePossession" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
               </div>
             </div>
@@ -325,7 +331,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
               <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Faltas</label>
               <div className="flex gap-1.5 sm:gap-2">
                 <ToggleButton field="moreFouls" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-                <ToggleButton field="moreFouls" value="EQUAL" label="=" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreFouls" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
                 <ToggleButton field="moreFouls" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
               </div>
             </div>
@@ -335,7 +341,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
               <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Tarjetas (Am+R)</label>
               <div className="flex gap-1.5 sm:gap-2">
                 <ToggleButton field="moreCards" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-                <ToggleButton field="moreCards" value="EQUAL" label="=" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreCards" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
                 <ToggleButton field="moreCards" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
               </div>
             </div>
@@ -345,7 +351,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
               <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Offsides</label>
               <div className="flex gap-1.5 sm:gap-2">
                 <ToggleButton field="moreOffsides" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-                <ToggleButton field="moreOffsides" value="EQUAL" label="=" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreOffsides" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
                 <ToggleButton field="moreOffsides" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
               </div>
             </div>
@@ -355,7 +361,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
               <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Atajadas</label>
               <div className="flex gap-1.5 sm:gap-2">
                 <ToggleButton field="moreSaves" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-                <ToggleButton field="moreSaves" value="EQUAL" label="=" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreSaves" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
                 <ToggleButton field="moreSaves" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
               </div>
             </div>

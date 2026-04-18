@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [showFavPicker, setShowFavPicker] = useState(false);
+  const [collapsedStages, setCollapsedStages] = useState({});
   const activeCompetition = useCompetitionStore(state => state.activeCompetition);
 
   useEffect(() => {
@@ -179,25 +180,51 @@ export default function Dashboard() {
               <Calendar size={16} className="text-white/40" />
               <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider">{date}</h2>
             </div>
-            {Object.entries(byStage).map(([stage, stageMatches]) => (
-              <div key={stage} className="mb-4">
-                <div className="flex items-center gap-2 mb-2 ml-1">
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--color-primary)' }} />
-                  <span className="text-xs font-medium text-white/30">{stage}</span>
+            {Object.entries(byStage).map(([stage, stageMatches]) => {
+              const stageKey = `${date}-${stage}`;
+              const isCollapsed = collapsedStages[stageKey];
+              return (
+                <div key={stage} className="mb-4">
+                  <button 
+                    onClick={() => setCollapsedStages(prev => ({ ...prev, [stageKey]: !isCollapsed }))}
+                    className="w-full flex items-center justify-between gap-2 mb-2 ml-1 cursor-pointer bg-transparent border-none p-0 group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--color-primary)' }} />
+                      <span className="text-xs font-medium text-white/30 group-hover:text-white/60 transition-colors uppercase">
+                        {stage.replace(/Regular Season - /i, 'Fecha ').replace(/Reg /i, 'Fecha ')}
+                      </span>
+                    </div>
+                    <div className="text-white/20 mr-2 group-hover:text-white/50 transition-colors">
+                      <ChevronDown size={14} className={`transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {!isCollapsed && (
+                      <m.div 
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2">
+                          {stageMatches.map((match) => (
+                            <MatchCard
+                              key={match.id}
+                              match={match}
+                              isFavorite={favorites.includes(match.homeTeam) || favorites.includes(match.awayTeam)}
+                              existingPrediction={predictionsMap.get(match.id)}
+                              onPredictionSaved={loadData}
+                            />
+                          ))}
+                        </div>
+                      </m.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {stageMatches.map((match) => (
-                    <MatchCard
-                      key={match.id}
-                      match={match}
-                      isFavorite={favorites.includes(match.homeTeam) || favorites.includes(match.awayTeam)}
-                      existingPrediction={predictionsMap.get(match.id)}
-                      onPredictionSaved={loadData}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         );
       })}

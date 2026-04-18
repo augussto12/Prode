@@ -95,6 +95,20 @@ export default function Explorer() {
     [filteredCountries, visibleCountries]
   );
 
+  const filteredAllLeagues = useMemo(() => {
+    if (debouncedSearch.length < 2) return [];
+    const q = debouncedSearch.toLowerCase();
+    const result = [];
+    data.byCountry.forEach(c => {
+      c.leagues.forEach(l => {
+        if (l.league.name.toLowerCase().includes(q) || tCountry(c.country).toLowerCase().includes(q)) {
+          result.push({ ...l, countryObj: c });
+        }
+      });
+    });
+    return result;
+  }, [data.byCountry, debouncedSearch]);
+
   const handleShowMore = useCallback(() => {
     setVisibleCountries(prev => prev + COUNTRIES_PER_PAGE);
   }, []);
@@ -130,19 +144,61 @@ export default function Explorer() {
           </h1>
           <p className="text-white/50 text-sm mt-1">Navega entre ligas, posiciones, goleadores y partidos en vivo</p>
         </div>
-        <div className="relative">
+        <div className="relative z-50">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onFocus={() => { if (!search) setSearch(''); }} // trigger render
             placeholder="Buscar liga o país..."
             className="pl-9 pr-4 py-2.5 w-full md:w-72 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500 transition-all"
           />
           {search && (
-            <button onClick={() => setSearch('')}
+            <button onClick={() => setSearch('')} aria-label="Limpiar búsqueda"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white bg-transparent border-none cursor-pointer text-xs">✕</button>
           )}
+
+          {/* Autocomplete Dropdown */}
+          <AnimatePresence>
+            {debouncedSearch.length >= 2 && (filteredTopLeagues.length > 0 || filteredCountries.length > 0) && (
+              <m.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 5 }}
+                className="absolute top-full mt-2 left-0 w-full md:w-80 bg-[#1e1b4b] border border-white/10 shadow-2xl rounded-xl overflow-hidden max-h-80 overflow-y-auto z-50"
+              >
+                {filteredAllLeagues.length > 0 && (
+                  <div className="p-2">
+                    <div className="text-[10px] uppercase font-bold text-white/40 px-2 py-1">🏆 Ligas y Copas</div>
+                    {filteredAllLeagues.slice(0, 6).map(l => (
+                      <Link key={`all-${l.league.id}`} to={`/liga/${l.league.id}`} className="flex items-center gap-3 p-2 hover:bg-white/10 rounded-lg transition-colors no-underline">
+                        {l.league.logo ? <img src={l.league.logo} className="w-5 h-5 object-contain" width={20} height={20} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} /> : <Trophy size={14} className="text-white/30"/>}
+                        <div className="truncate">
+                          <div className="text-sm font-medium text-white">{l.league.name}</div>
+                          <div className="text-[10px] text-white/50">{tCountry(l.countryObj?.country)}</div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+                {filteredCountries.length > 0 && (
+                  <div className="p-2 border-t border-white/5">
+                    <div className="text-[10px] uppercase font-bold text-white/40 px-2 py-1">🌍 Países ({filteredCountries.length})</div>
+                    {filteredCountries.slice(0, 10).map(c => (
+                      <button key={`country-${c.country}`} onClick={() => { setExpandedCountry(c.country); setSearch(''); }} className="w-full flex items-center justify-between p-2 hover:bg-white/10 rounded-lg transition-colors border-none text-left cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          {c.flag ? <img src={c.flag} className="w-4 h-3 object-contain" width={16} height={12} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} /> : <MapPin size={12} className="text-white/30" />}
+                          <span className="text-sm font-medium text-white">{tCountry(c.country)}</span>
+                        </div>
+                        <span className="text-[10px] text-white/40">{c.leagues.length} ligas</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </m.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
@@ -155,21 +211,21 @@ export default function Explorer() {
             style={{ background: 'linear-gradient(135deg, #b8860b, #daa520, #ffd700)' }}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
-            <div className="relative z-10 p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-6">
-              <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/20 backdrop-blur border border-white/30 flex items-center justify-center shrink-0 shadow-xl">
-                <Trophy size={36} className="text-white drop-shadow-md" />
+            <div className="relative z-10 p-4 md:p-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-5">
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-white/20 backdrop-blur border border-white/30 flex items-center justify-center shrink-0 shadow-xl">
+                <Trophy size={28} className="text-white drop-shadow-md" />
               </div>
               <div className="flex-1">
-                <div className="inline-block px-2.5 py-1 bg-white/20 backdrop-blur rounded-md text-white/90 text-[9px] font-bold uppercase tracking-widest mb-2 border border-white/20">
+                <div className="inline-block px-2 py-0.5 bg-white/20 backdrop-blur rounded text-white/90 text-[8px] font-bold uppercase tracking-widest mb-1.5 border border-white/20">
                   DESTACADO
                 </div>
-                <h2 className="text-2xl md:text-4xl font-black text-white tracking-tight drop-shadow-md">Copa del Mundo 2026</h2>
-                <p className="text-white/80 text-sm md:text-base mt-2 font-medium max-w-xl">
-                  Estados Unidos, México y Canadá — Sumate a predecir el torneo más importante del mundo entero.
+                <h2 className="text-xl md:text-3xl font-black text-white tracking-tight drop-shadow-md">Copa del Mundo 2026</h2>
+                <p className="text-white/80 text-xs md:text-sm mt-1.5 font-medium max-w-xl">
+                  Sumate a predecir el torneo más importante del mundo entero.
                 </p>
               </div>
-              <div className="hidden md:flex bg-white/10 hover:bg-white/20 backdrop-blur rounded-2xl p-3 transition-all border border-white/20">
-                <ChevronRight size={24} className="text-white" />
+              <div className="hidden md:flex bg-white/10 hover:bg-white/20 backdrop-blur rounded-2xl p-2 transition-all border border-white/20">
+                <ChevronRight size={20} className="text-white" />
               </div>
             </div>
           </m.div>
@@ -185,7 +241,7 @@ export default function Explorer() {
             </h2>
             <Link to="/groups" className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Ver todos</Link>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/10 -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/10 pt-2">
             {myGroups.map(group => (
               <Link
                 key={group.id}
@@ -252,7 +308,7 @@ export default function Explorer() {
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 {l.league.logo ? (
-                  <img src={l.league.logo} alt={l.league.name} loading="lazy" className="w-12 h-12 object-contain group-hover:scale-110 group-hover:-translate-y-1 transition-all z-10 drop-shadow-lg" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+                  <img src={l.league.logo} alt={l.league.name} loading="lazy" decoding="async" width={48} height={48} className="w-12 h-12 object-contain group-hover:scale-110 group-hover:-translate-y-1 transition-all z-10 drop-shadow-lg" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center z-10">
                     <Trophy size={20} className="text-white/40" />
@@ -261,7 +317,7 @@ export default function Explorer() {
                 <div className="text-center z-10 w-full mt-1">
                   <div className="text-xs font-bold text-white/90 truncate">{l.league.name}</div>
                   <div className="text-[9px] font-medium text-white/50 flex items-center justify-center gap-1 mt-1 uppercase tracking-wider">
-                    {l.country?.flag && <img src={l.country.flag} alt="" loading="lazy" className="w-3 h-2 object-contain rounded-sm" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                    {l.country?.flag && <img src={l.country.flag} alt="" loading="lazy" decoding="async" width={12} height={8} className="w-3 h-2 object-contain rounded-sm" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                     {tCountry(l.country?.name)}
                   </div>
                 </div>
@@ -302,63 +358,84 @@ export default function Explorer() {
 }
 
 // ─── Today Matches grouped by league ───
-const TodayMatchesRow = ({ data }) => (
-  <m.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-    className="glass-card rounded-2xl p-4 border border-white/5">
-    <div className="flex items-center gap-2 mb-3">
-      <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-      <span className="text-sm font-bold text-white/50 uppercase tracking-wider">Partidos de Hoy — {data.total} encuentros</span>
-    </div>
-    <div className="space-y-3">
-      {(data.grouped || []).map(group => (
-        <div key={group.league.id} className="pt-2">
-          <div className="flex items-center gap-2.5 mb-2 pl-1 border-l-[3px] border-amber-500/50">
-            {group.league.logo && <img src={group.league.logo} alt="" loading="lazy" className="w-6 h-6 object-contain ml-2" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
-            <span className="text-sm text-white/90 font-bold uppercase tracking-wider">{group.league.name}</span>
-            {group.league.flag && <img src={group.league.flag} alt="" className="w-5 h-4 object-contain opacity-70" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/10">
-            {group.matches.map(m => {
+const TodayMatchesRow = ({ data }) => {
+  const [collapsedLeagues, setCollapsedLeagues] = useState({});
+
+  return (
+    <m.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+      className="glass-card rounded-2xl p-4 border border-white/5">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+        <span className="text-sm font-bold text-white/50 uppercase tracking-wider">Partidos de Hoy — {data.total} encuentros</span>
+      </div>
+      <div className="space-y-3">
+        {(data.grouped || []).map(group => {
+          const isCollapsed = collapsedLeagues[group.league.id];
+          return (
+            <div key={group.league.id} className="pt-2">
+              <button 
+                onClick={() => setCollapsedLeagues(prev => ({ ...prev, [group.league.id]: !isCollapsed }))}
+                className="w-full flex items-center justify-between mb-2 pl-1 border-l-[3px] border-amber-500/50 bg-transparent border-t-0 border-r-0 border-b-0 cursor-pointer group px-0"
+              >
+                <div className="flex items-center gap-2.5">
+                  {group.league.logo && <img src={group.league.logo} alt="" loading="lazy" decoding="async" width={24} height={24} className="w-6 h-6 object-contain ml-2" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                  <span className="text-sm text-white/90 font-bold uppercase tracking-wider group-hover:text-amber-400 transition-colors">{group.league.name}</span>
+                  {group.league.flag && <img src={group.league.flag} alt="" className="w-5 h-4 object-contain opacity-70" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                </div>
+                <ChevronDown size={16} className={`text-white/30 mr-2 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
+              </button>
+              
+              <AnimatePresence initial={false}>
+                {!isCollapsed && (
+                  <m.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/10 px-1 after:content-[''] after:w-4 after:shrink-0">
+                      {group.matches.map(m => {
               const isLive = ['1H', '2H', 'HT', 'ET', 'BT', 'P'].includes(m.fixture.status.short);
               const isPending = ['NS', 'TBD'].includes(m.fixture.status.short);
 
               return (
-                <Link
-                  key={m.fixture.id}
-                  to={`/partido/${m.fixture.id}`}
-                  className={`flex-shrink-0 bg-white/5 rounded-2xl p-4 min-w-[320px] hover:bg-white/10 transition-all no-underline border flex flex-col justify-between ${isLive ? 'border-red-500/30 bg-red-500/5' : 'border-transparent'}`}
-                >
-                  <div className="flex flex-col gap-3">
-                    <div className="flex justify-between items-center text-[11px] font-medium text-white/50 border-b border-white/5 pb-2">
-                      {isLive ? (
-                        <span className="text-red-400 animate-pulse font-bold flex items-center gap-1">● {m.fixture.status.elapsed || 0}'</span>
-                      ) : isPending ? (
-                        <span>{new Date(m.fixture.date).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs</span>
-                      ) : (
-                        <span>{m.fixture.status.short}</span>
-                      )}
-                      {m.league?.round && (
-                        <span className="truncate max-w-[190px] text-right" title={m.league.round}>
-                          {m.league.round.replace(/Regular Season/i, 'Reg.').replace(/Group Stage/i, 'Fase de Grupos')}
-                        </span>
-                      )}
-                    </div>
+                      <Link
+                        key={m.fixture.id}
+                        to={`/partido/${m.fixture.id}`}
+                        className={`flex-shrink-0 bg-white/5 rounded-xl p-2.5 min-w-[220px] md:min-w-[240px] hover:bg-white/10 transition-all no-underline border flex flex-col justify-between overflow-hidden ${isLive ? 'border-red-500/30 bg-red-500/5' : 'border-transparent'}`}
+                      >
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between items-center text-[10px] font-medium text-white/50 border-b border-white/5 pb-1.5">
+                            {isLive ? (
+                              <span className="text-red-400 animate-pulse font-bold flex items-center gap-1">● {m.fixture.status.elapsed || 0}'</span>
+                            ) : isPending ? (
+                              <span>{new Date(m.fixture.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()}</span>
+                            ) : (
+                              <span>{m.fixture.status.short}</span>
+                            )}
+                            {m.league?.round && (
+                              <span className="truncate max-w-[150px] text-right" title={m.league.round}>
+                                {m.league.round.replace(/Regular Season - /i, 'Fecha ').replace(/Reg /i, 'Fecha ').replace(/Group Stage/i, 'Fase de Grupos')}
+                              </span>
+                            )}
+                          </div>
                     {/* Teams and Score */}
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        {m.teams?.home?.logo && <img src={m.teams.home.logo} alt="" loading="lazy" className="w-6 h-6 object-contain" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
-                        <span className="text-sm text-white font-semibold truncate">{m.teams?.home?.name}</span>
+                    <div className="flex items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                        {m.teams?.home?.logo && <img src={m.teams.home.logo} alt="" loading="lazy" decoding="async" width={20} height={20} className="w-5 h-5 object-contain" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                        <span className="text-xs sm:text-[13px] text-white font-semibold truncate">{m.teams?.home?.name}</span>
                       </div>
-                      <div className="text-base font-black text-white px-2 text-center w-8">
+                      <div className="text-sm font-bold text-white px-1 text-center w-6">
                         {!isPending ? (m.goals?.home ?? 0) : '-'}
                       </div>
                     </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        {m.teams?.away?.logo && <img src={m.teams.away.logo} alt="" loading="lazy" className="w-6 h-6 object-contain" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
-                        <span className="text-sm text-white font-semibold truncate">{m.teams?.away?.name}</span>
+                    <div className="flex items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                        {m.teams?.away?.logo && <img src={m.teams.away.logo} alt="" loading="lazy" decoding="async" width={20} height={20} className="w-5 h-5 object-contain" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                        <span className="text-xs sm:text-[13px] text-white font-semibold truncate">{m.teams?.away?.name}</span>
                       </div>
-                      <div className="text-base font-black text-white px-2 text-center w-8">
+                      <div className="text-sm font-bold text-white px-1 text-center w-6">
                         {!isPending ? (m.goals?.away ?? 0) : '-'}
                       </div>
                     </div>
@@ -403,16 +480,21 @@ const TodayMatchesRow = ({ data }) => (
                         })()}
                       </div>
                     </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </m.div>
+            )}
+          </AnimatePresence>
         </div>
-      ))}
-    </div>
-  </m.div>
-);
+      );
+    })}
+  </div>
+</m.div>
+  );
+};
 
 // ─── Country Accordion (memoized, renders only when expanded) ───
 function CountryAccordion({ country: c, expanded, onToggle }) {
@@ -424,7 +506,7 @@ function CountryAccordion({ country: c, expanded, onToggle }) {
       >
         <div className="flex items-center gap-3">
           {c.flag ? (
-            <img src={c.flag} alt="" loading="lazy" className="w-6 h-4 object-contain rounded-sm" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+            <img src={c.flag} alt="" loading="lazy" decoding="async" width={24} height={16} className="w-6 h-4 object-contain rounded-sm" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
           ) : (
             <MapPin size={16} className="text-white/30" />
           )}
@@ -453,7 +535,7 @@ function CountryAccordion({ country: c, expanded, onToggle }) {
                   className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/5 transition-all no-underline"
                 >
                   {l.league.logo ? (
-                    <img src={l.league.logo} alt="" loading="lazy" className="w-8 h-8 object-contain" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+                    <img src={l.league.logo} alt="" loading="lazy" decoding="async" width={32} height={32} className="w-8 h-8 object-contain" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
                   ) : (
                     <div className="w-8 h-8 rounded bg-white/10 flex items-center justify-center">
                       <Trophy size={14} className="text-white/30" />

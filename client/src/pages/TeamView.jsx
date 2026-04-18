@@ -167,7 +167,7 @@ export default function TeamView() {
       {/* HEADER */}
       <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
         <div className="w-32 h-32 md:w-40 md:h-40 rounded-3xl bg-white/5 p-4 flex items-center justify-center border border-white/10 shadow-xl shrink-0">
-          <img src={team.logo} alt={team.name} className="w-full h-full object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+          <img src={team.logo} alt={team.name} width={80} height={80} className="w-full h-full object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
         </div>
         <div className="flex-1 text-center md:text-left space-y-2">
           <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">{team.name}</h1>
@@ -193,30 +193,30 @@ export default function TeamView() {
       </m.div>
 
       {/* TABS */}
-      <div className="flex gap-2 p-1 bg-white/5 rounded-2xl border border-white/10 overflow-x-auto scrollbar-none">
+      <div className="flex gap-1 bg-white/5 p-1 rounded-xl w-full sm:w-fit overflow-x-auto hide-scrollbar">
         <button
           onClick={() => setActiveTab('squad')}
-          className={`flex-1 min-w-[120px] py-2.5 rounded-xl text-sm font-bold transition-all border ${activeTab === 'squad' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-lg' : 'bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5'}`}
+          className={`px-4 sm:px-5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap flex-1 sm:flex-none ${activeTab === 'squad' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md' : 'bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5'}`}
         >
-          Plantilla (Squad)
+          Plantel
         </button>
         <button
           onClick={() => setActiveTab('fixtures')}
-          className={`flex-1 min-w-[120px] py-2.5 rounded-xl text-sm font-bold transition-all border ${activeTab === 'fixtures' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-lg' : 'bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5'}`}
+          className={`px-4 sm:px-5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap flex-1 sm:flex-none ${activeTab === 'fixtures' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md' : 'bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5'}`}
         >
-          Partidos Recientes
+          Partidos
         </button>
         {statistics && (
           <button
             onClick={() => setActiveTab('statistics')}
-            className={`flex-1 min-w-[120px] py-2.5 rounded-xl text-sm font-bold transition-all border ${activeTab === 'statistics' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-lg' : 'bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5'}`}
+            className={`px-4 sm:px-5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap flex-1 sm:flex-none ${activeTab === 'statistics' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md' : 'bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5'}`}
           >
             Estadísticas
           </button>
         )}
         <button
           onClick={() => setActiveTab('transfers')}
-          className={`flex-1 min-w-[120px] py-2.5 rounded-xl text-sm font-bold transition-all border ${activeTab === 'transfers' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-lg' : 'bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5'}`}
+          className={`px-4 sm:px-5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap flex-1 sm:flex-none ${activeTab === 'transfers' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md' : 'bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5'}`}
         >
           Fichajes
         </button>
@@ -309,7 +309,7 @@ export default function TeamView() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-white/50">{isHome ? 'vs' : '@'}</span>
-                      <img src={opponent.logo} alt={opponent.name} className="w-5 h-5 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+                      <img src={opponent.logo} alt={opponent.name} width={20} height={20} className="w-5 h-5 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
                       <span className="font-bold text-sm text-white truncate">{opponent.name}</span>
                     </div>
                   </div>
@@ -442,7 +442,7 @@ export default function TeamView() {
 
                       <div className="flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-end bg-black/20 sm:bg-transparent rounded-lg p-2 sm:p-0">
                         <span className="text-white/50 text-xs font-medium">{isIncoming ? 'Desde:' : 'Hacia:'}</span>
-                        <img src={otherTeam.logo} alt="" className="w-8 h-8 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+                        <img src={otherTeam.logo} alt="" width={32} height={32} className="w-8 h-8 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
                         <span className="text-white font-bold text-sm truncate max-w-[120px]">{otherTeam.name}</span>
                       </div>
                     </div>

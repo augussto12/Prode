@@ -113,7 +113,7 @@ export default function AdminPanel() {
            {saving ? <Loader2 size={16} className="animate-spin" /> : <Calculator size={16} />}
            {saving ? 'Calculando...' : 'Forzar Cálculo de Puntos'}
          </button>
-         <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-white/30">
+         <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-white/40">
            <Clock size={12} />
            <span>Se ejecuta automáticamente a las 00:00 y 06:00 hs</span>
          </div>
@@ -151,10 +151,10 @@ export default function AdminPanel() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                       <span className="text-xs sm:text-sm font-medium text-white truncate">{u.displayName}</span>
-                      <span className="text-[10px] sm:text-xs text-white/30">@{u.username}</span>
+                      <span className="text-[10px] sm:text-xs text-white/40">@{u.username}</span>
                       {isMe && <span className="px-1 py-0.5 bg-indigo-500/20 text-indigo-400 rounded text-[9px] sm:text-[10px] font-semibold">TÚ</span>}
                     </div>
-                    <div className="text-[10px] sm:text-xs text-white/30 mt-0.5 truncate">{u.email} • {new Date(u.createdAt).toLocaleDateString('es-AR')}</div>
+                    <div className="text-[10px] sm:text-xs text-white/40 mt-0.5 truncate">{u.email} • {new Date(u.createdAt).toLocaleDateString('es-AR')}</div>
                   </div>
                 </div>
 
@@ -542,7 +542,7 @@ function SyncPanel({ onSyncComplete }) {
             </div>
           )}
         </div>
-        <p className="text-[10px] sm:text-xs text-white/30 mt-2">IDs comunes: 1=Mundial, 128=Liga Argentina, 13=Libertadores, 2=Champions</p>
+        <p className="text-[10px] sm:text-xs text-white/40 mt-2">IDs comunes: 1=Mundial, 128=Liga Argentina, 13=Libertadores, 2=Champions</p>
       </div>
 
       {/* Sync Actions */}

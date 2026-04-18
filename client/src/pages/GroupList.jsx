@@ -119,10 +119,10 @@ export default function GroupList() {
                           : 'bg-white/[0.03] border-white/10 hover:border-white/25 hover:bg-white/[0.06]'
                       }`}
                     >
-                      {comp.logo && <img src={comp.logo} alt="" className="w-8 h-8 object-contain shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                      {comp.logo && <img src={comp.logo} alt="" width={32} height={32} className="w-8 h-8 object-contain shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                       <div className="min-w-0">
                         <div className={`text-sm font-semibold truncate ${createForm.competitionId === comp.id ? 'text-indigo-300' : 'text-white/80'}`}>{comp.name}</div>
-                        <div className="text-[10px] text-white/30">Temporada {comp.season}</div>
+                        <div className="text-[10px] text-white/40">Temporada {comp.season}</div>
                       </div>
                       {createForm.competitionId === comp.id && (
                         <div className="ml-auto shrink-0 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
@@ -205,7 +205,7 @@ export default function GroupList() {
                   <Users size={20} />
                 </div>
                 <button onClick={(e) => { e.preventDefault(); copyCode(group.inviteCode, group.id); }}
-                  className="text-white/30 hover:text-white/60 bg-transparent border-none cursor-pointer p-1" title="Copiar código">
+                  className="text-white/30 hover:text-white/60 bg-transparent border-none cursor-pointer p-1" title="Copiar código" aria-label="Copiar código de invitación">
                   {copiedId === group.id ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
                 </button>
               </div>
@@ -217,8 +217,8 @@ export default function GroupList() {
               </div>
               {group.competition && (
                 <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-white/5">
-                  {group.competition.logo && <img src={group.competition.logo} alt="" className="w-4 h-4 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
-                  <span className="text-[10px] text-white/30 uppercase tracking-wider">{group.competition.name}</span>
+                  {group.competition.logo && <img src={group.competition.logo} alt="" width={16} height={16} className="w-4 h-4 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                  <span className="text-[10px] text-white/40 uppercase tracking-wider">{group.competition.name}</span>
                 </div>
               )}
             </Link>

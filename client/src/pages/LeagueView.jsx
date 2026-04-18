@@ -208,7 +208,7 @@ export default function LeagueView() {
         }} />
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-5 w-full">
           {leagueInfo?.logo ? (
-            <img src={leagueInfo.logo} alt={leagueInfo.name} className={`object-contain ${isWorldCup ? 'w-20 h-20' : 'w-16 h-16'}`} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+            <img src={leagueInfo.logo} alt={leagueInfo.name} width={64} height={64} className={`object-contain ${isWorldCup ? 'w-20 h-20' : 'w-16 h-16'}`} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
           ) : (
             <div className={`rounded-2xl flex items-center justify-center ${isWorldCup ? 'w-20 h-20 bg-amber-500/20' : 'w-16 h-16 bg-white/10'}`}>
               <Trophy size={isWorldCup ? 36 : 28} className={isWorldCup ? 'text-amber-400' : 'text-white/40'} />
@@ -223,7 +223,7 @@ export default function LeagueView() {
                 <span className="text-sm text-amber-400/70">Estados Unidos, México y Canadá</span>
               ) : (
                 <>
-                  {countryInfo?.flag && <img src={countryInfo.flag} alt="" className="w-5 h-3 object-contain rounded-sm" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                  {countryInfo?.flag && <img src={countryInfo.flag} alt="" width={20} height={12} className="w-5 h-3 object-contain rounded-sm" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                   <span className="text-sm text-white/50">{tCountry(countryInfo?.name)}</span>
                   <span className="text-white/20">•</span>
                   <span className="text-sm text-white/50">{leagueInfo?.type === 'Cup' ? 'Copa' : 'Liga'}</span>
@@ -270,13 +270,13 @@ export default function LeagueView() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-white/5 p-1 rounded-xl w-full sm:w-fit overflow-x-auto">
+      <div className="flex gap-1 bg-white/5 p-1 rounded-xl w-full sm:w-fit overflow-x-auto hide-scrollbar">
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border-none whitespace-nowrap shrink-0 ${
-              tab === t.id ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white/70 bg-transparent'
+            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all cursor-pointer border-none whitespace-nowrap shrink-0 flex-1 sm:flex-none ${
+              tab === t.id ? 'bg-white/10 text-white shadow-sm' : 'text-white/50 hover:text-white/70 bg-transparent'
             }`}>
-            <t.icon size={16} /> <span className="hidden sm:inline">{t.label}</span>
+            <t.icon size={14} className="sm:w-4 sm:h-4" /> <span>{t.label}</span>
           </button>
         ))}
       </div>
@@ -371,7 +371,7 @@ export default function LeagueView() {
                               <td className={`px-4 py-2.5 sticky-col backdrop-blur-md border-r border-l-[3px] border-white/5 ${indicatorColor}`}>
                                 <div className="flex items-center gap-2 cursor-pointer group" onClick={() => navigate(`/equipo/${row.team.id}`)}>
                                   <span className="w-5 font-bold text-white/40 text-xs text-right mr-1">{row.rank}</span>
-                                  {row.team.logo && <img src={row.team.logo} alt="" className="w-5 h-5 object-contain group-hover:scale-110 transition-transform shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                                  {row.team.logo && <img src={row.team.logo} alt="" width={20} height={20} className="w-5 h-5 object-contain group-hover:scale-110 transition-transform shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                                   <span className="text-white font-medium text-xs group-hover:text-indigo-300 transition-colors whitespace-nowrap">{row.team.name}</span>
                                 </div>
                               </td>
@@ -491,18 +491,18 @@ export default function LeagueView() {
 
       {/* Scorers Tab */}
       {tab === 'scorers' && (
-        <div className="glass-card rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+        <div className="glass-card rounded-2xl overflow-hidden border border-white/5">
+          <div className="overflow-x-auto hide-scrollbar">
+            <table className="w-full min-w-[500px] md:min-w-full text-sm">
               <thead>
-                <tr className="text-white/30 text-xs border-b border-white/5">
-                  <th className="text-left px-4 py-3 font-medium sticky-col backdrop-blur-md">
-                    <span className="inline-block w-4 text-white/50">#</span> Jugador
+                <tr className="text-white/30 text-[10px] md:text-xs border-b border-white/5 uppercase tracking-wider">
+                  <th className="text-left px-3 md:px-4 py-3 font-bold sticky-col backdrop-blur-md">
+                    <span className="inline-block w-3 md:w-4 text-white/50">#</span> Jugador
                   </th>
-                  <th className="text-left px-2 py-3 font-medium">Equipo</th>
-                  <th className="px-2 py-3 font-medium text-center">⚽ Goles</th>
-                  <th className="px-2 py-3 font-medium text-center">🅰️ Asist.</th>
-                  <th className="px-2 py-3 font-medium text-center">PJ</th>
+                  <th className="text-left px-2 py-3 font-bold whitespace-nowrap">Equipo</th>
+                  <th className="px-2 py-3 font-bold text-center whitespace-nowrap">⚽ Goles</th>
+                  <th className="px-2 py-3 font-bold text-center whitespace-nowrap">🅰️ Asist.</th>
+                  <th className="px-2 py-3 font-bold text-center whitespace-nowrap">PJ</th>
                 </tr>
               </thead>
               <tbody>
@@ -512,31 +512,31 @@ export default function LeagueView() {
                   return (
                     <tr key={player.id} className="border-t border-white/5 hover:bg-white/[0.03] transition-colors cursor-pointer"
                       onClick={() => navigate(`/jugador/${player.id}`)}>
-                      <td className="px-4 py-2 sticky-col backdrop-blur-xl border-r border-white/5 group-hover:bg-white/5 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <span className="w-4 text-white/40 text-xs font-bold shrink-0">{i + 1}</span>
+                      <td className="px-3 md:px-4 py-2 sticky-col backdrop-blur-xl border-r border-white/5 group-hover:bg-white/5 transition-colors">
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <span className="w-3 md:w-4 text-white/40 text-[10px] md:text-xs font-bold shrink-0">{i + 1}</span>
                           {player.photo ? (
-                            <img src={player.photo} alt="" className="w-8 h-8 rounded-full object-cover bg-white/10" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+                            <img src={player.photo} alt="" width={24} height={24} className="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover bg-white/10" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white/40">
+                            <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-white/10 flex items-center justify-center text-[10px] md:text-xs font-bold text-white/40">
                               {player.name?.charAt(0)}
                             </div>
                           )}
-                          <div>
-                            <div className="text-sm font-medium text-white">{player.name}</div>
-                            <div className="text-[10px] text-white/30">{tCountry(player.nationality)}</div>
+                          <div className="min-w-0 pr-2">
+                            <div className="text-xs md:text-sm font-bold text-white truncate max-w-[120px] sm:max-w-[180px]">{player.name}</div>
+                            <div className="text-[9px] md:text-[10px] text-white/40 truncate">{tCountry(player.nationality)}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-2 py-3">
-                        <div className="flex items-center gap-2">
-                          {stats?.team?.logo && <img src={stats.team.logo} alt="" className="w-5 h-5 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
-                          <span className="text-xs text-white/60">{stats?.team?.name}</span>
+                      <td className="px-2 py-2">
+                        <div className="flex items-center gap-1.5 md:gap-2">
+                          {stats?.team?.logo && <img src={stats.team.logo} alt="" width={16} height={16} className="w-4 h-4 md:w-5 md:h-5 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                          <span className="text-[10px] md:text-xs text-white/60 truncate max-w-[80px] sm:max-w-[120px]">{stats?.team?.name}</span>
                         </div>
                       </td>
-                      <td className="px-2 py-3 text-center text-white font-bold text-base">{stats?.goals?.total ?? 0}</td>
-                      <td className="px-2 py-3 text-center text-white/60">{stats?.goals?.assists ?? 0}</td>
-                      <td className="px-2 py-3 text-center text-white/40">{stats?.games?.appearences ?? 0}</td>
+                      <td className="px-2 py-2 text-center text-emerald-400 font-black text-sm md:text-base">{stats?.goals?.total ?? 0}</td>
+                      <td className="px-2 py-2 text-center text-white/60 text-xs md:text-sm">{stats?.goals?.assists ?? 0}</td>
+                      <td className="px-2 py-2 text-center text-white/40 text-[10px] md:text-xs">{stats?.games?.appearences ?? 0}</td>
                     </tr>
                   );
                 })}
@@ -560,7 +560,7 @@ export default function LeagueView() {
                   className="glass-card rounded-xl p-4 flex flex-col items-center gap-3 hover:bg-white/10 hover:ring-1 hover:ring-indigo-500/50 transition-all cursor-pointer group"
                 >
                   {team.logo ? (
-                    <img src={team.logo} alt={team.name} loading="lazy" className="w-14 h-14 object-contain group-hover:scale-110 transition-transform" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+                    <img src={team.logo} alt={team.name} loading="lazy" decoding="async" width={56} height={56} className="w-14 h-14 object-contain group-hover:scale-110 transition-transform" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
                   ) : (
                     <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
                       <ShieldCheck size={24} className="text-white/30" />
@@ -615,7 +615,7 @@ function FixturesList({ fixtures }) {
                     isLive ? 'border border-red-500/20' : ''
                   }`}>
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {m.teams?.home?.logo && <img src={m.teams.home.logo} alt="" className="w-6 h-6 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                    {m.teams?.home?.logo && <img src={m.teams.home.logo} alt="" width={24} height={24} className="w-6 h-6 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                     <span className="text-sm text-white font-medium truncate">{m.teams?.home?.name}</span>
                   </div>
                   <div className="px-4 text-center min-w-[70px]">
@@ -634,7 +634,7 @@ function FixturesList({ fixtures }) {
                   </div>
                   <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
                     <span className="text-sm text-white font-medium truncate">{m.teams?.away?.name}</span>
-                    {m.teams?.away?.logo && <img src={m.teams.away.logo} alt="" className="w-6 h-6 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                    {m.teams?.away?.logo && <img src={m.teams.away.logo} alt="" width={24} height={24} className="w-6 h-6 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                   </div>
                   <div className="ml-3 w-10 text-right">
                     {isLive && <span className="w-2 h-2 rounded-full bg-red-500 inline-block animate-pulse" />}

@@ -35,6 +35,7 @@ export default defineConfig({
   build: {
     target: ['es2020', 'chrome90', 'firefox88', 'safari14', 'edge90'],
     cssMinify: true,
+    assetsInlineLimit: 4096,
     reportCompressedSize: false,
     chunkSizeWarningLimit: 600,
     rollupOptions: {
@@ -51,6 +52,9 @@ export default defineConfig({
           }
           if (id.includes('node_modules/zustand/')) {
             return 'zustand';
+          }
+          if (id.includes('node_modules/lucide-react/')) {
+            return 'icons';
           }
         }
       }

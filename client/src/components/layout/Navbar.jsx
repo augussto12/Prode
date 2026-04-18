@@ -46,7 +46,7 @@ export default function Navbar() {
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-white/10 shadow-lg backdrop-blur-md" style={{ background: 'color-mix(in srgb, var(--color-bg-start) 80%, transparent)' }}>
+    <nav className="sticky top-0 z-50 border-b border-white/10 shadow-lg bg-[#0f172a]">
       <div className="relative z-50 max-w-[1600px] mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
@@ -97,9 +97,10 @@ export default function Navbar() {
                 </Link>
                 <button
                   onClick={handleLogout}
+                  aria-label="Cerrar sesión"
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-xs cursor-pointer border-none bg-transparent"
                 >
-                  <LogOut size={14} />
+                  <LogOut size={14} aria-hidden="true" />
                 </button>
               </>
             ) : (
@@ -122,8 +123,8 @@ export default function Navbar() {
                 {liveCount}
               </Link>
             )}
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="text-white bg-transparent border-none cursor-pointer p-1">
-              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+            <button onClick={() => setMobileOpen(!mobileOpen)} aria-label={mobileOpen ? 'Cerrar menú' : 'Abrir menú'} className="text-white bg-transparent border-none cursor-pointer p-1">
+              {mobileOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
             </button>
           </div>
         </div>

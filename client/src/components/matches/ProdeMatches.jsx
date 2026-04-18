@@ -146,6 +146,10 @@ export default function ProdeMatches({ competitionId, groupId, initialTab = 'mat
     const bIsFav = favorites.includes(b.homeTeam) || favorites.includes(b.awayTeam);
     if (aIsFav && !bIsFav) return -1;
     if (!aIsFav && bIsFav) return 1;
+    
+    if (timeFilter === 'past') {
+      return new Date(b.matchDate) - new Date(a.matchDate);
+    }
     return new Date(a.matchDate) - new Date(b.matchDate);
   });
 

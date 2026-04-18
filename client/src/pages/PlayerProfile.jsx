@@ -55,7 +55,7 @@ export default function PlayerProfile() {
         <div className="absolute inset-0 opacity-10 pointer-events-none bg-gradient-to-r from-indigo-600 to-purple-600" />
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 w-full">
           {player?.photo ? (
-            <img src={player.photo} alt={player.name} className="w-28 h-28 rounded-2xl object-cover bg-white/10 border-2 border-white/20" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+            <img src={player.photo} alt={player.name} width={112} height={112} className="w-28 h-28 rounded-2xl object-cover bg-white/10 border-2 border-white/20" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
           ) : (
             <div className="w-28 h-28 rounded-2xl bg-white/10 flex items-center justify-center text-4xl font-bold text-white/30">
               {player?.name?.charAt(0)}
@@ -70,7 +70,7 @@ export default function PlayerProfile() {
               {player?.weight && <span className="text-sm text-white/50">{player.weight}</span>}
             </div>
             {player?.birth?.date && (
-              <div className="flex items-center justify-center md:justify-start gap-1 mt-1 text-xs text-white/30">
+              <div className="flex items-center justify-center md:justify-start gap-1 mt-1 text-xs text-white/40">
                 <Calendar size={10} />
                 Nacido el {new Date(player.birth.date).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}
                 {player.birth.place && ` en ${player.birth.place}, ${player.birth.country}`}
@@ -81,13 +81,13 @@ export default function PlayerProfile() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-white/5 p-1 rounded-xl w-full sm:w-fit overflow-x-auto">
+      <div className="flex gap-1 bg-white/5 p-1 rounded-xl w-full sm:w-fit overflow-x-auto hide-scrollbar">
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border-none whitespace-nowrap shrink-0 ${
-              tab === t.id ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white/70 bg-transparent'
+            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all cursor-pointer border-none whitespace-nowrap shrink-0 flex-1 sm:flex-none ${
+              tab === t.id ? 'bg-white/10 text-white shadow-sm' : 'text-white/50 hover:text-white/70 bg-transparent'
             }`}>
-            <t.icon size={16} /> <span className="hidden sm:inline">{t.label}</span>
+            <t.icon size={14} className="sm:w-4 sm:h-4" /> <span>{t.label}</span>
           </button>
         ))}
       </div>
@@ -99,10 +99,10 @@ export default function PlayerProfile() {
             <m.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
               className="glass-card rounded-2xl p-5">
               <div className="flex items-center gap-3 mb-4 pb-3 border-b border-white/5">
-                {s.team?.logo && <img src={s.team.logo} alt="" className="w-8 h-8 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                {s.team?.logo && <img src={s.team.logo} alt="" width={32} height={32} className="w-8 h-8 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                 <div>
                   <div className="text-sm font-semibold text-white">{s.team?.name}</div>
-                  <div className="text-xs text-white/30">{s.league?.name} — {s.league?.season}</div>
+                  <div className="text-xs text-white/40">{s.league?.name} — {s.league?.season}</div>
                 </div>
               </div>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
@@ -148,7 +148,7 @@ export default function PlayerProfile() {
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-medium text-white">{t.league}</div>
-                    <div className="text-xs text-white/30">{t.country} — {t.season}</div>
+                    <div className="text-xs text-white/40">{t.country} — {t.season}</div>
                   </div>
                   <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                     t.place === 'Winner' ? 'bg-amber-500/20 text-amber-400' : 'bg-white/10 text-white/50'
@@ -171,26 +171,30 @@ export default function PlayerProfile() {
             <div className="space-y-3">
               {transfers.map((t, i) => (
                 <m.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-                  className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02]">
-                  <div className="text-xs text-white/30 w-16 shrink-0 text-center">
-                    {t.date ? new Date(t.date).toLocaleDateString('es-AR', { month: 'short', year: 'numeric' }) : '—'}
+                  className="flex flex-col gap-2.5 p-3 sm:p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-[10px] sm:text-xs font-mono text-white/40 uppercase tracking-widest">
+                      {t.date ? new Date(t.date).toLocaleDateString('es-AR', { month: 'short', year: 'numeric' }) : 'Fecha Desc.'}
+                    </span>
+                    <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded ${
+                      t.type === 'Free' ? 'text-green-400 bg-green-500/10 border border-green-500/20' :
+                      t.type === 'Loan' ? 'text-blue-400 bg-blue-500/10 border border-blue-500/20' :
+                      'text-white/40 bg-white/5 border border-white/10'
+                    }`}>
+                      {t.type === 'Free' ? 'Libre' : t.type === 'Loan' ? 'Préstamo' : t.type || 'Fichaje'}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {t.teams?.out?.logo && <img src={t.teams.out.logo} alt="" className="w-6 h-6 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
-                    <span className="text-xs text-white/60 truncate">{t.teams?.out?.name}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0 bg-white/5 p-2 rounded-lg border border-white/5">
+                      {t.teams?.out?.logo ? <img src={t.teams.out.logo} alt="" width={20} height={20} className="w-5 h-5 sm:w-6 sm:h-6 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} /> : <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white/10" />}
+                      <span className="text-[10px] sm:text-xs text-white/60 truncate font-semibold">{t.teams?.out?.name || 'Desconocido'}</span>
+                    </div>
+                    <ArrowRightLeft size={14} className="text-white/20 shrink-0" />
+                    <div className="flex items-center gap-2 flex-1 min-w-0 bg-white/5 p-2 rounded-lg border border-white/5">
+                      {t.teams?.in?.logo ? <img src={t.teams.in.logo} alt="" width={20} height={20} className="w-5 h-5 sm:w-6 sm:h-6 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} /> : <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white/10" />}
+                      <span className="text-[10px] sm:text-xs text-white truncate font-bold">{t.teams?.in?.name || 'Desconocido'}</span>
+                    </div>
                   </div>
-                  <ArrowRightLeft size={14} className="text-white/20 shrink-0" />
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {t.teams?.in?.logo && <img src={t.teams.in.logo} alt="" className="w-6 h-6 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
-                    <span className="text-xs text-white font-medium truncate">{t.teams?.in?.name}</span>
-                  </div>
-                  <span className={`text-xs shrink-0 px-2 py-1 rounded ${
-                    t.type === 'Free' ? 'text-green-400 bg-green-500/10' :
-                    t.type === 'Loan' ? 'text-blue-400 bg-blue-500/10' :
-                    'text-white/40 bg-white/5'
-                  }`}>
-                    {t.type === 'Free' ? 'Libre' : t.type === 'Loan' ? 'Préstamo' : t.type || '—'}
-                  </span>
                 </m.div>
               ))}
             </div>
