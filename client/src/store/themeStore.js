@@ -33,6 +33,12 @@ const applyToCss = (theme) => {
   root.style.setProperty('--accent-color', theme.accentColor);
   root.style.setProperty('--bg-start-color', theme.bgGradientFrom);
   root.style.setProperty('--bg-end-color', theme.bgGradientTo);
+  
+  // Actualizar meta theme-color para navegadores móviles (overscroll y status bar)
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+  if (metaThemeColor) {
+    metaThemeColor.setAttribute('content', theme.bgGradientFrom);
+  }
 };
 
 const useThemeStore = create((set, get) => ({

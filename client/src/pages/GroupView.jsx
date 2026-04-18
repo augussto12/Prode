@@ -443,7 +443,7 @@ export default function GroupView() {
                   </div>
                 )}
                 
-                <ProdeMatches competitionId={group.competitionId} />
+                <ProdeMatches competitionId={group.competitionId} groupId={group.id} />
               </m.div>
             )}
           </AnimatePresence>

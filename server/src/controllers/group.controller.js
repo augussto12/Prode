@@ -85,3 +85,10 @@ export async function unban(req, res, next) {
     res.json({ message: 'Member unbanned successfully' });
   } catch (err) { next(err); }
 }
+
+export async function getMatchPredictions(req, res, next) {
+  try {
+    const preds = await groupService.getMatchPredictions(Number(req.params.id), Number(req.params.externalFixtureId));
+    res.json(preds);
+  } catch (err) { next(err); }
+}

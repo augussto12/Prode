@@ -249,3 +249,39 @@ export async function unbanMember(groupId, userIdToUnban, requestingUserId) {
     data: { isBanned: false, bannedAt: null },
   });
 }
+
+// --- PREDICTIONS ---
+export async function getMatchPredictions(groupId, externalFixtureId) {
+  // Obtener los miembros del grupo
+  const members = await prisma.groupUser.findMany({
+    where: { groupId, isBanned: false },
+    select: { userId: true, user: { select: { displayName: true, avatar: true } }, totalPoints: true }
+  });
+
+  const userIds = members.map(m => m.userId);
+
+  // Traer predicciones para este partido específicas de estos usuarios
+  const predictions = await prisma.prediction.findMany({
+    where: {
+      externalFixtureId,
+      userId: { in: userIds }
+    }
+  });
+
+  // Mapear combinando predicción e info de usuario, ordenados por puntos de predicción o totalPoints si no hay predi
+  const result = members.map(m => {
+    const p = predictions.find(pred => pred.userId === m.userId);
+    return {
+      user: m.user,
+      prediction: p || null,
+      totalPoints: m.totalPoints
+    };
+  });
+
+  return result.sort((a, b) => {
+    const ptsA = a.prediction?.pointsEarned || 0;
+    const ptsB = b.prediction?.pointsEarned || 0;
+    if (ptsB !== ptsA) return ptsB - ptsA;
+    return b.totalPoints - a.totalPoints;
+  });
+}

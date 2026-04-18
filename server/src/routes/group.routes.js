@@ -16,6 +16,7 @@ router.post('/join', authenticate, validate(joinGroupSchema), ctrl.join);
 // Requieren membresía (Anti-IDOR)
 router.get('/:id', authenticate, requireGroupMember, ctrl.getById);
 router.get('/:id/leaderboard', authenticate, requireGroupMember, ctrl.getLeaderboard);
+router.get('/:id/matches/:externalFixtureId/predictions', authenticate, requireGroupMember, ctrl.getMatchPredictions);
 router.put('/:id/theme', authenticate, requireGroupAdmin, validate(groupThemeSchema), ctrl.updateTheme);
 router.delete('/:id', authenticate, requireGroupAdmin, ctrl.removeGroup);
 router.delete('/:id/leave', authenticate, requireGroupMember, ctrl.leave);

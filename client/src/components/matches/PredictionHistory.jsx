@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { m } from 'framer-motion';
-import { BarChart3, Crosshair, Flag } from 'lucide-react';
+import { BarChart3, Crosshair, Flag, Users } from 'lucide-react';
+import GroupPredictionsModal from './GroupPredictionsModal';
 
-export default function PredictionHistory({ predictions, matches }) {
+export default function PredictionHistory({ predictions, matches, groupId }) {
   const [predFilter, setPredFilter] = useState('all');
+  const [selectedMatchModal, setSelectedMatchModal] = useState(null);
 
   const predsWithMatch = predictions.map(p => {
     const match = matches.find(m => m.id === p.externalFixtureId);
@@ -12,10 +14,10 @@ export default function PredictionHistory({ predictions, matches }) {
 
   // Helper to determine if prediction is a main hit (exact or winner correct)
   const isMainHit = (p) => {
-    const m = p.match;
-    if (m.status !== 'FINISHED') return false;
+    const matchObj = p.match;
+    if (matchObj.status !== 'FINISHED') return false;
     const pH = Number(p.homeGoals), pA = Number(p.awayGoals);
-    const mH = Number(m.homeGoals), mA = Number(m.awayGoals);
+    const mH = Number(matchObj.homeGoals), mA = Number(matchObj.awayGoals);
     if (pH === mH && pA === mA) return true; // exact
     // Winner check
     const predResult = pH > pA ? 'HOME' : pH < pA ? 'AWAY' : 'DRAW';
@@ -98,14 +100,14 @@ export default function PredictionHistory({ predictions, matches }) {
           </div>
         ) : (
           filteredPreds.map(pred => {
-            const m = pred.match;
-            if (!m) return null;
-            const isFinished = m.status === 'FINISHED';
+            const matchObj = pred.match;
+            if (!matchObj) return null;
+            const isFinished = matchObj.status === 'FINISHED';
             const hasExtras = pred.moreShots || pred.moreCorners;
 
             // Determine result label by comparing actual scores, NOT points
             const pH = Number(pred.homeGoals), pA = Number(pred.awayGoals);
-            const mH = Number(m.homeGoals), mA = Number(m.awayGoals);
+            const mH = Number(matchObj.homeGoals), mA = Number(matchObj.awayGoals);
             const isExact = isFinished && pH === mH && pA === mA;
             
             // Check if predicted the correct winner/draw
@@ -130,16 +132,16 @@ export default function PredictionHistory({ predictions, matches }) {
                   {/* Match Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-white/30 mb-1 sm:mb-1.5">
-                      <span className="truncate">{m.stage}</span>
+                      <span className="truncate">{matchObj.stage}</span>
                       <span>•</span>
-                      <span className="shrink-0">{new Date(m.matchDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}</span>
+                      <span className="shrink-0">{new Date(matchObj.matchDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}</span>
                     </div>
                     <div className="flex items-center gap-2 sm:gap-3">
-                      {m.homeTeamLogo && <img src={m.homeTeamLogo} alt="" className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
-                      <span className="text-xs sm:text-sm font-medium text-white truncate">{m.homeTeam}</span>
+                      {matchObj.homeTeamLogo && <img src={matchObj.homeTeamLogo} alt="" className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                      <span className="text-xs sm:text-sm font-medium text-white truncate">{matchObj.homeTeam}</span>
                       <span className="text-[10px] sm:text-xs text-white/30 shrink-0">vs</span>
-                      <span className="text-xs sm:text-sm font-medium text-white truncate">{m.awayTeam}</span>
-                      {m.awayTeamLogo && <img src={m.awayTeamLogo} alt="" className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
+                      <span className="text-xs sm:text-sm font-medium text-white truncate">{matchObj.awayTeam}</span>
+                      {matchObj.awayTeamLogo && <img src={matchObj.awayTeamLogo} alt="" className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />}
                     </div>
                   </div>
 
@@ -159,7 +161,7 @@ export default function PredictionHistory({ predictions, matches }) {
                       {isFinished ? (
                         <>
                           <div className="text-[9px] sm:text-[10px] text-white/40 uppercase tracking-wider mb-0.5 sm:mb-1">Resultado</div>
-                          <div className="text-xs sm:text-sm font-bold text-white mb-1">{m.homeGoals} - {m.awayGoals}</div>
+                          <div className="text-xs sm:text-sm font-bold text-white mb-1">{matchObj.homeGoals} - {matchObj.awayGoals}</div>
                           <div className={`text-[9px] sm:text-[10px] font-bold ${
                             isExact ? 'text-emerald-400' : isWinnerCorrect ? 'text-blue-400' : pred.pointsEarned > 0 ? 'text-violet-400' : 'text-red-400'
                           }`}>
@@ -168,7 +170,7 @@ export default function PredictionHistory({ predictions, matches }) {
                           </div>
                         </>
                       ) : (
-                        <div className="text-[10px] sm:text-xs text-white/30 italic">{m.status === 'SCHEDULED' ? 'Por jugar' : 'En vivo'}</div>
+                        <div className="text-[10px] sm:text-xs text-white/30 italic">{matchObj.status === 'SCHEDULED' ? 'Por jugar' : 'En vivo'}</div>
                       )}
                     </div>
                   </div>
@@ -182,7 +184,7 @@ export default function PredictionHistory({ predictions, matches }) {
                         <Crosshair size={11} className="text-violet-400/60 shrink-0" />
                         <span className="text-[9px] sm:text-[10px] text-white/30">Remates al Arco:</span>
                         <span className="text-[9px] sm:text-[10px] font-semibold text-violet-300 bg-violet-500/10 px-1.5 py-0.5 rounded border border-violet-500/20">
-                          {getMarketLabel(pred.moreShots, m)}
+                          {getMarketLabel(pred.moreShots, matchObj)}
                         </span>
                         {pred.moreShotsHit !== null && pred.moreShotsHit !== undefined && (
                           <span className={`text-[9px] font-bold ${pred.moreShotsHit ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -196,7 +198,7 @@ export default function PredictionHistory({ predictions, matches }) {
                         <Flag size={11} className="text-amber-400/60 shrink-0" />
                         <span className="text-[9px] sm:text-[10px] text-white/30">Córners:</span>
                         <span className="text-[9px] sm:text-[10px] font-semibold text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-                          {getMarketLabel(pred.moreCorners, m)}
+                          {getMarketLabel(pred.moreCorners, matchObj)}
                         </span>
                         {pred.moreCornersHit !== null && pred.moreCornersHit !== undefined && (
                           <span className={`text-[9px] font-bold ${pred.moreCornersHit ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -207,11 +209,31 @@ export default function PredictionHistory({ predictions, matches }) {
                     )}
                   </div>
                 )}
+                {/* Botón predicciones grupales */}
+                {groupId && isFinished && (
+                  <div className="mt-3 pt-3 flex justify-end border-t border-white/5">
+                    <button 
+                      onClick={() => setSelectedMatchModal(matchObj)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-semibold text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 transition-all border border-indigo-500/20 cursor-pointer"
+                    >
+                      <Users size={12} /> Ver de todos
+                    </button>
+                  </div>
+                )}
               </m.div>
             );
           })
         )}
       </div>
+
+      {groupId && (
+        <GroupPredictionsModal
+          isOpen={!!selectedMatchModal}
+          onClose={() => setSelectedMatchModal(null)}
+          groupId={groupId}
+          match={selectedMatchModal}
+        />
+      )}
     </div>
   );
 }
