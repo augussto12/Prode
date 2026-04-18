@@ -482,15 +482,16 @@ const TodayMatchesRow = ({ data }) => {
                       awayGoalsToday={m.goals?.away}
                     />
 
-                    {/* Mock Odds / 1X2 View */}
+                    {/* Real Odds / 1X2 View */}
                     <div className="flex items-center justify-between gap-1 mt-2 pt-2 border-t border-white/5 relative">
-                      {/* Only apply dimming opacity if finished to keep the focus on the score, but we will highlight the winner */}
                       <div className={`flex items-center justify-between w-full flex-1 gap-1 ${['FT', 'AET', 'PEN'].includes(m.fixture.status.short) ? 'opacity-90' : ''}`}>
                         {(() => {
-                          const s = m.fixture.id || 1;
-                          const h = (1.5 + (s % 300) / 100).toFixed(2);
-                          const d = (2.0 + (s % 150) / 100).toFixed(2);
-                          const a = (1.8 + (s % 250) / 100).toFixed(2);
+                          let h = '-', d = '-', a = '-';
+                          if (m.odds && m.odds.length > 0) {
+                            h = m.odds.find(o => o.value === 'Home')?.odd || '-';
+                            d = m.odds.find(o => o.value === 'Draw')?.odd || '-';
+                            a = m.odds.find(o => o.value === 'Away')?.odd || '-';
+                          }
 
                           const isFinished = ['FT', 'AET', 'PEN'].includes(m.fixture.status.short);
                           const homeGoals = m.goals?.home ?? 0;

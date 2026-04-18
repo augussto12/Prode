@@ -44,6 +44,7 @@ function trimMatch(m) {
     goals: m.goals,
     // Penalty score needed by useBracket to determine knockout winners
     score: m.score?.penalty?.home != null ? { penalty: m.score.penalty } : undefined,
+    odds: m.odds || null, // Real pre-match odds
   };
 }
 
@@ -313,6 +314,26 @@ router.get('/today', async (req, res, next) => {
 
     const data = await cachedApiCall(cacheKey, 600, async () => {
       const result = await footballApi.fetchFixturesByDate(todayStr, null, tz);
+      
+      // Intentar fetchear pre-match odds (Bookmaker 8=Bet365, Bet 1=Match Winner)
+      try {
+        const oddsResult = await footballApi.fetchOdds({ date: todayStr, timezone: tz, bookmaker: 8, bet: 1 });
+        const oddsMap = {};
+        (oddsResult.response || []).forEach(o => {
+          const betWinner = o.bookmakers?.[0]?.bets?.[0];
+          if (betWinner) oddsMap[o.fixture.id] = betWinner.values;
+        });
+        
+        // Attach
+        (result.response || []).forEach(m => {
+          if (oddsMap[m.fixture.id]) {
+            m.odds = oddsMap[m.fixture.id];
+          }
+        });
+      } catch (e) {
+        console.log('No pre-match odds fetched for today', e.message);
+      }
+      
       return result.response;
     });
 
@@ -353,6 +374,25 @@ router.get('/fixtures/date/:date', async (req, res, next) => {
 
     const data = await cachedApiCall(cacheKey, 3600, async () => {
       const result = await footballApi.fetchFixturesByDate(date, leagueId);
+      
+      try {
+        // Fetch real pre-match odds
+        const oddsResult = await footballApi.fetchOdds({ date, bookmaker: 8, bet: 1 });
+        const oddsMap = {};
+        (oddsResult.response || []).forEach(o => {
+          const betWinner = o.bookmakers?.[0]?.bets?.[0];
+          if (betWinner) oddsMap[o.fixture.id] = betWinner.values;
+        });
+        
+        (result.response || []).forEach(m => {
+          if (oddsMap[m.fixture.id]) {
+            m.odds = oddsMap[m.fixture.id];
+          }
+        });
+      } catch (e) {
+        console.log('No pre-match odds fetched for date', date);
+      }
+      
       return result.response;
     });
 

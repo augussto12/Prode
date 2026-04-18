@@ -12,9 +12,11 @@ export default function LiveMatch() {
   const [injuries, setInjuries] = useState([]);
   const [liveOdds, setLiveOdds] = useState([]);
   const [firstLeg, setFirstLeg] = useState(null); // Partido de ida (para llaves de vuelta)
+  const [h2hMatches, setH2hMatches] = useState([]); // Historial H2H completo
   const [loading, setLoading] = useState(true);
   const [activeLineupTab, setActiveLineupTab] = useState('home');
   const [activeOddsMarketIndex, setActiveOddsMarketIndex] = useState(0);
+  const [showH2H, setShowH2H] = useState(false);
   const intervalRef = useRef(null);
 
   useEffect(() => {
@@ -37,12 +39,10 @@ export default function LiveMatch() {
       setData(resultRes.data);
       setInjuries(injuriesRes.data || []);
 
-      // Detectar si es partido de VUELTA en fase final → buscar partido de ida
+      // Cargar historial y, si es vuelta, buscar el de ida
       const roundStr = resultRes.data.fixture?.league?.round || '';
       const isSecondLeg = /2nd\s*Leg/i.test(roundStr);
-      if (isSecondLeg) {
-        fetchFirstLeg(resultRes.data.fixture);
-      }
+      fetchH2HHistory(resultRes.data.fixture, isSecondLeg, id);
 
       // Polling if live
       const status = resultRes.data.fixture?.fixture?.status?.short;
@@ -69,8 +69,8 @@ export default function LiveMatch() {
     finally { setLoading(false); }
   };
 
-  /** Busca el partido de ida en el H2H para calcular el agregado */
-  const fetchFirstLeg = async (fix) => {
+  /** Carga el historial H2H y opcionalmente el partido de ida */
+  const fetchH2HHistory = async (fix, isSecondLeg, currentId) => {
     try {
       const homeId = fix.teams?.home?.id;
       const awayId = fix.teams?.away?.id;
@@ -78,23 +78,23 @@ export default function LiveMatch() {
       if (!homeId || !awayId) return;
 
       const { data: h2hData } = await api.get(`/explorer/h2h/${homeId}/${awayId}?last=5`);
-      const matches = h2hData || [];
+      
+      // Filtrar el partido actual para no mostrarlo en el historial
+      const matches = (h2hData || []).filter(m => String(m.fixture.id) !== String(currentId));
+      setH2hMatches(matches);
 
-      // Buscar el partido de ida: misma liga, mismo año, que sea "1st Leg" y ya terminado
-      // En el partido de IDA, los equipos están invertidos (home de vuelta = away de ida)
-      const firstLegMatch = matches.find(m => {
-        const round = m.league?.round || '';
-        const isFirstLeg = /1st\s*Leg/i.test(round);
-        const sameLeague = m.league?.id === leagueId;
-        const isFinished = ['FT', 'AET', 'PEN'].includes(m.fixture?.status?.short);
-        return isFirstLeg && sameLeague && isFinished;
-      });
-
-      if (firstLegMatch) {
-        setFirstLeg(firstLegMatch);
+      if (isSecondLeg) {
+        const firstLegMatch = matches.find(m => {
+          const round = m.league?.round || '';
+          const isFirstLeg = /1st\s*Leg/i.test(round);
+          const sameLeague = m.league?.id === leagueId;
+          const isFinished = ['FT', 'AET', 'PEN'].includes(m.fixture?.status?.short);
+          return isFirstLeg && sameLeague && isFinished;
+        });
+        if (firstLegMatch) setFirstLeg(firstLegMatch);
       }
     } catch (e) {
-      console.log('No se pudo cargar el partido de ida');
+      console.log('No se pudo cargar el historial H2H');
     }
   };
 
@@ -217,18 +217,18 @@ export default function LiveMatch() {
               {isLive ? (
                 <div className="inline-flex items-center justify-center gap-1.5 md:gap-2 px-2 md:px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 whitespace-nowrap">
                   <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-red-500 animate-pulse" />
-                  <span className="text-xs md:text-sm text-red-500 font-bold">{match.status.elapsed}'</span>
-                  {match.status.short === 'HT' && <span className="text-[10px] md:text-xs text-red-500/70 ml-1">(MT)</span>}
+                  <span className="text-xs md:text-sm text-red-500 font-bold">{match?.status?.elapsed}'</span>
+                  {match?.status?.short === 'HT' && <span className="text-[10px] md:text-xs text-red-500/70 ml-1">(MT)</span>}
                 </div>
               ) : isFinished ? (
                 <span className="px-3 md:px-4 py-1 md:py-1.5 bg-white/10 text-white/70 rounded-full text-[10px] md:text-xs font-semibold uppercase tracking-widest inline-block border border-white/5 whitespace-nowrap">
-                  {match.status.short === 'PEN' ? 'Penales' : match.status.short === 'AET' ? 'Alargue' : 'Final'}
+                  {match?.status?.short === 'PEN' ? 'Penales' : match?.status?.short === 'AET' ? 'Alargue' : 'Final'}
                 </span>
               ) : (
                 <div className="inline-flex items-center justify-center gap-1 md:gap-1.5 px-3 md:px-4 py-1 md:py-1.5 rounded-full bg-white/5 text-white/50 border border-white/5 whitespace-nowrap">
                   <Clock size={12} className="shrink-0" />
                   <span className="text-[10px] md:text-xs font-medium">
-                    {new Date(match.date).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })} • {new Date(match.date).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                    {match?.date ? new Date(match.date).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }) : 'Pronto'} • {match?.date ? new Date(match.date).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : ''}
                   </span>
                 </div>
               )}
@@ -414,7 +414,7 @@ export default function LiveMatch() {
           )}
 
           {/* Injuries / Hospital */}
-          {injuries.length > 0 && (
+          {injuries.length > 0 ? (
             <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl p-6">
               <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center justify-center gap-2"><span className="text-white/30">🏥</span> Enfemería / Bajas</h3>
               <div className="relative flex justify-between gap-2 md:gap-6">
@@ -459,6 +459,11 @@ export default function LiveMatch() {
                   {injuries.filter(i => i.team.id === teams?.away?.id).length === 0 && <span className="text-[9px] md:text-[10px] text-white/20 italic block text-right">Plantel a disp.</span>}
                 </div>
               </div>
+            </m.div>
+          ) : (
+            <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl p-6 border border-white/5">
+              <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-2 flex items-center justify-center gap-2"><span className="text-white/30">🏥</span> Enfemería / Bajas</h3>
+              <p className="text-center text-xs text-white/40">Todos los jugadores a disposición</p>
             </m.div>
           )}
 
@@ -525,6 +530,94 @@ export default function LiveMatch() {
                   );
                 })}
               </div>
+            </m.div>
+          )}
+
+          {/* Historial H2H (Últimos 5 partidos) */}
+          {h2hMatches.length > 0 ? (
+            <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl overflow-hidden border border-white/5">
+              <button 
+                onClick={() => setShowH2H(!showH2H)}
+                className="w-full p-6 flex flex-col md:flex-row items-center justify-between cursor-pointer gap-2 hover:bg-white/5 transition-colors border-none bg-transparent"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-white/30 text-lg">⚔️</span>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-widest text-left">Historial H2H</h3>
+                  <span className="text-[10px] text-white/40 bg-white/10 px-2 py-0.5 rounded-full ml-1">Últimos {h2hMatches.length}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* Resumen de victorias simple en el header del toggle */}
+                  {(() => {
+                    let wH = 0, wA = 0, d = 0;
+                    h2hMatches.forEach(m => {
+                      const hWon = m.goals?.home > m.goals?.away;
+                      const aWon = m.goals?.away > m.goals?.home;
+                      if (hWon) { if (m.teams.home.id === teams.home.id) wH++; else wA++; }
+                      else if (aWon) { if (m.teams.away.id === teams.away.id) wA++; else wH++; }
+                      else d++;
+                    });
+                    return (
+                      <div className="flex text-[10px] font-bold">
+                         <span className="text-emerald-400 w-4 text-center">{wH}</span>
+                         <span className="text-white/30 px-1 border-x border-white/10 mx-1">{d}</span>
+                         <span className="text-blue-400 w-4 text-center">{wA}</span>
+                      </div>
+                    );
+                  })()}
+                  <m.div animate={{ rotate: showH2H ? 180 : 0 }} className="text-white/30 ml-2">▼</m.div>
+                </div>
+              </button>
+
+              <AnimatePresence>
+                {showH2H && (
+                  <m.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-4 pb-4 space-y-2">
+                      {h2hMatches.map(m => {
+                        const hG = m.goals?.home ?? '-';
+                        const aG = m.goals?.away ?? '-';
+                        const tHome = m.teams?.home;
+                        const tAway = m.teams?.away;
+                        const isDraw = hG === aG;
+                        
+                        return (
+                          <div key={m.fixture.id} onClick={() => navigate(`/partido/${m.fixture.id}`)} className="flex flex-col md:flex-row items-center max-w-full justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-colors cursor-pointer group">
+                            <div className="flex items-center justify-center gap-1.5 md:gap-3 w-full max-w-full">
+                              <div className="flex-1 flex items-center justify-end gap-1.5 md:gap-2 min-w-0">
+                                <span className={`text-[10px] md:text-xs font-bold truncate text-right ${hG > aG ? 'text-white' : 'text-white/60'}`}>{tHome?.name}</span>
+                                {tHome?.logo && <img src={tHome.logo} alt="" className="w-4 h-4 md:w-5 md:h-5 object-contain" />}
+                              </div>
+
+                              <div className="flex flex-col items-center justify-center px-1 md:px-2 min-w-[50px] md:min-w-[60px]">
+                                <span className="text-[8px] md:text-[9px] text-white/30 mb-0.5">{new Date(m.fixture.date).getFullYear()}</span>
+                                <div className="text-xs md:text-sm font-black font-mono tracking-widest text-center whitespace-nowrap">
+                                   <span className={hG > aG ? 'text-emerald-400' : isDraw ? 'text-amber-400' : 'text-white/40'}>{hG}</span>
+                                   <span className="text-white/20 mx-1">:</span>
+                                   <span className={aG > hG ? 'text-blue-400' : isDraw ? 'text-amber-400' : 'text-white/40'}>{aG}</span>
+                                </div>
+                              </div>
+
+                              <div className="flex-1 flex items-center justify-start gap-1.5 md:gap-2 min-w-0">
+                                {tAway?.logo && <img src={tAway.logo} alt="" className="w-4 h-4 md:w-5 md:h-5 object-contain" />}
+                                <span className={`text-[10px] md:text-xs font-bold truncate text-left ${aG > hG ? 'text-white' : 'text-white/60'}`}>{tAway?.name}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </m.div>
+                )}
+              </AnimatePresence>
+            </m.div>
+          ) : (
+            <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-3xl p-6 border border-white/5">
+              <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-2 flex items-center justify-center gap-2"><span className="text-white/30">⚔️</span> Historial H2H</h3>
+              <p className="text-center text-xs text-white/40">No hay historial previo entre estos equipos</p>
             </m.div>
           )}
 
