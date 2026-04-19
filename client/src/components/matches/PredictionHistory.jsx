@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { m } from 'framer-motion';
-import { BarChart3, Crosshair, Flag, Users, ChevronDown, ChevronUp } from 'lucide-react';
+import { BarChart3, Crosshair, Flag, Users, ChevronDown, ChevronUp, ArrowUpDown } from 'lucide-react';
 import GroupPredictionsModal from './GroupPredictionsModal';
 
 export default function PredictionHistory({ predictions, matches, groupId, groupSettings = null }) {
   const [predFilter, setPredFilter] = useState('all');
+  const [sortOrder, setSortOrder] = useState('newest'); // 'newest' | 'oldest'
   const [selectedMatchModal, setSelectedMatchModal] = useState(null);
   const [expandedMatches, setExpandedMatches] = useState({});
 
@@ -40,12 +41,15 @@ export default function PredictionHistory({ predictions, matches, groupId, group
     ? Math.round((correctPreds.length / finishedCount) * 100)
     : 0;
 
-  const filteredPreds = predFilter === 'correct' ? correctPreds
+  const filteredPreds = (predFilter === 'correct' ? correctPreds
     : predFilter === 'wrong' ? wrongPreds
     : predFilter === 'pending' ? pendingPreds
-    : predsWithMatch;
-
-
+    : predsWithMatch
+  ).sort((a, b) => {
+    const dateA = new Date(a.match.matchDate);
+    const dateB = new Date(b.match.matchDate);
+    return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+  });
 
   return (
     <div className="space-y-3 sm:space-y-4">
@@ -69,26 +73,35 @@ export default function PredictionHistory({ predictions, matches, groupId, group
         </div>
       </div>
 
-      {/* Filter — scrollable on mobile */}
-      <div className="flex gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide pb-0.5 -mx-1 px-1">
-        {[
-          { id: 'all', label: 'Todas', count: predsWithMatch.length },
-          { id: 'correct', label: 'Acertadas', count: correctPreds.length, color: 'text-emerald-400' },
-          { id: 'wrong', label: 'Falladas', count: wrongPreds.length, color: 'text-red-400' },
-          { id: 'pending', label: 'Pendientes', count: pendingPreds.length, color: 'text-amber-400' },
-        ].map(f => (
-          <button
-            key={f.id}
-            onClick={() => setPredFilter(f.id)}
-            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
-              predFilter === f.id
-                ? 'bg-white/10 text-white'
-                : 'bg-transparent text-white/40 hover:text-white/60'
-            }`}
-          >
-            {f.label} <span className={f.color || 'text-white/30'}>({f.count})</span>
-          </button>
-        ))}
+      {/* Sort Order Toggle */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide pb-0.5 -mx-1 px-1">
+          {[
+            { id: 'all', label: 'Todas', count: predsWithMatch.length },
+            { id: 'correct', label: 'Acertadas', count: correctPreds.length, color: 'text-emerald-400' },
+            { id: 'wrong', label: 'Falladas', count: wrongPreds.length, color: 'text-red-400' },
+            { id: 'pending', label: 'Pendientes', count: pendingPreds.length, color: 'text-amber-400' },
+          ].map(f => (
+            <button
+              key={f.id}
+              onClick={() => setPredFilter(f.id)}
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
+                predFilter === f.id
+                  ? 'bg-white/10 text-white'
+                  : 'bg-transparent text-white/40 hover:text-white/60'
+              }`}
+            >
+              {f.label} <span className={f.color || 'text-white/30'}>({f.count})</span>
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest')}
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-medium text-white/40 hover:text-white/60 bg-white/5 hover:bg-white/10 transition-all border-none cursor-pointer shrink-0"
+        >
+          <ArrowUpDown size={12} />
+          {sortOrder === 'newest' ? 'Más nuevos' : 'Más viejos'}
+        </button>
       </div>
 
       {/* Predictions List */}

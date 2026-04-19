@@ -41,6 +41,18 @@ export default function AdminPanel() {
     finally { setSaving(false); }
   };
 
+  const [recalculating, setRecalculating] = useState(false);
+  const triggerRecalculateLeaderboards = async () => {
+    setRecalculating(true);
+    try {
+      const res = await api.post('/admin/scoring/recalculate-leaderboards');
+      useToastStore.getState().addToast({ type: 'success', message: res.data?.message || 'Leaderboards recalculados ✅' });
+    } catch (err) { 
+      useToastStore.getState().addToast({ type: 'error', message: err.response?.data?.error || 'Error al recalcular' }); 
+    }
+    finally { setRecalculating(false); }
+  };
+
   const handleRoleChange = async (userId, newRole) => {
     try {
       const { data } = await api.put(`/admin/users/${userId}/role`, { role: newRole });
@@ -111,11 +123,19 @@ export default function AdminPanel() {
            className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-indigo-500/25 disabled:opacity-50 cursor-pointer border-none text-xs sm:text-sm"
          >
            {saving ? <Loader2 size={16} className="animate-spin" /> : <Calculator size={16} />}
-           {saving ? 'Calculando...' : 'Forzar Cálculo de Puntos'}
+           {saving ? 'Calculando...' : 'Calcular Puntos'}
+         </button>
+         <button 
+           onClick={triggerRecalculateLeaderboards}
+           disabled={recalculating}
+           className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-amber-500/25 disabled:opacity-50 cursor-pointer border-none text-xs sm:text-sm"
+         >
+           {recalculating ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+           {recalculating ? 'Recalculando...' : 'Recalcular Leaderboards'}
          </button>
          <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-white/40">
            <Clock size={12} />
-           <span>Se ejecuta automáticamente a las 00:00 y 06:00 hs</span>
+           <span>Cron automático: 01:00, 17:00, 19:00 y 22:00 hs</span>
          </div>
       </div>
 
