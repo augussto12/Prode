@@ -6,7 +6,7 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.js';
 import * as footballApi from '../services/football-api.service.js';
-import { cachedApiCall, getCacheStats } from '../services/cache.service.js';
+import { cachedApiCall, invalidateCache, getCacheStats } from '../services/cache.service.js';
 import { TOP_LEAGUE_IDS, CURATED_LEAGUES, ALLOWED_LEAGUE_IDS, LIVE_LEAGUE_IDS_STRING } from '../config/leagues.config.js';
 
 const router = Router();
@@ -406,8 +406,10 @@ router.get('/fixtures/:id', async (req, res, next) => {
     const fixtureId = Number(req.params.id);
     const cacheKey = `fixture:${fixtureId}`;
 
-    // Si está en vivo, cache corto de 30s; si terminó, 1 hora
-    const data = await cachedApiCall(cacheKey, 30, async () => {
+    // TTL dinámico: primero intentar cache existente para determinar status
+    // Si no hay cache, fetch con TTL corto (15s) e inmediatamente después
+    // ajustar si el partido ya terminó.
+    const data = await cachedApiCall(cacheKey, 15, async () => {
       const [fixtureRes, eventsRes, statsRes, lineupsRes] = await Promise.all([
         footballApi.fetchFixtureById(fixtureId),
         footballApi.fetchFixtureEvents(fixtureId).catch(() => ({ response: [] })),
@@ -422,6 +424,22 @@ router.get('/fixtures/:id', async (req, res, next) => {
         lineups: lineupsRes.response || [],
       };
     });
+
+    // Si el partido ya terminó, extender el TTL del cache a 1 hora
+    // para evitar llamadas innecesarias a la API
+    const statusShort = data?.fixture?.fixture?.status?.short;
+    const isFinished = ['FT', 'AET', 'PEN'].includes(statusShort);
+    const isNotStarted = ['NS', 'TBD', 'PST', 'CANC', 'ABD', 'WO'].includes(statusShort);
+
+    if (isFinished) {
+      // Sobreescribir el TTL del cache entry a 1 hora (ya no va a cambiar)
+      invalidateCache(cacheKey);
+      await cachedApiCall(cacheKey, 3600, async () => data);
+    } else if (isNotStarted) {
+      invalidateCache(cacheKey);
+      await cachedApiCall(cacheKey, 300, async () => data);
+    }
+    // Si está en vivo, mantiene TTL de 15s (ya seteado arriba)
 
     res.json(data);
   } catch (err) { next(err); }

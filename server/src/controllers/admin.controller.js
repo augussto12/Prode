@@ -8,6 +8,13 @@ export async function calculateScores(req, res, next) {
   } catch (err) { next(err); }
 }
 
+export async function recalculateLeaderboards(req, res, next) {
+  try {
+    await scoringService.recalculateAllLeaderboards();
+    res.json({ message: 'Leaderboards recalculados correctamente desde las predicciones existentes.' });
+  } catch (err) { next(err); }
+}
+
 export async function getUsers(req, res, next) {
   try {
     const users = await prisma.user.findMany({

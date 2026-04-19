@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { Search, Trophy, Globe, ChevronDown, ChevronRight, MapPin, Loader2, Users } from 'lucide-react';
@@ -22,9 +22,12 @@ const COUNTRIES_PER_PAGE = 25;
 export default function Explorer() {
   const [data, setData] = useState({ topLeagues: [], byCountry: [] });
   const [todayMatches, setTodayMatches] = useState(null);
+  const [liveMatches, setLiveMatches] = useState(null);
   const [myGroups, setMyGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingToday, setLoadingToday] = useState(true);
+  const liveIntervalRef = useRef(null);
+  const todayIntervalRef = useRef(null);
 
   const user = useAuthStore(state => state.user);
   const [search, setSearch] = useState('');
@@ -36,11 +39,20 @@ export default function Explorer() {
   useEffect(() => {
     loadData();
     loadToday();
+    loadLive(); // Primera carga inmediata de live
     if (user) {
       loadMyGroups();
     }
-    const liveInterval = setInterval(loadToday, 60000);
-    return () => clearInterval(liveInterval);
+
+    // Polling live data cada 30s — siempre fresco (endpoint sin cache)
+    liveIntervalRef.current = setInterval(loadLive, 30000);
+    // Reload today cada 5 min para capturar nuevos partidos que arrancan/terminan
+    todayIntervalRef.current = setInterval(loadToday, 300000);
+
+    return () => {
+      if (liveIntervalRef.current) clearInterval(liveIntervalRef.current);
+      if (todayIntervalRef.current) clearInterval(todayIntervalRef.current);
+    };
   }, [user?.id]); // user?.id es estable, user como objeto cambia de referencia
 
   // Reset visible countries when search changes
@@ -63,6 +75,55 @@ export default function Explorer() {
     } catch (err) { /* silent */ }
     finally { setLoadingToday(false); }
   };
+
+  /** Fetch live matches (sin cache en el server) y mergear con todayMatches */
+  const loadLive = async () => {
+    try {
+      const { data: live } = await api.get('/explorer/live');
+      setLiveMatches(live || { total: 0, grouped: [] });
+    } catch (err) { /* silent — live might have 0 matches */ }
+  };
+
+  /**
+   * Merge: toma todayMatches como base y sobreescribe los scores/status
+   * de cualquier partido que esté en liveMatches (datos frescos sin cache).
+   * Esto garantiza que los cards siempre muestren el score en tiempo real.
+   */
+  const mergedTodayMatches = useMemo(() => {
+    if (!todayMatches) return null;
+    if (!liveMatches || liveMatches.total === 0) return todayMatches;
+
+    // Build lookup map: fixtureId → live match data
+    const liveMap = new Map();
+    (liveMatches.grouped || []).forEach(group => {
+      group.matches.forEach(m => {
+        liveMap.set(m.fixture.id, m);
+      });
+    });
+
+    if (liveMap.size === 0) return todayMatches;
+
+    // Override today matches with live data (preserving odds from today)
+    const merged = {
+      ...todayMatches,
+      grouped: todayMatches.grouped.map(group => ({
+        ...group,
+        matches: group.matches.map(m => {
+          const live = liveMap.get(m.fixture.id);
+          if (live) {
+            return {
+              ...m,
+              fixture: live.fixture, // Fresh status + elapsed
+              goals: live.goals,      // Fresh score
+            };
+          }
+          return m;
+        }),
+      })),
+    };
+
+    return merged;
+  }, [todayMatches, liveMatches]);
 
   const loadMyGroups = async () => {
     try {
@@ -290,8 +351,8 @@ export default function Explorer() {
             ))}
           </div>
         </div>
-      ) : todayMatches?.total > 0 ? (
-        <TodayMatchesRow data={todayMatches} />
+      ) : mergedTodayMatches?.total > 0 ? (
+        <TodayMatchesRow data={mergedTodayMatches} />
       ) : null}
 
       {/* Top Leagues */}

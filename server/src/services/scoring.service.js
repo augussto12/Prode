@@ -141,94 +141,126 @@ export async function scorePendingPredictions() {
     return { message: 'No hay predicciones pendientes para calcular.', calculated: 0 };
   }
 
+  console.log(`[SCORING] Procesando ${pendingFixtures.length} fixtures pendientes: ${pendingFixtures.map(f => f.externalFixtureId).join(', ')}`);
+
   let totalCalculated = 0;
   const finishedFixtures = [];
 
   // 2. Group process by fixture to minimize API calls
   for (const { externalFixtureId } of pendingFixtures) {
     const fixtureData = await getFixtureFromApi(externalFixtureId);
-    if (!fixtureData) continue;
+    if (!fixtureData) {
+      console.log(`[SCORING] Fixture ${externalFixtureId}: no data from API, skipping`);
+      continue;
+    }
 
     const statusShort = fixtureData.fixture?.status?.short;
     const isFinished = ['FT', 'AET', 'PEN'].includes(statusShort);
 
-    if (isFinished) {
-      // 3. Fetch stats if we need to score shots/corners
-      // Ideally we would only fetch this if the config awards > 0 points to avoid unnecessary API calls
-      if (config.moreShots > 0 || config.moreCorners > 0 || config.morePossession > 0 || config.moreFouls > 0 || config.moreCards > 0 || config.moreOffsides > 0 || config.moreSaves > 0) {
-        const statsData = await cachedApiCall(`fixture-stats:${externalFixtureId}`, 86400, async () => {
-          const result = await footballApi.fetchFixtureStats(externalFixtureId);
-          return result.response || [];
-        });
+    if (!isFinished) {
+      console.log(`[SCORING] Fixture ${externalFixtureId}: status=${statusShort}, NOT finished, skipping`);
+      continue;
+    }
 
-        // Parse stats
-        const homeStats = statsData.find(s => s.team.id === fixtureData.teams.home.id)?.statistics || [];
-        const awayStats = statsData.find(s => s.team.id === fixtureData.teams.away.id)?.statistics || [];
-        
-        const getStat = (arr, type) => {
-          const s = arr.find(x => x.type === type);
-          if (!s || s.value === null) return null;
-          // Clean percentage if string
-          const valStr = String(s.value).replace('%', '');
-          return Number(valStr);
-        };
+    console.log(`[SCORING] Fixture ${externalFixtureId}: ${fixtureData.teams?.home?.name} ${fixtureData.goals?.home}-${fixtureData.goals?.away} ${fixtureData.teams?.away?.name} (${statusShort})`);
 
-        fixtureData.homeShots = getStat(homeStats, 'Shots on Goal');
-        fixtureData.awayShots = getStat(awayStats, 'Shots on Goal');
-        fixtureData.homeCorners = getStat(homeStats, 'Corner Kicks');
-        fixtureData.awayCorners = getStat(awayStats, 'Corner Kicks');
-        fixtureData.homePossession = getStat(homeStats, 'Ball Possession');
-        fixtureData.awayPossession = getStat(awayStats, 'Ball Possession');
-        fixtureData.homeFouls = getStat(homeStats, 'Fouls');
-        fixtureData.awayFouls = getStat(awayStats, 'Fouls');
-        
-        // Sum Yellow + Red Cards
-        const homeY = getStat(homeStats, 'Yellow Cards') || 0;
-        const homeR = getStat(homeStats, 'Red Cards') || 0;
-        fixtureData.homeCards = homeY + homeR;
-        
-        const awayY = getStat(awayStats, 'Yellow Cards') || 0;
-        const awayR = getStat(awayStats, 'Red Cards') || 0;
-        fixtureData.awayCards = awayY + awayR;
-
-        fixtureData.homeOffsides = getStat(homeStats, 'Offsides');
-        fixtureData.awayOffsides = getStat(awayStats, 'Offsides');
-        fixtureData.homeSaves = getStat(homeStats, 'Goalkeeper Saves');
-        fixtureData.awaySaves = getStat(awayStats, 'Goalkeeper Saves');
-      }
-
-      // Fetch all predictions for this fixture
-      const fixturePredictions = await prisma.prediction.findMany({
-        where: { externalFixtureId, isCalculated: false }
+    // 3. Fetch stats if we need to score shots/corners
+    if (config.moreShots > 0 || config.moreCorners > 0 || config.morePossession > 0 || config.moreFouls > 0 || config.moreCards > 0 || config.moreOffsides > 0 || config.moreSaves > 0) {
+      const statsData = await cachedApiCall(`fixture-stats:${externalFixtureId}`, 86400, async () => {
+        const result = await footballApi.fetchFixtureStats(externalFixtureId);
+        return result.response || [];
       });
 
-      // Calculate and update
-      for (const prediction of fixturePredictions) {
-        const result = calculatePredictionPoints(prediction, fixtureData, config);
-        await prisma.prediction.update({
-          where: { id: prediction.id },
-          data: { 
-            pointsEarned: result.points, 
-            basePoints: result.basePoints,
-            moreShotsHit: result.moreShotsHit,
-            moreCornersHit: result.moreCornersHit,
-            morePossessionHit: result.morePossessionHit,
-            moreFoulsHit: result.moreFoulsHit,
-            moreCardsHit: result.moreCardsHit,
-            moreOffsidesHit: result.moreOffsidesHit,
-            moreSavesHit: result.moreSavesHit,
-            isCalculated: true 
-          },
-        });
-        totalCalculated++;
-      }
-      finishedFixtures.push(externalFixtureId);
+      // Parse stats
+      const homeStats = statsData.find(s => s.team.id === fixtureData.teams.home.id)?.statistics || [];
+      const awayStats = statsData.find(s => s.team.id === fixtureData.teams.away.id)?.statistics || [];
+      
+      const getStat = (arr, type) => {
+        const s = arr.find(x => x.type === type);
+        if (!s || s.value === null) return null;
+        const valStr = String(s.value).replace('%', '');
+        return Number(valStr);
+      };
+
+      fixtureData.homeShots = getStat(homeStats, 'Shots on Goal');
+      fixtureData.awayShots = getStat(awayStats, 'Shots on Goal');
+      fixtureData.homeCorners = getStat(homeStats, 'Corner Kicks');
+      fixtureData.awayCorners = getStat(awayStats, 'Corner Kicks');
+      fixtureData.homePossession = getStat(homeStats, 'Ball Possession');
+      fixtureData.awayPossession = getStat(awayStats, 'Ball Possession');
+      fixtureData.homeFouls = getStat(homeStats, 'Fouls');
+      fixtureData.awayFouls = getStat(awayStats, 'Fouls');
+      
+      const homeY = getStat(homeStats, 'Yellow Cards') || 0;
+      const homeR = getStat(homeStats, 'Red Cards') || 0;
+      fixtureData.homeCards = homeY + homeR;
+      
+      const awayY = getStat(awayStats, 'Yellow Cards') || 0;
+      const awayR = getStat(awayStats, 'Red Cards') || 0;
+      fixtureData.awayCards = awayY + awayR;
+
+      fixtureData.homeOffsides = getStat(homeStats, 'Offsides');
+      fixtureData.awayOffsides = getStat(awayStats, 'Offsides');
+      fixtureData.homeSaves = getStat(homeStats, 'Goalkeeper Saves');
+      fixtureData.awaySaves = getStat(awayStats, 'Goalkeeper Saves');
     }
+
+    // Fetch all predictions for this fixture
+    const fixturePredictions = await prisma.prediction.findMany({
+      where: { externalFixtureId, isCalculated: false }
+    });
+
+    // Calculate and update
+    for (const prediction of fixturePredictions) {
+      const result = calculatePredictionPoints(prediction, fixtureData, config);
+      
+      console.log(`[SCORING] User ${prediction.userId} | Fixture ${externalFixtureId} | Pred: ${prediction.homeGoals}-${prediction.awayGoals} | Result: base=${result.basePoints} total=${result.points} joker=${prediction.isJoker}`);
+      
+      await prisma.prediction.update({
+        where: { id: prediction.id },
+        data: { 
+          pointsEarned: result.points, 
+          basePoints: result.basePoints,
+          moreShotsHit: result.moreShotsHit,
+          moreCornersHit: result.moreCornersHit,
+          morePossessionHit: result.morePossessionHit,
+          moreFoulsHit: result.moreFoulsHit,
+          moreCardsHit: result.moreCardsHit,
+          moreOffsidesHit: result.moreOffsidesHit,
+          moreSavesHit: result.moreSavesHit,
+          isCalculated: true 
+        },
+      });
+      totalCalculated++;
+    }
+    finishedFixtures.push(externalFixtureId);
   }
 
-  // 4. Update leaderboards for ALL groups atomically (now joining Prediction mapped to Group.competitionId)
+  // 4. Update leaderboards for ALL groups atomically
   if (totalCalculated > 0) {
+    // ── Audit: snapshot ANTES del recálculo ──
+    const beforeSnapshot = await prisma.groupUser.findMany({
+      where: { isBanned: false },
+      select: { id: true, userId: true, groupId: true, totalPoints: true },
+    });
+    const beforeMap = new Map(beforeSnapshot.map(gu => [gu.id, gu.totalPoints]));
+
     await recalculateAllLeaderboards();
+
+    // ── Audit: snapshot DESPUÉS del recálculo ──
+    const afterSnapshot = await prisma.groupUser.findMany({
+      where: { isBanned: false },
+      select: { id: true, userId: true, groupId: true, totalPoints: true },
+    });
+
+    // Log cambios significativos
+    for (const after of afterSnapshot) {
+      const before = beforeMap.get(after.id) ?? 0;
+      if (after.totalPoints !== before) {
+        const diff = after.totalPoints - before;
+        console.log(`[SCORING][LEADERBOARD] User ${after.userId} Group ${after.groupId}: ${before} → ${after.totalPoints} (${diff > 0 ? '+' : ''}${diff})`);
+      }
+    }
   }
 
   return { 

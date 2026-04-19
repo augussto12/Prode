@@ -57,7 +57,7 @@ export default function LiveMatch() {
               setData(fresh);
               fetchLiveOdds();
             } catch (e) { console.error(e); }
-          }, 30000);
+          }, 15000); // 15s para datos en vivo — lo más fresco posible
         }
       } else {
         if (status === 'NS' || !status) {
