@@ -19,6 +19,8 @@ export default function GroupList() {
     name: '', description: '', isPublic: false, competitionId: '',
     primaryColor: '#6366f1', secondaryColor: '#8b5cf6', accentColor: '#f59e0b',
     bgGradientFrom: '#0f172a', bgGradientTo: '#1e1b4b',
+    allowMoreShots: true, allowMoreCorners: true, allowMorePossession: true,
+    allowMoreFouls: true, allowMoreCards: true, allowMoreOffsides: true, allowMoreSaves: true,
   });
   const navigate = useNavigate();
   const activeCompetition = useCompetitionStore(state => state.activeCompetition);
@@ -146,6 +148,30 @@ export default function GroupList() {
                 <input type="text" value={createForm.description} onChange={(e) => setCreateForm({...createForm, description: e.target.value})}
                   className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500" placeholder="Opcional" />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-white/60 text-sm mb-2">Módulos de Juego (Extras)</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[
+                  { key: 'allowMoreCorners', label: '⛳ Más Córners' },
+                  { key: 'allowMoreFouls', label: '🦵 Más Faltas' },
+                  { key: 'allowMoreShots', label: '🎯 Más Remates' },
+                  { key: 'allowMoreCards', label: '🟨 Más Tarjetas' },
+                  { key: 'allowMorePossession', label: '⚽ Más Posesión' },
+                  { key: 'allowMoreOffsides', label: '🏁 Más Offsides' },
+                  { key: 'allowMoreSaves', label: '🧤 Más Atajadas' },
+                ].map(m => (
+                  <div key={m.key} className="flex items-center justify-between p-2.5 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition-colors"
+                       onClick={() => setCreateForm(prev => ({ ...prev, [m.key]: !prev[m.key] }))}>
+                    <span className="text-xs text-white/80 font-medium">{m.label}</span>
+                    <div className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${createForm[m.key] ? 'bg-indigo-500' : 'bg-black/60 shadow-inner'}`}>
+                      <div className={`w-4 h-4 bg-white rounded-full absolute top-[2px] shadow-sm transition-all ${createForm[m.key] ? 'left-[18px]' : 'left-[2px]'}`} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-white/40 mt-1.5 ml-1">* El resultado de goles y ganador siempre estarán activos.</p>
             </div>
 
             <div>

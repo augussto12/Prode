@@ -136,7 +136,10 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
                 <div key={idx} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                   <span className="text-[10px] text-white/30 mb-1 ml-1">{isMe ? 'Vos' : m.user.displayName}{m.user.role === 'ADMIN' && <span className="ml-1 text-amber-500">★</span>}</span>
                   <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-md ${isMe ? 'rounded-br-none text-white' : 'bg-white/10 border border-white/5 rounded-bl-none text-white/90'}`} style={isMe ? { background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' } : {}}>
-                    {m.content}
+                    <div>{m.content}</div>
+                    <div className={`text-[9px] mt-0.5 text-right ${isMe ? 'text-white/70' : 'text-white/40'}`}>
+                      {m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''}
+                    </div>
                   </div>
                 </div>
               );
@@ -188,7 +191,10 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
                   <div key={idx} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                     <span className="text-[10px] text-white/40 mb-1 ml-1">{isMe ? 'Vos' : m.user.displayName}{m.user.role === 'ADMIN' && <span className="ml-1 text-amber-500">★</span>}</span>
                     <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-md ${isMe ? 'rounded-br-none text-white' : 'bg-white/10 border border-white/5 rounded-bl-none text-white/90'}`} style={isMe ? { background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' } : {}}>
-                      {m.content}
+                      <div>{m.content}</div>
+                      <div className={`text-[9px] mt-0.5 text-right ${isMe ? 'text-white/70' : 'text-white/40'}`}>
+                        {m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''}
+                      </div>
                     </div>
                   </div>
                 );

@@ -135,6 +135,13 @@ export default function GroupView() {
       accentColor: group.accentColor || '#f59e0b',
       bgGradientFrom: group.bgGradientFrom || '#0f172a',
       bgGradientTo: group.bgGradientTo || '#1e1b4b',
+      allowMoreShots: group.allowMoreShots ?? true,
+      allowMoreCorners: group.allowMoreCorners ?? true,
+      allowMorePossession: group.allowMorePossession ?? true,
+      allowMoreFouls: group.allowMoreFouls ?? true,
+      allowMoreCards: group.allowMoreCards ?? true,
+      allowMoreOffsides: group.allowMoreOffsides ?? true,
+      allowMoreSaves: group.allowMoreSaves ?? true,
     });
     setShowEditModal(true);
   };
@@ -154,10 +161,28 @@ export default function GroupView() {
     }
   };
 
-  const copyCode = () => {
-    navigator.clipboard.writeText(group.inviteCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyCode = async () => {
+    const code = group.inviteCode;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(code);
+      } else {
+        // Fallback for non-HTTPS (e.g. localhost)
+        const textarea = document.createElement('textarea');
+        textarea.value = code;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      setCopied(true);
+      useToastStore.getState().addToast({ type: 'success', message: 'Código copiado al portapapeles' });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      useToastStore.getState().addToast({ type: 'error', message: 'No se pudo copiar el código' });
+    }
   };
 
   if (loading) return (
@@ -176,8 +201,8 @@ export default function GroupView() {
         <div className="absolute inset-0 opacity-20 pointer-events-none"
              style={{ background: `linear-gradient(135deg, var(--color-primary), var(--color-secondary))` }} />
         
-        <div className="relative z-10 flex flex-col gap-4 sm:gap-6">
-          {/* Top: Name + Meta */}
+        <div className="relative z-10 space-y-4 sm:space-y-5">
+          {/* Group Name + Meta */}
           <div>
             <h1 className="text-xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">{group.name}</h1>
             {group.description && (
@@ -201,43 +226,36 @@ export default function GroupView() {
             </div>
           </div>
 
-          {/* Bottom: Invite code + Actions — horizontal on mobile */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {/* Invite code — compact on mobile */}
-            <div className="bg-black/20 rounded-xl p-2.5 sm:p-3 border border-white/5 flex items-center gap-3 sm:flex-col sm:text-center sm:min-w-[200px] min-w-0">
-              <div className="text-[10px] sm:text-xs text-white/40 shrink-0">Código</div>
-              <div className="flex items-center gap-2 flex-1 justify-center min-w-0 mb-1 sm:mb-0">
-                <span className="font-mono text-sm sm:text-base text-white font-bold tracking-wider truncate bg-white/5 px-2 py-1 rounded inline-block max-w-full overflow-hidden text-ellipsis">{group.inviteCode}</span>
-                <button 
-                  onClick={copyCode}
-                  className="p-1.5 text-indigo-400 hover:text-indigo-300 hover:bg-white/5 rounded-lg transition-colors cursor-pointer border-none bg-transparent shrink-0"
-                  title="Copiar código"
-                >
-                  {copied ? <Check size={16} className="text-emerald-400" /> : <Share2 size={16} />}
-                </button>
-              </div>
-            </div>
+          {/* Invite Code Bar */}
+          <div className="flex items-center gap-2 bg-black/30 rounded-xl p-2.5 sm:p-3 border border-white/5">
+            <span className="text-[10px] sm:text-xs text-white/40 uppercase tracking-wider font-semibold shrink-0">Código</span>
+            <span className="font-mono text-xs sm:text-sm text-white/80 font-bold tracking-wider truncate flex-1 bg-white/5 px-2 py-1 rounded select-all">{group.inviteCode}</span>
+            <button 
+              onClick={copyCode}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-indigo-300 hover:text-indigo-200 bg-indigo-500/15 hover:bg-indigo-500/25 rounded-lg transition-colors cursor-pointer border-none shrink-0"
+            >
+              {copied ? <><Check size={14} className="text-emerald-400" /> Copiado</> : <><Share2 size={14} /> Copiar</>}
+            </button>
+          </div>
 
-            {/* Action buttons — row on mobile */}
-            <div className="flex flex-wrap gap-2 sm:flex-col sm:gap-2 sm:min-w-[180px]">
-              <button 
-                onClick={handleLeave}
-                className="flex items-center justify-center gap-1.5 flex-1 sm:flex-none sm:w-full py-2 px-3 rounded-xl text-red-400 text-xs sm:text-sm font-medium hover:bg-red-400/10 transition-colors border-none bg-transparent cursor-pointer"
-              >
-                <LogOut size={14} /> Salir
-              </button>
-              
-              {group.isAdmin && (
-                <>
-                  <button onClick={openEditModal} className="flex items-center justify-center gap-1.5 flex-1 sm:flex-none sm:w-full px-3 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-xl font-bold transition-all border border-indigo-500/30 cursor-pointer text-xs sm:text-sm">
-                    <Edit3 size={14} /> Editar
-                  </button>
-                  <button onClick={handleDelete} className="flex items-center justify-center gap-1.5 flex-1 sm:flex-none sm:w-full px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl font-bold transition-all border border-red-500/30 cursor-pointer text-xs sm:text-sm">
-                    <Trash2 size={14} /> Eliminar
-                  </button>
-                </>
-              )}
-            </div>
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {group.isAdmin && (
+              <>
+                <button onClick={openEditModal} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 rounded-xl font-bold transition-all border border-indigo-500/20 cursor-pointer text-xs sm:text-sm">
+                  <Edit3 size={14} /> Editar
+                </button>
+                <button onClick={handleDelete} className="flex items-center gap-1.5 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl font-medium transition-all border border-red-500/20 cursor-pointer text-xs sm:text-sm">
+                  <Trash2 size={14} /> Eliminar
+                </button>
+              </>
+            )}
+            <button 
+              onClick={handleLeave}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-white/40 text-xs sm:text-sm font-medium hover:text-red-400 hover:bg-red-400/10 transition-colors border-none bg-transparent cursor-pointer ml-auto"
+            >
+              <LogOut size={14} /> Salir del grupo
+            </button>
           </div>
         </div>
       </div>
@@ -443,7 +461,7 @@ export default function GroupView() {
                   </div>
                 )}
                 
-                <ProdeMatches competitionId={group.competitionId} groupId={group.id} />
+                <ProdeMatches competitionId={group.competitionId} groupId={group.id} groupSettings={group} />
               </m.div>
             )}
           </AnimatePresence>
@@ -474,6 +492,30 @@ export default function GroupView() {
                 <label className="block text-white/60 text-xs sm:text-sm mb-1">Descripción</label>
                 <textarea rows="2" value={editForm.description} onChange={(e) => setEditForm({...editForm, description: e.target.value})}
                           className="w-full px-3 sm:px-4 py-2 bg-black/40 border border-white/10 rounded-xl text-white text-sm resize-none focus:outline-none focus:border-indigo-500" />
+              </div>
+
+              <div>
+                <label className="block text-white/60 text-xs sm:text-sm mb-2">Módulos de Juego</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {[
+                    { key: 'allowMoreCorners', label: '⛳ Más Córners' },
+                    { key: 'allowMoreFouls', label: '🦵 Más Faltas' },
+                    { key: 'allowMoreShots', label: '🎯 Más Remates' },
+                    { key: 'allowMoreCards', label: '🟨 Más Tarjetas' },
+                    { key: 'allowMorePossession', label: '⚽ Más Posesión' },
+                    { key: 'allowMoreOffsides', label: '🏁 Más Offsides' },
+                    { key: 'allowMoreSaves', label: '🧤 Más Atajadas' },
+                  ].map(m => (
+                    <div key={m.key} className="flex items-center justify-between p-2.5 sm:p-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition-colors"
+                         onClick={() => setEditForm(prev => ({ ...prev, [m.key]: !prev[m.key] }))}>
+                      <span className="text-[11px] sm:text-xs text-white/80 font-medium">{m.label}</span>
+                      <div className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${editForm[m.key] ? 'bg-indigo-500' : 'bg-black/60 shadow-inner'}`}>
+                        <div className={`w-4 h-4 bg-white rounded-full absolute top-[2px] shadow-sm transition-all ${editForm[m.key] ? 'left-[18px]' : 'left-[2px]'}`} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-white/40 mt-1.5 ml-1">* El resultado exacto y el equipo ganador siempre son obligatorios.</p>
               </div>
 
               <div>

@@ -144,7 +144,7 @@ export default function Explorer() {
           </h1>
           <p className="text-white/50 text-sm mt-1">Navega entre ligas, posiciones, goleadores y partidos en vivo</p>
         </div>
-        <div className="relative z-50">
+        <div className="relative z-40">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
           <input
             type="text"

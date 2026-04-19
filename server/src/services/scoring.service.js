@@ -10,6 +10,7 @@ function getMatchResult(homeGoals, awayGoals) {
 
 export function calculatePredictionPoints(prediction, fixtureData, config) {
   let points = 0;
+  let basePoints = 0;
   let moreShotsHit = null;
   let moreCornersHit = null;
   let morePossessionHit = null;
@@ -25,6 +26,7 @@ export function calculatePredictionPoints(prediction, fixtureData, config) {
   if (actualHomeGoals === null || actualAwayGoals === null) {
     return { 
       points: 0, 
+      basePoints: 0,
       moreShotsHit: null, 
       moreCornersHit: null,
       morePossessionHit: null,
@@ -45,8 +47,10 @@ export function calculatePredictionPoints(prediction, fixtureData, config) {
     // 1. Result Sovereignty: You either get exact, or trend (winner). MUTUALLY EXCLUSIVE.
     if (isExact) {
       points += config.exactScore;
+      basePoints += config.exactScore;
     } else if (predictedResult === actualResult) {
       points += config.correctWinner;
+      basePoints += config.correctWinner;
     }
   }
 
@@ -86,10 +90,12 @@ export function calculatePredictionPoints(prediction, fixtureData, config) {
   // Joker Multiplier (x2)
   if (prediction.isJoker) {
     points *= 2;
+    basePoints *= 2;
   }
 
   return { 
     points, 
+    basePoints,
     moreShotsHit, 
     moreCornersHit,
     morePossessionHit,
@@ -203,6 +209,7 @@ export async function scorePendingPredictions() {
           where: { id: prediction.id },
           data: { 
             pointsEarned: result.points, 
+            basePoints: result.basePoints,
             moreShotsHit: result.moreShotsHit,
             moreCornersHit: result.moreCornersHit,
             morePossessionHit: result.morePossessionHit,
@@ -240,11 +247,23 @@ export async function recalculateAllLeaderboards() {
     UPDATE "GroupUser" gu
     SET "totalPoints" = COALESCE(sub.total, 0)
     FROM (
-      SELECT gu2.id AS group_user_id, SUM(p."pointsEarned") AS total
+      SELECT gu2.id AS group_user_id, SUM(
+        p."basePoints" + 
+        (CASE WHEN p."isJoker" = true THEN 2 ELSE 1 END) * (
+          (CASE WHEN g."allowMoreShots" = true AND p."moreShotsHit" = true THEN sc."moreShots" ELSE 0 END) +
+          (CASE WHEN g."allowMoreCorners" = true AND p."moreCornersHit" = true THEN sc."moreCorners" ELSE 0 END) +
+          (CASE WHEN g."allowMorePossession" = true AND p."morePossessionHit" = true THEN sc."morePossession" ELSE 0 END) +
+          (CASE WHEN g."allowMoreFouls" = true AND p."moreFoulsHit" = true THEN sc."moreFouls" ELSE 0 END) +
+          (CASE WHEN g."allowMoreCards" = true AND p."moreCardsHit" = true THEN sc."moreCards" ELSE 0 END) +
+          (CASE WHEN g."allowMoreOffsides" = true AND p."moreOffsidesHit" = true THEN sc."moreOffsides" ELSE 0 END) +
+          (CASE WHEN g."allowMoreSaves" = true AND p."moreSavesHit" = true THEN sc."moreSaves" ELSE 0 END)
+        )
+      ) AS total
       FROM "GroupUser" gu2
       JOIN "Group" g ON g.id = gu2."groupId"
       JOIN "Prediction" p ON p."userId" = gu2."userId" AND p."isCalculated" = true
-      WHERE p."competitionId" = g."competitionId"
+      CROSS JOIN "ScoringConfig" sc
+      WHERE p."competitionId" = g."competitionId" AND sc.id = 1
       GROUP BY gu2.id
     ) sub
     WHERE gu.id = sub.group_user_id

@@ -8,7 +8,7 @@ import useToastStore from '../../store/toastStore';
 
 const MARKET_LABELS = { HOME: 'Local', AWAY: 'Visitante', EQUAL: 'Igual' };
 
-export default memo(function MatchCard({ match, isFavorite, existingPrediction: existingProp, onPredictionSaved, hideStage = false }) {
+export default memo(function MatchCard({ match, isFavorite, existingPrediction: existingProp, onPredictionSaved, hideStage = false, groupSettings = null }) {
   const navigate = useNavigate();
   const user = useAuthStore(state => state.user);
   const addToast = useToastStore(state => state.addToast);
@@ -151,8 +151,19 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
     return '—';
   };
 
+  // Helper constraints
+  const canShow = (mod) => !groupSettings || groupSettings[mod] !== false;
+
   // Whether the card has existing extra market predictions to show on past matches
-  const hasExtraMarkets = existingPrediction && (existingPrediction.moreShots || existingPrediction.moreCorners || existingPrediction.morePossession || existingPrediction.moreFouls || existingPrediction.moreCards || existingPrediction.moreOffsides || existingPrediction.moreSaves);
+  const hasExtraMarkets = existingPrediction && (
+    (existingPrediction.moreShots && canShow('allowMoreShots')) || 
+    (existingPrediction.moreCorners && canShow('allowMoreCorners')) || 
+    (existingPrediction.morePossession && canShow('allowMorePossession')) || 
+    (existingPrediction.moreFouls && canShow('allowMoreFouls')) || 
+    (existingPrediction.moreCards && canShow('allowMoreCards')) || 
+    (existingPrediction.moreOffsides && canShow('allowMoreOffsides')) || 
+    (existingPrediction.moreSaves && canShow('allowMoreSaves'))
+  );
 
   return (
     <m.div
@@ -296,75 +307,89 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
           className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2.5 sm:space-y-3 border-t border-white/5 pt-2.5 sm:pt-3"
         >
           {/* More Shots */}
-          <div>
-            <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Remates al Arco</label>
-            <div className="flex gap-1.5 sm:gap-2">
-              <ToggleButton field="moreShots" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-              <ToggleButton field="moreShots" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-              <ToggleButton field="moreShots" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+          {canShow('allowMoreShots') && (
+            <div>
+              <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Remates al Arco</label>
+              <div className="flex gap-1.5 sm:gap-2">
+                <ToggleButton field="moreShots" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreShots" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreShots" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* More Corners */}
-          <div>
-            <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Córners</label>
-            <div className="flex gap-1.5 sm:gap-2">
-              <ToggleButton field="moreCorners" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-              <ToggleButton field="moreCorners" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-              <ToggleButton field="moreCorners" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+          {canShow('allowMoreCorners') && (
+            <div>
+              <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Córners</label>
+              <div className="flex gap-1.5 sm:gap-2">
+                <ToggleButton field="moreCorners" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreCorners" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                <ToggleButton field="moreCorners" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Possession */}
-            <div>
-              <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Posesión</label>
-              <div className="flex gap-1.5 sm:gap-2">
-                <ToggleButton field="morePossession" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-                <ToggleButton field="morePossession" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-                <ToggleButton field="morePossession" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+            {canShow('allowMorePossession') && (
+              <div>
+                <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Posesión</label>
+                <div className="flex gap-1.5 sm:gap-2">
+                  <ToggleButton field="morePossession" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                  <ToggleButton field="morePossession" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                  <ToggleButton field="morePossession" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Fouls */}
-            <div>
-              <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Faltas</label>
-              <div className="flex gap-1.5 sm:gap-2">
-                <ToggleButton field="moreFouls" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-                <ToggleButton field="moreFouls" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-                <ToggleButton field="moreFouls" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+            {canShow('allowMoreFouls') && (
+              <div>
+                <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Faltas</label>
+                <div className="flex gap-1.5 sm:gap-2">
+                  <ToggleButton field="moreFouls" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                  <ToggleButton field="moreFouls" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                  <ToggleButton field="moreFouls" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Cards */}
-            <div>
-              <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Tarjetas (Am+R)</label>
-              <div className="flex gap-1.5 sm:gap-2">
-                <ToggleButton field="moreCards" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-                <ToggleButton field="moreCards" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-                <ToggleButton field="moreCards" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+            {canShow('allowMoreCards') && (
+              <div>
+                <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Tarjetas (Am+R)</label>
+                <div className="flex gap-1.5 sm:gap-2">
+                  <ToggleButton field="moreCards" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                  <ToggleButton field="moreCards" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                  <ToggleButton field="moreCards" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Offsides */}
-            <div>
-              <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Offsides</label>
-              <div className="flex gap-1.5 sm:gap-2">
-                <ToggleButton field="moreOffsides" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-                <ToggleButton field="moreOffsides" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-                <ToggleButton field="moreOffsides" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+            {canShow('allowMoreOffsides') && (
+              <div>
+                <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Offsides</label>
+                <div className="flex gap-1.5 sm:gap-2">
+                  <ToggleButton field="moreOffsides" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                  <ToggleButton field="moreOffsides" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                  <ToggleButton field="moreOffsides" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Saves */}
-            <div>
-              <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Atajadas</label>
-              <div className="flex gap-1.5 sm:gap-2">
-                <ToggleButton field="moreSaves" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-                <ToggleButton field="moreSaves" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
-                <ToggleButton field="moreSaves" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+            {canShow('allowMoreSaves') && (
+              <div>
+                <label className="text-[10px] sm:text-xs text-white/40 mb-1 sm:mb-1.5 block">Más Atajadas</label>
+                <div className="flex gap-1.5 sm:gap-2">
+                  <ToggleButton field="moreSaves" value="HOME" label={match.homeTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                  <ToggleButton field="moreSaves" value="EQUAL" label="Igual" prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                  <ToggleButton field="moreSaves" value="AWAY" label={match.awayTeam} prediction={prediction} setPrediction={setPrediction} isPast={isPast} />
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Save button — only show when there are changes */}
@@ -390,7 +415,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
           animate={{ opacity: 1 }}
           className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2 border-t border-white/5 pt-2.5 sm:pt-3"
         >
-          {existingPrediction.moreShots && (
+          {existingPrediction.moreShots && canShow('allowMoreShots') && (
             <div className="flex items-center justify-between bg-white/[0.03] rounded-lg p-2.5 sm:p-3">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <Crosshair size={13} className="text-violet-400/60" />
@@ -401,7 +426,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
               </span>
             </div>
           )}
-          {existingPrediction.moreCorners && (
+          {existingPrediction.moreCorners && canShow('allowMoreCorners') && (
             <div className="flex items-center justify-between bg-white/[0.03] rounded-lg p-2.5 sm:p-3">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <Flag size={13} className="text-amber-400/60" />
@@ -412,7 +437,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
               </span>
             </div>
           )}
-          {existingPrediction.morePossession && (
+          {existingPrediction.morePossession && canShow('allowMorePossession') && (
             <div className="flex items-center justify-between bg-white/[0.03] rounded-lg p-2.5 sm:p-3">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-emerald-400/60 text-[13px]">⚽</span>
@@ -423,7 +448,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
               </span>
             </div>
           )}
-          {existingPrediction.moreFouls && (
+          {existingPrediction.moreFouls && canShow('allowMoreFouls') && (
             <div className="flex items-center justify-between bg-white/[0.03] rounded-lg p-2.5 sm:p-3">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-blue-400/60 text-[13px]">🦵</span>
@@ -434,7 +459,7 @@ export default memo(function MatchCard({ match, isFavorite, existingPrediction: 
               </span>
             </div>
           )}
-          {existingPrediction.moreCards && (
+          {existingPrediction.moreCards && canShow('allowMoreCards') && (
             <div className="flex items-center justify-between bg-white/[0.03] rounded-lg p-2.5 sm:p-3">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-yellow-400/60 text-[13px]">🟨</span>

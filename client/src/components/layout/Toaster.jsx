@@ -10,10 +10,10 @@ const icons = {
 };
 
 const bgColors = {
-  success: 'bg-emerald-950/40 border-emerald-500/30',
-  error: 'bg-red-950/40 border-red-500/30',
-  info: 'bg-blue-950/40 border-blue-500/30',
-  warning: 'bg-amber-950/40 border-amber-500/30'
+  success: 'bg-emerald-950/80 border-emerald-500/40',
+  error: 'bg-red-950/80 border-red-500/40',
+  info: 'bg-blue-950/80 border-blue-500/40',
+  warning: 'bg-amber-950/80 border-amber-500/40'
 };
 
 export default function Toaster() {

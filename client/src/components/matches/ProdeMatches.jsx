@@ -5,7 +5,7 @@ import api from '../../services/api';
 import MatchCard from './MatchCard';
 import PredictionHistory from './PredictionHistory';
 
-export default function ProdeMatches({ competitionId, groupId, initialTab = 'matches' }) {
+export default function ProdeMatches({ competitionId, groupId, groupSettings, initialTab = 'matches' }) {
   const [matches, setMatches] = useState([]);
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -196,7 +196,7 @@ export default function ProdeMatches({ competitionId, groupId, initialTab = 'mat
       </div>
 
       {activeTab === 'history' ? (
-        <PredictionHistory predictions={predictions} matches={matches} groupId={groupId} />
+        <PredictionHistory predictions={predictions} matches={matches} groupId={groupId} groupSettings={groupSettings} />
       ) : (
         <>
           {/* Filters Header */}
@@ -315,6 +315,7 @@ export default function ProdeMatches({ competitionId, groupId, initialTab = 'mat
                       existingPrediction={predictionsMap.get(match.id)}
                       onPredictionSaved={loadData}
                       hideStage={true}
+                      groupSettings={groupSettings}
                     />
                   ))}
                 </div>

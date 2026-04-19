@@ -1,11 +1,18 @@
 import { useState } from 'react';
 import { m } from 'framer-motion';
-import { BarChart3, Crosshair, Flag, Users } from 'lucide-react';
+import { BarChart3, Crosshair, Flag, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import GroupPredictionsModal from './GroupPredictionsModal';
 
-export default function PredictionHistory({ predictions, matches, groupId }) {
+export default function PredictionHistory({ predictions, matches, groupId, groupSettings = null }) {
   const [predFilter, setPredFilter] = useState('all');
   const [selectedMatchModal, setSelectedMatchModal] = useState(null);
+  const [expandedMatches, setExpandedMatches] = useState({});
+
+  const canShow = (mod) => !groupSettings || groupSettings[mod] !== false;
+
+  const toggleMatch = (id) => {
+    setExpandedMatches(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const predsWithMatch = predictions.map(p => {
     const match = matches.find(m => m.id === p.externalFixtureId);
@@ -97,7 +104,14 @@ export default function PredictionHistory({ predictions, matches, groupId }) {
             const matchObj = pred.match;
             if (!matchObj) return null;
             const isFinished = matchObj.status === 'FINISHED';
-            const hasExtras = pred.moreShots || pred.moreCorners;
+            const hasExtras = 
+              (pred.moreShots && canShow('allowMoreShots')) || 
+              (pred.moreCorners && canShow('allowMoreCorners')) || 
+              (pred.morePossession && canShow('allowMorePossession')) || 
+              (pred.moreFouls && canShow('allowMoreFouls')) || 
+              (pred.moreCards && canShow('allowMoreCards')) || 
+              (pred.moreOffsides && canShow('allowMoreOffsides')) || 
+              (pred.moreSaves && canShow('allowMoreSaves'));
 
             // Determine result label by comparing actual scores, NOT points
             const pH = Number(pred.homeGoals), pA = Number(pred.awayGoals);
@@ -170,6 +184,54 @@ export default function PredictionHistory({ predictions, matches, groupId }) {
                   </div>
                 </div>
 
+                {hasExtras && (
+                  <>
+                    <button
+                      onClick={() => toggleMatch(pred.id)}
+                      className="w-full flex items-center justify-center gap-1 mt-3 pt-2 pb-1 text-[10px] sm:text-xs text-white/40 hover:text-white/60 bg-transparent border-t border-white/5 cursor-pointer transition-all"
+                    >
+                      {expandedMatches[pred.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      {expandedMatches[pred.id] ? 'Ocultar Opciones Extra' : 'Ver Opciones Extra'}
+                    </button>
+                    {expandedMatches[pred.id] && (
+                      <m.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="space-y-2 pt-2 mt-1 border-t border-white/5"
+                      >
+                        {[
+                          { configKey: 'allowMoreShots', key: 'moreShots', label: 'Más Remates al Arco', icon: <Crosshair size={13} className="text-violet-400/60" />, colorClass: 'text-violet-300 bg-violet-500/10 border-violet-500/20' },
+                          { configKey: 'allowMoreCorners', key: 'moreCorners', label: 'Más Córners', icon: <Flag size={13} className="text-amber-400/60" />, colorClass: 'text-amber-300 bg-amber-500/10 border-amber-500/20' },
+                          { configKey: 'allowMorePossession', key: 'morePossession', label: 'Más Posesión', icon: <span className="text-emerald-400/60 text-[13px]">⚽</span>, colorClass: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20' },
+                          { configKey: 'allowMoreFouls', key: 'moreFouls', label: 'Más Faltas', icon: <span className="text-blue-400/60 text-[13px]">🦵</span>, colorClass: 'text-blue-300 bg-blue-500/10 border-blue-500/20' },
+                          { configKey: 'allowMoreCards', key: 'moreCards', label: 'Más Tarjetas', icon: <span className="text-yellow-400/60 text-[13px]">🟨</span>, colorClass: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20' },
+                          { configKey: 'allowMoreOffsides', key: 'moreOffsides', label: 'Más Offsides', icon: <span className="text-violet-400/60 text-[13px]">🏁</span>, colorClass: 'text-violet-300 bg-violet-500/10 border-violet-500/20' },
+                          { configKey: 'allowMoreSaves', key: 'moreSaves', label: 'Más Atajadas', icon: <span className="text-emerald-400/60 text-[13px]">🧤</span>, colorClass: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20' },
+                        ].map((market) => (
+                          pred[market.key] && canShow(market.configKey) && (
+                            <div key={market.key} className="flex items-center justify-between bg-white/[0.03] rounded-lg p-2.5 sm:p-3">
+                              <div className="flex items-center gap-1.5 sm:gap-2">
+                                {market.icon}
+                                <span className="text-[10px] sm:text-xs text-white/40">{market.label}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded border ${market.colorClass}`}>
+                                  {pred[market.key] === 'HOME' ? matchObj.homeTeam : pred[market.key] === 'AWAY' ? matchObj.awayTeam : 'Igual'}
+                                </span>
+                                {isFinished && (
+                                  <span className={`text-[10px] font-bold ${pred[`${market.key}Hit`] === true ? 'text-emerald-400' : 'text-red-400'}`}>
+                                    {pred[`${market.key}Hit`] === true ? '✓' : '✗'}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        ))}
+                      </m.div>
+                    )}
+                  </>
+                )}
+
 
                 {/* Botón predicciones grupales */}
                 {groupId && isFinished && (
@@ -194,6 +256,7 @@ export default function PredictionHistory({ predictions, matches, groupId }) {
           onClose={() => setSelectedMatchModal(null)}
           groupId={groupId}
           match={selectedMatchModal}
+          groupSettings={groupSettings}
         />
       )}
     </div>

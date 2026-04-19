@@ -87,6 +87,15 @@ model Group {
   bgGradientTo    String      @default("#1e1b4b")  
   logoUrl         String?
 
+  // Modulos extra permitidos
+  allowMoreShots      Boolean @default(true)
+  allowMoreCorners    Boolean @default(true)
+  allowMorePossession Boolean @default(true)
+  allowMoreFouls      Boolean @default(true)
+  allowMoreCards      Boolean @default(true)
+  allowMoreOffsides   Boolean @default(true)
+  allowMoreSaves      Boolean @default(true)
+
   competitionId Int
   competition   Competition   @relation(fields: [competitionId], references: [id])
 
@@ -156,6 +165,7 @@ model Prediction {
 
   isJoker         Boolean   @default(false)
   
+  basePoints      Int       @default(0)
   pointsEarned    Int       @default(0)
   moreShotsHit    Boolean?  // null=not calculated, true=correct, false=wrong
   moreCornersHit  Boolean?

@@ -65,6 +65,13 @@ export const groupCreateSchema = z.object({
   accentColor: z.string().regex(hexColorRegex).optional(),
   bgGradientFrom: z.string().regex(hexColorRegex).optional(),
   bgGradientTo: z.string().regex(hexColorRegex).optional(),
+  allowMoreShots: z.boolean().optional(),
+  allowMoreCorners: z.boolean().optional(),
+  allowMorePossession: z.boolean().optional(),
+  allowMoreFouls: z.boolean().optional(),
+  allowMoreCards: z.boolean().optional(),
+  allowMoreOffsides: z.boolean().optional(),
+  allowMoreSaves: z.boolean().optional(),
 });
 
 export const groupThemeSchema = z.object({
@@ -75,6 +82,13 @@ export const groupThemeSchema = z.object({
   accentColor: z.string().regex(hexColorRegex).optional(),
   bgGradientFrom: z.string().regex(hexColorRegex).optional(),
   bgGradientTo: z.string().regex(hexColorRegex).optional(),
+  allowMoreShots: z.boolean().optional(),
+  allowMoreCorners: z.boolean().optional(),
+  allowMorePossession: z.boolean().optional(),
+  allowMoreFouls: z.boolean().optional(),
+  allowMoreCards: z.boolean().optional(),
+  allowMoreOffsides: z.boolean().optional(),
+  allowMoreSaves: z.boolean().optional(),
 });
 
 export const joinGroupSchema = z.object({

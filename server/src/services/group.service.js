@@ -1,5 +1,6 @@
 import prisma from '../config/database.js';
 import { BadRequestError, NotFoundError, ForbiddenError } from '../utils/errors.js';
+import { recalculateAllLeaderboards } from './scoring.service.js';
 import crypto from 'crypto';
 
 export async function createGroup(userId, data) {
@@ -21,6 +22,13 @@ export async function createGroup(userId, data) {
         accentColor: data.accentColor || '#f59e0b',
         bgGradientFrom: data.bgGradientFrom || '#0f172a',
         bgGradientTo: data.bgGradientTo || '#1e1b4b',
+        allowMoreShots: data.allowMoreShots ?? true,
+        allowMoreCorners: data.allowMoreCorners ?? true,
+        allowMorePossession: data.allowMorePossession ?? true,
+        allowMoreFouls: data.allowMoreFouls ?? true,
+        allowMoreCards: data.allowMoreCards ?? true,
+        allowMoreOffsides: data.allowMoreOffsides ?? true,
+        allowMoreSaves: data.allowMoreSaves ?? true,
       },
     });
 
@@ -164,11 +172,23 @@ export async function updateGroupTheme(groupId, userId, themeData) {
   
   if (themeData.name !== undefined) data.name = themeData.name;
   if (themeData.description !== undefined) data.description = themeData.description;
+  if (themeData.allowMoreShots !== undefined) data.allowMoreShots = themeData.allowMoreShots;
+  if (themeData.allowMoreCorners !== undefined) data.allowMoreCorners = themeData.allowMoreCorners;
+  if (themeData.allowMorePossession !== undefined) data.allowMorePossession = themeData.allowMorePossession;
+  if (themeData.allowMoreFouls !== undefined) data.allowMoreFouls = themeData.allowMoreFouls;
+  if (themeData.allowMoreCards !== undefined) data.allowMoreCards = themeData.allowMoreCards;
+  if (themeData.allowMoreOffsides !== undefined) data.allowMoreOffsides = themeData.allowMoreOffsides;
+  if (themeData.allowMoreSaves !== undefined) data.allowMoreSaves = themeData.allowMoreSaves;
 
-  return prisma.group.update({
+  const updatedGroup = await prisma.group.update({
     where: { id: groupId },
     data,
   });
+
+  // Re-calcular los puntos ya que las reglas del grupo pudieron cambiar
+  await recalculateAllLeaderboards();
+
+  return updatedGroup;
 }
 
 export async function getPublicGroups() {
