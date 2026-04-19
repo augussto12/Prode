@@ -8,7 +8,6 @@ export default function PredictionHistory({ predictions, matches, groupId, group
   const [selectedMatchModal, setSelectedMatchModal] = useState(null);
   const [expandedMatches, setExpandedMatches] = useState({});
 
-  const canShow = (mod) => !groupSettings || groupSettings[mod] !== false;
 
   const toggleMatch = (id) => {
     setExpandedMatches(prev => ({ ...prev, [id]: !prev[id] }));
@@ -105,13 +104,8 @@ export default function PredictionHistory({ predictions, matches, groupId, group
             if (!matchObj) return null;
             const isFinished = matchObj.status === 'FINISHED';
             const hasExtras = 
-              (pred.moreShots && canShow('allowMoreShots')) || 
-              (pred.moreCorners && canShow('allowMoreCorners')) || 
-              (pred.morePossession && canShow('allowMorePossession')) || 
-              (pred.moreFouls && canShow('allowMoreFouls')) || 
-              (pred.moreCards && canShow('allowMoreCards')) || 
-              (pred.moreOffsides && canShow('allowMoreOffsides')) || 
-              (pred.moreSaves && canShow('allowMoreSaves'));
+              pred.moreShots || pred.moreCorners || pred.morePossession || 
+              pred.moreFouls || pred.moreCards || pred.moreOffsides || pred.moreSaves;
 
             // Determine result label by comparing actual scores, NOT points
             const pH = Number(pred.homeGoals), pA = Number(pred.awayGoals);
@@ -208,7 +202,7 @@ export default function PredictionHistory({ predictions, matches, groupId, group
                           { configKey: 'allowMoreOffsides', key: 'moreOffsides', label: 'Más Offsides', icon: <span className="text-violet-400/60 text-[13px]">🏁</span>, colorClass: 'text-violet-300 bg-violet-500/10 border-violet-500/20' },
                           { configKey: 'allowMoreSaves', key: 'moreSaves', label: 'Más Atajadas', icon: <span className="text-emerald-400/60 text-[13px]">🧤</span>, colorClass: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20' },
                         ].map((market) => (
-                          pred[market.key] && canShow(market.configKey) && (
+                          pred[market.key] && (
                             <div key={market.key} className="flex items-center justify-between bg-white/[0.03] rounded-lg p-2.5 sm:p-3">
                               <div className="flex items-center gap-1.5 sm:gap-2">
                                 {market.icon}
