@@ -2,9 +2,8 @@ import cron from 'node-cron';
 import { scorePendingPredictions } from '../services/scoring.service.js';
 
 export function setupCronJobs() {
-  // Ejecutar cada 2 horas para que los puntos se actualicen rápido después de cada partido
-  // Horarios: 00:00, 02:00, 04:00, 06:00, 08:00, 10:00, 12:00, 14:00, 16:00, 18:00, 20:00, 22:00
-  cron.schedule('0 */2 * * *', async () => {
+  // Ejecutar en horarios clave (17, 19, 22 y 01 hs) para reducir llamadas a la API
+  cron.schedule('0 1,17,19,22 * * *', async () => {
     console.log(`[CRON] Iniciando cálculo de puntajes (batch)... ${new Date().toISOString()}`);
     
     try {
@@ -15,5 +14,5 @@ export function setupCronJobs() {
     }
   });
 
-  console.log('✅ Cron jobs configurados — scoring cada 2 horas.');
+  console.log('✅ Cron jobs configurados — scoring a las 17:00, 19:00, 22:00 y 01:00 hs.');
 }

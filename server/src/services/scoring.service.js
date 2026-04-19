@@ -9,6 +9,7 @@ function getMatchResult(homeGoals, awayGoals) {
 }
 
 export function calculatePredictionPoints(prediction, fixtureData, config) {
+  let points = 0;
   let moreShotsHit = null;
   let moreCornersHit = null;
   let morePossessionHit = null;
