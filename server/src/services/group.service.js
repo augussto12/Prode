@@ -305,3 +305,58 @@ export async function getMatchPredictions(groupId, externalFixtureId) {
     return b.totalPoints - a.totalPoints;
   });
 }
+
+/**
+ * Reinicia todos los puntajes de un grupo:
+ * 1. Marca como isCalculated=false TODAS las predicciones de la competición del grupo
+ * 2. Pone en 0 los puntos de cada predicción
+ * 3. Reinicia el leaderboard (totalPoints=0 en GroupUser)
+ */
+export async function resetGroupScores(groupId, requestingUserId) {
+  const adminMembership = await prisma.groupUser.findUnique({
+    where: { userId_groupId: { userId: requestingUserId, groupId } },
+  });
+  if (!adminMembership || !adminMembership.isAdmin) {
+    throw new ForbiddenError('Solo los admins del grupo pueden reiniciar puntajes');
+  }
+
+  const group = await prisma.group.findUnique({ where: { id: groupId } });
+  if (!group) throw new NotFoundError('Grupo no encontrado');
+
+  // Obtener todos los userIds del grupo (no baneados)
+  const members = await prisma.groupUser.findMany({
+    where: { groupId, isBanned: false },
+    select: { userId: true },
+  });
+  const userIds = members.map(m => m.userId);
+
+  // 1. Resetear predicciones de esos usuarios para esa competición
+  const resetResult = await prisma.prediction.updateMany({
+    where: {
+      userId: { in: userIds },
+      competitionId: group.competitionId,
+    },
+    data: {
+      pointsEarned: 0,
+      basePoints: 0,
+      isCalculated: false,
+      moreShotsHit: null,
+      moreCornersHit: null,
+      morePossessionHit: null,
+      moreFoulsHit: null,
+      moreCardsHit: null,
+      moreOffsidesHit: null,
+      moreSavesHit: null,
+    },
+  });
+
+  // 2. Resetear leaderboard del grupo
+  await prisma.groupUser.updateMany({
+    where: { groupId, isBanned: false },
+    data: { totalPoints: 0 },
+  });
+
+  console.log(`[Group] Puntajes reiniciados para grupo ${groupId}: ${resetResult.count} predicciones reseteadas, ${userIds.length} miembros reseteados`);
+
+  return { predictionsReset: resetResult.count, membersReset: userIds.length };
+}

@@ -92,3 +92,13 @@ export async function getMatchPredictions(req, res, next) {
     res.json(preds);
   } catch (err) { next(err); }
 }
+
+export async function resetScores(req, res, next) {
+  try {
+    const result = await groupService.resetGroupScores(Number(req.params.id), req.user.id);
+    res.json({ 
+      message: `Puntajes reiniciados: ${result.predictionsReset} predicciones y ${result.membersReset} miembros reseteados.`,
+      ...result
+    });
+  } catch (err) { next(err); }
+}

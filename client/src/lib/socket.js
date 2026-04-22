@@ -7,9 +7,10 @@ export function getSocket() {
     socket = io(window.location.origin, {
       autoConnect: false,
       withCredentials: true,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
       reconnectionDelay: 2000,
-      transports: ["websocket"], // Forzar websockets, evitar HTTP polling
+      transports: ["websocket", "polling"], // WebSocket primero, polling como fallback
+      upgrade: true, // Upgradeará de polling a websocket automáticamente
       closeOnBeforeunload: false, // Prevent socket.io from using unload listener (fixes BFCache)
     });
   }

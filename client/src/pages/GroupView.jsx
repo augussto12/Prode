@@ -15,6 +15,7 @@ import {
   Edit3,
   X,
   Calendar,
+  RotateCcw,
 } from "lucide-react";
 import useAuthStore from "../store/authStore";
 import useThemeStore from "../store/themeStore";
@@ -185,6 +186,31 @@ export default function GroupView() {
             .addToast({
               type: "error",
               message: err.response?.data?.error || "Error al eliminar",
+            });
+        }
+      },
+    });
+  };
+
+  const handleResetScores = async () => {
+    useToastStore.getState().askConfirm({
+      title: "Reiniciar Puntajes",
+      message:
+        "Esto pondrá TODOS los puntajes del grupo en 0 y las predicciones se volverán a calcular en el próximo ciclo. \u00bfEstás seguro?",
+      confirmText: "Reiniciar",
+      onConfirm: async () => {
+        try {
+          const { data } = await api.post(`/groups/${id}/reset-scores`);
+          loadGroup();
+          useToastStore
+            .getState()
+            .addToast({ type: "success", message: data.message });
+        } catch (err) {
+          useToastStore
+            .getState()
+            .addToast({
+              type: "error",
+              message: err.response?.data?.error || "Error al reiniciar puntajes",
             });
         }
       },
@@ -368,6 +394,12 @@ export default function GroupView() {
                   className="flex items-center gap-1.5 px-3 py-2 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 rounded-xl font-bold transition-all border border-indigo-500/20 cursor-pointer text-xs sm:text-sm"
                 >
                   <Edit3 size={14} /> Editar
+                </button>
+                <button
+                  onClick={handleResetScores}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded-xl font-medium transition-all border border-amber-500/20 cursor-pointer text-xs sm:text-sm"
+                >
+                  <RotateCcw size={14} /> Reiniciar Puntos
                 </button>
                 <button
                   onClick={handleDelete}

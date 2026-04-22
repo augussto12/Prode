@@ -25,5 +25,6 @@ router.delete('/:id/leave', authenticate, requireGroupMember, ctrl.leave);
 router.delete('/:id/members/:userId', authenticate, requireGroupAdmin, ctrl.removeMember);
 router.get('/:id/banned', authenticate, requireGroupAdmin, ctrl.getBanned);
 router.post('/:id/unban/:userId', authenticate, requireGroupAdmin, ctrl.unban);
+router.post('/:id/reset-scores', authenticate, requireGroupAdmin, ctrl.resetScores);
 
 export default router;
