@@ -32,6 +32,7 @@ router.get('/leagues/:id/next-fixtures', authenticate, ctrl.getNextFixtures);
 router.get('/my-team/:leagueId', authenticate, ctrl.getMyTeam);
 router.post('/my-team/:leagueId', authenticate, ctrl.saveMyTeam);
 router.put('/my-team/:leagueId/captain', authenticate, ctrl.setCaptain);
+router.put('/my-team/:leagueId/name', authenticate, ctrl.renameTeam);
 
 // ================================
 // TRANSFERENCIAS

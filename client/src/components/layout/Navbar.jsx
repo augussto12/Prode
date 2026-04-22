@@ -54,7 +54,7 @@ export default function Navbar() {
     },
     { to: "/liga/1", label: "Mundial 2026", icon: Trophy, gold: true },
     { to: "/torneo", label: "Mi Prode", icon: Zap },
-    { to: "/fantasy", label: "GrandT", icon: Star },
+    { to: "/fantasy", label: "GranDT", icon: Star },
     { to: "/groups", label: "Grupos", icon: Users },
     ...(user?.role === "ADMIN" || user?.role === "SUPERADMIN"
       ? [{ to: "/admin", label: "Admin", icon: Shield }]
@@ -91,20 +91,19 @@ export default function Navbar() {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all no-underline ${
-                  isActive(link.to)
+                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all no-underline ${isActive(link.to)
                     ? "text-white"
                     : link.gold
                       ? "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
                       : "text-white/50 hover:text-white hover:bg-white/5"
-                }`}
+                  }`}
                 style={
                   isActive(link.to)
                     ? {
-                        background: link.gold
-                          ? "linear-gradient(135deg, #b8860b, #daa520)"
-                          : "var(--color-primary)",
-                      }
+                      background: link.gold
+                        ? "linear-gradient(135deg, #b8860b, #daa520)"
+                        : "var(--color-primary)",
+                    }
                     : {}
                 }
               >
@@ -195,11 +194,10 @@ export default function Navbar() {
                 key={link.to}
                 to={link.to}
                 onClick={() => setMobileOpen(false)}
-                className={`relative flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium no-underline ${
-                  isActive(link.to)
+                className={`relative flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium no-underline ${isActive(link.to)
                     ? "text-white bg-white/10"
                     : "text-white/60 hover:text-white"
-                }`}
+                  }`}
               >
                 <link.icon size={18} />
                 {link.label}
@@ -210,11 +208,10 @@ export default function Navbar() {
                 <Link
                   to="/profile"
                   onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium no-underline ${
-                    isActive("/profile")
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium no-underline ${isActive("/profile")
                       ? "text-white bg-white/10"
                       : "text-white/60 hover:text-white"
-                  }`}
+                    }`}
                 >
                   <User size={18} />
                   Mi Perfil

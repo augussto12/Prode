@@ -688,29 +688,6 @@ export default memo(function MatchCard({
         </m.div>
       )}
 
-      {/* Save button — always visible when there are changes (not just inside extras) */}
-      {user && !isPast && hasChanges && (
-        <div className="px-3 sm:px-4 pb-3 sm:pb-4">
-          <m.button
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full py-2 sm:py-2.5 rounded-xl text-white font-semibold text-xs sm:text-sm transition-all hover:opacity-90 disabled:opacity-50 cursor-pointer border-none shadow-lg"
-            style={{
-              background: saved
-                ? "#22c55e"
-                : "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
-            }}
-          >
-            {saving
-              ? "Guardando..."
-              : saved
-                ? "✓ Guardado"
-                : "Guardar Predicción"}
-          </m.button>
-        </div>
-      )}
 
       {/* Expanded Markets — READ-ONLY (past/live matches with existing predictions) */}
       {expanded && isPast && hasExtraMarkets && (
@@ -814,8 +791,8 @@ export default memo(function MatchCard({
         </m.div>
       )}
 
-      {/* Quick save for score-only — only when NOT expanded and there are changes */}
-      {!expanded && !isPast && hasChanges && (
+      {/* Save button — visible when there are unsaved changes */}
+      {user && !isPast && hasChanges && (
         <div className="px-3 sm:px-4 pb-2.5 sm:pb-3">
           <m.button
             initial={{ opacity: 0, y: 5 }}
@@ -824,16 +801,14 @@ export default memo(function MatchCard({
             disabled={saving}
             className="w-full py-1.5 sm:py-2 rounded-xl text-white font-medium text-[11px] sm:text-xs transition-all hover:opacity-90 disabled:opacity-50 cursor-pointer border-none"
             style={{
-              background: saved
-                ? "#22c55e"
+              background: saving
+                ? "#6366f1"
                 : "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
             }}
           >
             {saving
               ? "Guardando..."
-              : saved
-                ? "✓ Guardado"
-                : "Guardar resultado"}
+              : "Guardar resultado"}
           </m.button>
         </div>
       )}

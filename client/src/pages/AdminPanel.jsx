@@ -155,7 +155,7 @@ export default function AdminPanel() {
   const tabs = [
     { id: "users", label: "Usuarios", icon: Users },
     { id: "scoring", label: "Puntuación", icon: Calculator },
-    { id: "fantasy", label: "GrandT", icon: Trophy },
+    { id: "fantasy", label: "GranDT", icon: Trophy },
     { id: "sync", label: "Config. BD", icon: Database },
     { id: "sportmonks", label: "Sportmonks", icon: Globe },
   ];
@@ -191,11 +191,10 @@ export default function AdminPanel() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all cursor-pointer border-none whitespace-nowrap ${
-              tab === t.id
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all cursor-pointer border-none whitespace-nowrap ${tab === t.id
                 ? "bg-white/10 text-white"
                 : "text-white/50 hover:text-white/70 bg-transparent"
-            }`}
+              }`}
           >
             <t.icon size={14} /> {t.label}
           </button>
@@ -243,11 +242,11 @@ export default function AdminPanel() {
       {tab === "fantasy" && <AdminFantasy />}
 
       {/* Admin System (Scoring, Sync, Sportmonks tabs content routing happens inside) */}
-      <AdminSystem 
-        tab={tab} 
-        scoringConfig={scoringConfig} 
-        onConfigUpdate={loadData} 
-        fetchCompetitions={fetchCompetitions} 
+      <AdminSystem
+        tab={tab}
+        scoringConfig={scoringConfig}
+        onConfigUpdate={loadData}
+        fetchCompetitions={fetchCompetitions}
       />
     </div>
   );

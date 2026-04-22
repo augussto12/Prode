@@ -876,3 +876,33 @@ export async function adminRecalculateAll(req, res) {
     return res.status(500).json({ error: err.message });
   }
 }
+
+/**
+ * RENOMBRAR EQUIPO
+ */
+export async function renameTeam(req, res) {
+  const userId = req.user.id;
+  const { leagueId } = req.params;
+  const { name } = req.body;
+
+  if (!name || name.trim().length < 2 || name.trim().length > 30) {
+    return res.status(400).json({ error: 'El nombre debe tener entre 2 y 30 caracteres.' });
+  }
+
+  try {
+    const team = await prisma.fantasyTeam.findUnique({
+      where: { userId_fantasyLeagueId: { userId, fantasyLeagueId: leagueId } }
+    });
+    if (!team) return res.status(404).json({ error: 'No se encontró tu equipo en esta liga.' });
+
+    const updated = await prisma.fantasyTeam.update({
+      where: { id: team.id },
+      data: { name: name.trim() }
+    });
+
+    return res.json({ success: true, name: updated.name });
+  } catch (err) {
+    console.error('[Rename Team]', err.message);
+    return res.status(500).json({ error: 'Error al renombrar el equipo.' });
+  }
+}
