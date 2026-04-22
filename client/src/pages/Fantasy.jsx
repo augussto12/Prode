@@ -134,7 +134,7 @@ function Fantasy() {
       {/* HEADER HERO */}
       <div className="fantasy-header">
          <div className="fantasy-hero-backdrop"></div>
-         <h1 className="flex items-center justify-center gap-3"><Trophy className="text-amber-400" size={32} /> Fantasy Football</h1>
+         <h1 className="flex items-center justify-center gap-3"><Trophy className="text-amber-400" size={32} /> GrandT</h1>
          <p>Construye tu plantilla ideal, administra tu presupuesto de $100M y aniquila a tus amigos.</p>
       </div>
 

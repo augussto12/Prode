@@ -54,7 +54,7 @@ export default function Navbar() {
     },
     { to: "/liga/1", label: "Mundial 2026", icon: Trophy, gold: true },
     { to: "/torneo", label: "Mi Prode", icon: Zap },
-    { to: "/fantasy", label: "Fantasy", icon: Star },
+    { to: "/fantasy", label: "GrandT", icon: Star },
     { to: "/groups", label: "Grupos", icon: Users },
     ...(user?.role === "ADMIN" || user?.role === "SUPERADMIN"
       ? [{ to: "/admin", label: "Admin", icon: Shield }]

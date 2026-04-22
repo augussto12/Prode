@@ -84,8 +84,8 @@ export default memo(function MatchCard({
 
   // Detect if the user has changed anything from the saved/initial state
   const hasChanges = useMemo(() => {
-    // If no existing prediction, any data entered counts as a change
-    if (!existingProp) {
+    // If no existing prediction (never saved), any data entered counts as a change
+    if (!existingPrediction) {
       return (
         prediction.homeGoals !== "" ||
         prediction.awayGoals !== "" ||
@@ -100,7 +100,7 @@ export default memo(function MatchCard({
       );
     }
     // If there's an existing prediction, compare each field
-    const ep = existingProp;
+    const ep = existingPrediction;
     return (
       String(prediction.homeGoals) !== String(ep.homeGoals ?? "") ||
       String(prediction.awayGoals) !== String(ep.awayGoals ?? "") ||
@@ -113,7 +113,7 @@ export default memo(function MatchCard({
       (prediction.moreSaves || "") !== (ep.moreSaves || "") ||
       (prediction.isJoker || false) !== (ep.isJoker || false)
     );
-  }, [prediction, existingProp]);
+  }, [prediction, existingPrediction]);
 
   const handleSave = async () => {
     if (isSavingRef.current) return;
@@ -142,8 +142,10 @@ export default memo(function MatchCard({
         competitionId: match.competitionId,
         ...payload,
       });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+
+      // Actualizar el estado local para que hasChanges sea false y el botón desaparezca
+      setExistingPrediction({ ...payload });
+      addToast({ type: "success", message: "Predicción guardada ✓" });
       if (onPredictionSaved) onPredictionSaved();
     } catch (err) {
       const msg =
@@ -205,6 +207,9 @@ export default memo(function MatchCard({
 
   // Helper constraints
   const canShow = (mod) => !groupSettings || groupSettings[mod] !== false;
+
+  // Check if ANY extra module is enabled (for expand toggle visibility)
+  const hasAnyExtras = canShow("allowMoreShots") || canShow("allowMoreCorners") || canShow("allowMorePossession") || canShow("allowMoreFouls") || canShow("allowMoreCards") || canShow("allowMoreOffsides") || canShow("allowMoreSaves");
 
   // Whether the card has existing extra market predictions to show on past matches
   const hasExtraMarkets =
@@ -410,8 +415,8 @@ export default memo(function MatchCard({
         )}
       </div>
 
-      {/* Expand Toggle — show for both past (read-only) and future (editable) if user exists */}
-      {user && (isPast ? hasExtraMarkets : true) && (
+      {/* Expand Toggle — show only if at least one extra module is enabled */}
+      {user && (isPast ? hasExtraMarkets : hasAnyExtras) && (
         <button
           onClick={() => setExpanded(!expanded)}
           className="w-full flex items-center justify-center gap-1 py-2 text-xs text-white/60 hover:text-white/60 bg-white/[0.02] border-t border-white/5 cursor-pointer border-x-0 border-b-0 bg-transparent transition-all"
@@ -680,29 +685,31 @@ export default memo(function MatchCard({
               </div>
             )}
           </div>
-
-          {/* Save button — only show when there are changes */}
-          {hasChanges && (
-            <m.button
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              onClick={handleSave}
-              disabled={saving}
-              className="w-full py-2 sm:py-2.5 rounded-xl text-white font-semibold text-xs sm:text-sm transition-all hover:opacity-90 disabled:opacity-50 cursor-pointer border-none shadow-lg"
-              style={{
-                background: saved
-                  ? "#22c55e"
-                  : "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
-              }}
-            >
-              {saving
-                ? "Guardando..."
-                : saved
-                  ? "✓ Guardado"
-                  : "Guardar Predicción"}
-            </m.button>
-          )}
         </m.div>
+      )}
+
+      {/* Save button — always visible when there are changes (not just inside extras) */}
+      {user && !isPast && hasChanges && (
+        <div className="px-3 sm:px-4 pb-3 sm:pb-4">
+          <m.button
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full py-2 sm:py-2.5 rounded-xl text-white font-semibold text-xs sm:text-sm transition-all hover:opacity-90 disabled:opacity-50 cursor-pointer border-none shadow-lg"
+            style={{
+              background: saved
+                ? "#22c55e"
+                : "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+            }}
+          >
+            {saving
+              ? "Guardando..."
+              : saved
+                ? "✓ Guardado"
+                : "Guardar Predicción"}
+          </m.button>
+        </div>
       )}
 
       {/* Expanded Markets — READ-ONLY (past/live matches with existing predictions) */}

@@ -155,7 +155,7 @@ export default function AdminPanel() {
   const tabs = [
     { id: "users", label: "Usuarios", icon: Users },
     { id: "scoring", label: "Puntuación", icon: Calculator },
-    { id: "fantasy", label: "Fantasy", icon: Trophy },
+    { id: "fantasy", label: "GrandT", icon: Trophy },
     { id: "sync", label: "Config. BD", icon: Database },
     { id: "sportmonks", label: "Sportmonks", icon: Globe },
   ];
