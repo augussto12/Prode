@@ -16,6 +16,8 @@ services:
       - FOOTBALL_API_BASE=${FOOTBALL_API_BASE:-https://v3.football.api-sports.io}
       - FOOTBALL_LEAGUE_ID=${FOOTBALL_LEAGUE_ID:-1}
       - FOOTBALL_SEASON=${FOOTBALL_SEASON:-2022}
+      - SPORTMONKS_API_KEY=${SPORTMONKS_API_KEY}
+      - SPORTMONKS_BASE_URL=${SPORTMONKS_BASE_URL:-https://api.sportmonks.com/v3/football}
       - NODE_ENV=production
     networks:
       - default
