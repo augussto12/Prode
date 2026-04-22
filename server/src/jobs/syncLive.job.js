@@ -12,7 +12,7 @@
 import cron from 'node-cron';
 import prisma from '../config/database.js';
 import { getLiveMatches, getFixtureWithPlayerStats } from '../services/sportmonks/sportmonksFixtures.js';
-import { mapFixture, mapPlayerMatchStats } from '../utils/sportmonksMapper.js';
+import { mapFixture, mapPlayerMatchStats, mapEvent } from '../utils/sportmonksMapper.js';
 import { recalculateFixture } from './fantasyScoring.job.js';
 
 // Instancia de Socket.io — se setea desde fuera
@@ -42,11 +42,12 @@ async function syncFinalPlayerStats(smFixtureId, internalFixtureId) {
   try {
     const data = await getFixtureWithPlayerStats(smFixtureId);
     const lineups = data?.data?.lineups || [];
+    const events  = data?.data?.events  || [];
 
     let synced = 0;
 
     for (const lineupPlayer of lineups) {
-      const stats = mapPlayerMatchStats(lineupPlayer);
+      const stats = mapPlayerMatchStats(lineupPlayer, events);
 
       if (!stats.playerId) continue;
 
@@ -74,7 +75,24 @@ async function syncFinalPlayerStats(smFixtureId, internalFixtureId) {
       }
     }
 
-    console.log(`[Sportmonks] ✓ Stats finales partido ${smFixtureId}: ${synced} jugadores`);
+    // ── Persistir eventos del partido (goles, tarjetas, sustituciones) ──
+    let eventsSynced = 0;
+    for (const smEvent of events) {
+      const mapped = mapEvent(smEvent);
+      try {
+        await prisma.fixtureEvent.create({
+          data: {
+            fixtureId: internalFixtureId,
+            ...mapped,
+          },
+        });
+        eventsSynced++;
+      } catch (err) {
+        // Duplicados u otros errores no deben frenar el proceso
+      }
+    }
+
+    console.log(`[Sportmonks] ✓ Stats finales partido ${smFixtureId}: ${synced} jugadores, ${eventsSynced} eventos`);
 
     // Disparar cálculo de puntos fantasy automáticamente
     try {

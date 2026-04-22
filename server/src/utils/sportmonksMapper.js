@@ -190,6 +190,18 @@ export function mapPlayerMatchStats(lineupPlayer, fixtureEvents = []) {
     lineupPlayer.player?.statistics ||
     [];
 
+  // ═══ LOG TEMPORAL — Verificar type_ids de Sportmonks (quitar después de validar) ═══
+  console.log('[SM Stats Raw]', {
+    playerId: lineupPlayer.player_id || lineupPlayer.player?.id,
+    playerName: lineupPlayer.player_name || lineupPlayer.player?.display_name,
+    position: lineupPlayer.position?.name || lineupPlayer.position_id,
+    allDetails: details.map(d => ({
+      typeId: d.type_id,
+      value: d.data?.value ?? d.value?.total ?? d.value
+    }))
+  });
+  // ═══ FIN LOG TEMPORAL ═══
+
   const playerId = lineupPlayer.player_id || lineupPlayer.player?.id;
 
   // Extract cards from stats or fallback to events (event type_id 19 = yellow, 20 = red, 21 = second yellow)

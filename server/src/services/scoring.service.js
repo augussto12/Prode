@@ -87,10 +87,10 @@ export function calculatePredictionPoints(prediction, fixtureData, config) {
   moreCardsHit = checkStat(prediction.moreCards, homeCards, awayCards, config.moreCards);
   moreOffsidesHit = checkStat(prediction.moreOffsides, homeOffsides, awayOffsides, config.moreOffsides);
   moreSavesHit = checkStat(prediction.moreSaves, homeSaves, awaySaves, config.moreSaves);
-  // Joker Multiplier (x2)
+  // Joker Multiplier (x2) — se aplica al total (base + extras)
   if (prediction.isJoker) {
     points *= 2;
-    basePoints *= 2;
+    // basePoints se guarda SIN multiplicar — el SQL del leaderboard aplica joker
   }
 
   return { 
@@ -280,8 +280,8 @@ export async function recalculateAllLeaderboards() {
     SET "totalPoints" = COALESCE(sub.total, 0)
     FROM (
       SELECT gu2.id AS group_user_id, SUM(
-        p."basePoints" + 
         (CASE WHEN p."isJoker" = true THEN 2 ELSE 1 END) * (
+          p."basePoints" + 
           (CASE WHEN g."allowMoreShots" = true AND p."moreShotsHit" = true THEN sc."moreShots" ELSE 0 END) +
           (CASE WHEN g."allowMoreCorners" = true AND p."moreCornersHit" = true THEN sc."moreCorners" ELSE 0 END) +
           (CASE WHEN g."allowMorePossession" = true AND p."morePossessionHit" = true THEN sc."morePossession" ELSE 0 END) +

@@ -265,8 +265,20 @@ export async function getMyTeam(req, res) {
 
     if (!team) return res.status(404).json({ error: 'Equipo no encontrado' });
 
-    // Enrich picks with photoUrl from FantasyPlayer
+    // Devolver los picks del gameweek más reciente (el equipo se "arrastra")
     if (team.picks && team.picks.length > 0) {
+      // Find the latest gameweek that has picks
+      const gwIds = [...new Set(team.picks.map(p => p.gameweekId))];
+      const gameweeks = await prisma.fantasyGameweek.findMany({
+        where: { id: { in: gwIds } },
+        orderBy: { startDate: 'desc' }
+      });
+      const latestGwId = gameweeks[0]?.id;
+      if (latestGwId) {
+        team.picks = team.picks.filter(p => p.gameweekId === latestGwId);
+      }
+
+      // Enrich picks with photoUrl from FantasyPlayer
       const playerIds = team.picks.map(p => p.playerId);
       const fantasyPlayers = await prisma.fantasyPlayer.findMany({
         where: { sportmonksId: { in: playerIds } },
@@ -333,7 +345,7 @@ export async function resolveGameweekContext(leagueId) {
 export async function saveMyTeam(req, res) {
   const userId = req.user.id;
   const { leagueId } = req.params;
-  const { picks } = req.body; // Array de { playerId, isCaptain, isViceCaptain, isBenched, purchasePrice }
+  const { picks } = req.body; // Array de { playerId, isCaptain, isBenched }
 
   try {
     const team = await prisma.fantasyTeam.findUnique({
@@ -341,20 +353,9 @@ export async function saveMyTeam(req, res) {
     });
     if (!team) return res.status(404).json({ error: 'Equipo no encontrado' });
 
-    // Assuming saving the entire squad ONLY initially when no picks exist OR before GW 1
-    // A robust version would validate budget here and delete old picks
-    // For simplicity, we just rebuild exactly if allowed
+    // ── Validar mercado ANTES de tocar datos ──
+    const { gameweek, status } = await resolveGameweekContext(leagueId);
 
-    await prisma.fantasyPick.deleteMany({
-      where: {
-         fantasyTeamId: team.id,
-         // Technically we must only mutate picks for UPCOMING gameweeks 
-         // Since the prompt instructs basic saving, we will clear active GW pending
-      }
-    });
-
-    const { gameweek, status, transfersOpen } = await resolveGameweekContext(leagueId);
-    
     if (status === 'IN_PROGRESS') {
       return res.status(400).json({ error: 'Mercado cerrado: Hay partidos en curso o por finalizar. No puedes modificar tu equipo ahora.' });
     }
@@ -363,13 +364,70 @@ export async function saveMyTeam(req, res) {
       return res.status(400).json({ error: 'No se pueden guardar alineaciones: no hay fechas disponibles en esta liga.' });
     }
 
+    // ── Validaciones de integridad ──
+    if (!picks || !Array.isArray(picks) || picks.length === 0) {
+      return res.status(400).json({ error: 'Debes enviar al menos un jugador.' });
+    }
+    if (picks.length > 11) {
+      return res.status(400).json({ error: 'Máximo 11 titulares permitidos.' });
+    }
+
+    // Check duplicates
+    const playerIdSet = new Set(picks.map(p => p.playerId));
+    if (playerIdSet.size !== picks.length) {
+      return res.status(400).json({ error: 'No puedes tener jugadores duplicados en tu equipo.' });
+    }
+
+    // Fetch all player data at once
+    const playerIds = picks.map(p => p.playerId);
+    const fantasyPlayers = await prisma.fantasyPlayer.findMany({
+      where: { sportmonksId: { in: playerIds } }
+    });
+    const playerMap = new Map(fantasyPlayers.map(fp => [fp.sportmonksId, fp]));
+
+    // Verify all players exist
+    for (const p of picks) {
+      if (!playerMap.has(p.playerId)) {
+        return res.status(400).json({ error: `Jugador ${p.playerId} no encontrado.` });
+      }
+    }
+
+    // Count positions
+    const posCounts = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
+    for (const p of picks) {
+      const player = playerMap.get(p.playerId);
+      const pos = player.position === 'ATT' ? 'FWD' : player.position;
+      posCounts[pos] = (posCounts[pos] || 0) + 1;
+    }
+
+    if (picks.length === 11 && posCounts.GK !== 1) {
+      return res.status(400).json({ error: 'Un equipo completo necesita exactamente 1 arquero.' });
+    }
+    if (posCounts.DEF > 5) {
+      return res.status(400).json({ error: 'Máximo 5 defensores.' });
+    }
+    if (posCounts.MID > 5) {
+      return res.status(400).json({ error: 'Máximo 5 mediocampistas.' });
+    }
+    if (posCounts.FWD > 3) {
+      return res.status(400).json({ error: 'Máximo 3 delanteros.' });
+    }
+
+    // Max 3 players from same real team
+    const teamCounts = {};
+    for (const p of picks) {
+      const player = playerMap.get(p.playerId);
+      teamCounts[player.teamId] = (teamCounts[player.teamId] || 0) + 1;
+      if (teamCounts[player.teamId] > 3) {
+        return res.status(400).json({ error: `Máximo 3 jugadores del mismo equipo (${player.teamName}).` });
+      }
+    }
+
+    // Budget check
     let spent = 0;
     const newPicks = [];
     for (const p of picks) {
-      // Find player to get data
-      const player = await prisma.fantasyPlayer.findUnique({ where: { sportmonksId: p.playerId } });
-      if (!player) throw new Error(`Jugador ${p.playerId} no existe en FantasyPlayer`);
-      
+      const player = playerMap.get(p.playerId);
       spent += player.price;
       newPicks.push({
         fantasyTeamId: team.id,
@@ -380,15 +438,23 @@ export async function saveMyTeam(req, res) {
         playerTeamId: player.teamId,
         playerTeamName: player.teamName,
         isCaptain: p.isCaptain || false,
-        isViceCaptain: p.isViceCaptain || false,
+        isViceCaptain: false,
         isBenched: p.isBenched || false,
         purchasePrice: player.price
       });
     }
 
     if (spent > 100.0) {
-      return res.status(400).json({ error: `Presupuesto excedido. Gastaste ${spent}M de 100M.` });
+      return res.status(400).json({ error: `Presupuesto excedido. Gastaste ${spent.toFixed(1)}M de 100M.` });
     }
+
+    // ── Solo borrar picks del gameweek actual, no historial ──
+    await prisma.fantasyPick.deleteMany({
+      where: {
+        fantasyTeamId: team.id,
+        gameweekId: gameweek.id,
+      }
+    });
 
     await prisma.fantasyPick.createMany({ data: newPicks });
 
@@ -407,7 +473,7 @@ export async function saveMyTeam(req, res) {
 export async function setCaptain(req, res) {
   const userId = req.user.id;
   const { leagueId } = req.params;
-  const { captainId, viceCaptainId } = req.body;
+  const { captainId } = req.body;
 
   try {
     const { gameweek, status } = await resolveGameweekContext(leagueId);
@@ -424,10 +490,10 @@ export async function setCaptain(req, res) {
       where: { userId_fantasyLeagueId: { userId, fantasyLeagueId: leagueId } }
     });
 
-    // Reset all
+    // Reset all captains
     await prisma.fantasyPick.updateMany({
        where: { fantasyTeamId: team.id, gameweekId: gameweek.id },
-       data: { isCaptain: false, isViceCaptain: false }
+       data: { isCaptain: false }
     });
 
     if (captainId) {
@@ -437,13 +503,6 @@ export async function setCaptain(req, res) {
       });
     }
 
-    if (viceCaptainId) {
-      await prisma.fantasyPick.updateMany({
-         where: { fantasyTeamId: team.id, gameweekId: gameweek.id, playerId: viceCaptainId },
-         data: { isViceCaptain: true }
-      });
-    }
-    
     return res.json({ success: true });
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -474,33 +533,32 @@ export async function makeTransfer(req, res) {
   const { playerOutId, playerInId } = req.body;
   
   try {
-    const { targetGameweek, activeGameweek } = await resolveGameweekContext(leagueId);
+    const { gameweek, status } = await resolveGameweekContext(leagueId);
     
-    if (activeGameweek) {
-      return res.status(400).json({ error: 'Mercado cerrado: Hay un gameweek en curso. Las transferencias para la próxima fecha se habilitarán cuando este finalice.' });
+    if (status === 'IN_PROGRESS') {
+      return res.status(400).json({ error: 'Mercado cerrado: Hay un gameweek en curso.' });
     }
     
-    if (!targetGameweek) {
-      return res.status(400).json({ error: 'No hay ninguna fecha dispuesta para hacer transferencias.' });
+    if (!gameweek) {
+      return res.status(400).json({ error: 'No hay ninguna fecha disponible.' });
     }
 
     const team = await prisma.fantasyTeam.findUnique({
       where: { userId_fantasyLeagueId: { userId, fantasyLeagueId: leagueId } },
-      include: { picks: { where: { gameweekId: targetGameweek.id } }, transfers: { where: { gameweekId: targetGameweek.id } } }
+      include: { picks: { where: { gameweekId: gameweek.id } } }
     });
+    if (!team) return res.status(404).json({ error: 'Equipo no encontrado.' });
 
     const outPlayer = await prisma.fantasyPlayer.findUnique({ where: { sportmonksId: playerOutId } });
     const inPlayer = await prisma.fantasyPlayer.findUnique({ where: { sportmonksId: playerInId } });
 
     if (!outPlayer || !inPlayer) {
-       return res.status(404).json({ error: 'Jugadores involucrados no encontrados' });
+       return res.status(404).json({ error: 'Jugadores involucrados no encontrados.' });
     }
 
-    // Is it affordable?
     const pickToDrop = team.picks.find(p => p.playerId === playerOutId);
     if (!pickToDrop) return res.status(400).json({ error: 'El jugador de salida no está en tu equipo.' });
 
-    // The logic requested is simplified here: sell price is purchasePrice, budget grows; newly bought drains budget.
     const budgetRecovered = pickToDrop.purchasePrice;
     const newBudget = team.budgetRemaining + budgetRecovered - inPlayer.price;
 
@@ -511,47 +569,29 @@ export async function makeTransfer(req, res) {
     // Delete old pick
     await prisma.fantasyPick.delete({ where: { id: pickToDrop.id } });
 
-    // Create new pick
+    // Create new pick (sin penalización)
     await prisma.fantasyPick.create({
       data: {
         fantasyTeamId: team.id,
-        gameweekId: targetGameweek.id,
+        gameweekId: gameweek.id,
         playerId: inPlayer.sportmonksId,
         playerName: inPlayer.name,
         playerPosition: inPlayer.position,
         playerTeamId: inPlayer.teamId,
         playerTeamName: inPlayer.teamName,
         purchasePrice: inPlayer.price,
-        isBenched: pickToDrop.isBenched,   // Inherit bench status
-        isCaptain: pickToDrop.isCaptain,   // Inherit captaincy
-        isViceCaptain: pickToDrop.isViceCaptain
+        isBenched: pickToDrop.isBenched,
+        isCaptain: pickToDrop.isCaptain,
+        isViceCaptain: false
       }
     });
-
-    // Record transfer
-    await prisma.fantasyTransfer.create({
-      data: {
-        fantasyTeamId: team.id,
-        gameweekId: targetGameweek.id,
-        playerOutId: outPlayer.sportmonksId,
-        playerOutName: outPlayer.name,
-        playerInId: inPlayer.sportmonksId,
-        playerInName: inPlayer.name
-      }
-    });
-
-    // Subtract extra points if we made more than 1 transfer this week
-    let finalPoints = team.totalPoints;
-    if (team.transfers.length >= 1) {
-       finalPoints -= 4; // penalty
-    }
 
     await prisma.fantasyTeam.update({
        where: { id: team.id },
-       data: { budgetRemaining: newBudget, totalPoints: finalPoints }
+       data: { budgetRemaining: newBudget }
     });
 
-    return res.json({ success: true, budgetRemaining: newBudget, totalPoints: finalPoints });
+    return res.json({ success: true, budgetRemaining: newBudget });
   } catch(err) {
     return res.status(500).json({ error: err.message });
   }

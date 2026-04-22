@@ -210,6 +210,9 @@ export async function recalculateFixture(internalFixtureId) {
       });
 
       // ── 5. Actualizar points en cada FantasyPick que tenga este jugador ──
+      // Primero: asegurar que los equipos tengan picks para este GW (arrastre)
+      await ensurePicksForGameweek(gw);
+
       const updatedPicks = await prisma.fantasyPick.findMany({
         where: {
           playerId: stat.playerId,
@@ -258,14 +261,79 @@ export async function recalculateFixture(internalFixtureId) {
 }
 
 // ═══════════════════════════════════════
+// PROPAGACIÓN DE PICKS ENTRE GAMEWEEKS
+// ═══════════════════════════════════════
+
+/**
+ * Asegura que todos los equipos de una liga fantasy tengan picks
+ * para el gameweek dado. Si un equipo no tiene picks para este GW,
+ * copia los picks de su gameweek más reciente.
+ * Esto permite que el equipo "se arrastre" sin que el usuario
+ * tenga que guardar manualmente antes de cada fecha.
+ * 
+ * @param {object} gameweek - FantasyGameweek de Prisma
+ */
+const _propagatedGameweeks = new Set();
+
+async function ensurePicksForGameweek(gameweek) {
+  // Solo propagar una vez por ejecución del proceso para evitar loops
+  if (_propagatedGameweeks.has(gameweek.id)) return;
+  _propagatedGameweeks.add(gameweek.id);
+
+  // Todos los equipos de la liga
+  const teams = await prisma.fantasyTeam.findMany({
+    where: { fantasyLeagueId: gameweek.fantasyLeagueId, status: 'active' },
+    select: { id: true },
+  });
+
+  for (const team of teams) {
+    // ¿Ya tiene picks para este GW?
+    const existingCount = await prisma.fantasyPick.count({
+      where: { fantasyTeamId: team.id, gameweekId: gameweek.id },
+    });
+
+    if (existingCount > 0) continue;
+
+    // Buscar el gameweek más reciente ANTERIOR que tenga picks
+    const previousPicks = await prisma.fantasyPick.findMany({
+      where: { fantasyTeamId: team.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (previousPicks.length === 0) continue;
+
+    // Agrupar por gameweekId y tomar el más reciente
+    const latestGwId = previousPicks[0].gameweekId;
+    const picksToCopy = previousPicks.filter(p => p.gameweekId === latestGwId);
+
+    // Copiar al nuevo gameweek
+    const newPicks = picksToCopy.map(p => ({
+      fantasyTeamId: team.id,
+      gameweekId: gameweek.id,
+      playerId: p.playerId,
+      playerName: p.playerName,
+      playerPosition: p.playerPosition,
+      playerTeamId: p.playerTeamId,
+      playerTeamName: p.playerTeamName,
+      isCaptain: p.isCaptain,
+      isViceCaptain: false,
+      isBenched: p.isBenched,
+      purchasePrice: p.purchasePrice,
+      points: null, // Se calculan en el scoring
+    }));
+
+    await prisma.fantasyPick.createMany({ data: newPicks });
+    console.log(`[Fantasy Scoring] ↳ Picks propagados: equipo ${team.id} → GW ${gameweek.gameweekNumber} (${newPicks.length} jugadores)`);
+  }
+}
+
+// ═══════════════════════════════════════
 // RECALCULACIÓN DE EQUIPOS
 // ═══════════════════════════════════════
 
 /**
  * Recalcula totalPoints de uno o más FantasyTeams.
- * Aplica multiplicadores de Capitán/Vicecapitán con delegación:
- *   - Si el Capitán jugó (points != null && points > 0 en algún pick): Cap×2
- *   - Si el Capitán NO jugó NINGUNO de sus picks: Vice×1.5
+ * Aplica multiplicador de Capitán (x2).
  *
  * @param {string[]} teamIds - IDs de equipos a recalcular. Si vacío, recalcula todos.
  * @returns {number} cantidad de equipos actualizados
@@ -281,13 +349,6 @@ async function recalculateTeamTotals(teamIds = []) {
   let updatedCount = 0;
 
   for (const team of teams) {
-    // Identificar capitán y vice
-    const captainPick = team.picks.find(p => p.isCaptain);
-    const vicePick    = team.picks.find(p => p.isViceCaptain);
-
-    // ¿El capitán jugó? (tiene puntos calculados y no es null)
-    const captainPlayed = captainPick && captainPick.points != null && captainPick.points !== 0;
-
     let totalPoints = 0;
 
     for (const pick of team.picks) {
@@ -297,12 +358,9 @@ async function recalculateTeamTotals(teamIds = []) {
 
       let pts = pick.points;
 
+      // Capitán x2
       if (pick.isCaptain) {
-        // Capitán siempre ×2 si jugó, ×0 si no jugó (pero sus puntos ya son 0/null en ese caso)
         pts = Math.round(pts * 2);
-      } else if (pick.isViceCaptain && !captainPlayed) {
-        // Vice hereda el brazalete con ×1.5 SOLO si el capitán no jugó
-        pts = Math.round(pts * 1.5);
       }
 
       totalPoints += pts;
@@ -323,13 +381,19 @@ async function recalculateTeamTotals(teamIds = []) {
 // ═══════════════════════════════════════
 
 /**
- * Busca fixtures terminados SIN PlayerMatchStat e intenta re-sincronizar
- * las stats desde Sportmonks. Cubre el caso de crash/timeout durante
- * la recoleccion post-partido del syncLive.
- * Maximo 5 por ciclo para no abusar del rate limit.
+ * Busca fixtures terminados con stats faltantes o vacías e intenta
+ * re-sincronizar desde Sportmonks.
+ *
+ * Cubre dos casos:
+ *   A) Fixtures terminados SIN ningún PlayerMatchStat (crash/timeout)
+ *   B) Fixtures terminados CON PlayerMatchStat pero con todos los campos
+ *      en null (Sportmonks no había publicado las stats al momento del sync)
+ *
+ * Máximo 5 por caso por ciclo para no abusar del rate limit.
  */
 async function recoverMissingStats() {
   try {
+    // ── CASO A: Fixtures sin ningún PlayerMatchStat ──
     const orphanFixtures = await prisma.fixture.findMany({
       where: {
         status: 'finished',
@@ -344,46 +408,88 @@ async function recoverMissingStats() {
       orderBy: { startTime: 'desc' },
     });
 
-    if (orphanFixtures.length === 0) return;
-
-    console.log(`[Fantasy Scoring] Stats recovery: ${orphanFixtures.length} partido(s) sin stats...`);
+    if (orphanFixtures.length > 0) {
+      console.log(`[Fantasy Scoring] Stats recovery (huérfanos): ${orphanFixtures.length} partido(s) sin stats...`);
+    }
 
     for (const fixture of orphanFixtures) {
-      try {
-        const data = await getFixtureWithPlayerStats(fixture.externalId);
-        const lineups = data?.data?.lineups || [];
+      await _resyncFixtureStats(fixture);
+    }
 
-        let synced = 0;
-        for (const lineupPlayer of lineups) {
-          const stats = mapPlayerMatchStats(lineupPlayer);
-          if (!stats.playerId) continue;
+    // ── CASO B: Fixtures con stats vacías (todos null = Sportmonks no había publicado) ──
+    const fixturesWithEmptyStats = await prisma.fixture.findMany({
+      where: {
+        status: 'finished',
+        source: 'sportmonks',
+        leagueId: { in: SPORTMONKS_LEAGUE_IDS },
+        startTime: {
+          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        },
+        playerStats: {
+          some: {
+            AND: [
+              { goals: null },
+              { assists: null },
+              { minutesPlayed: null },
+              { rating: null },
+            ],
+          },
+        },
+      },
+      take: 5,
+      orderBy: { startTime: 'desc' },
+    });
 
-          try {
-            await prisma.playerMatchStat.upsert({
-              where: {
-                fixtureId_playerId: {
-                  fixtureId: fixture.id,
-                  playerId: stats.playerId,
-                },
-              },
-              update: { ...stats, updatedAt: new Date() },
-              create: { ...stats, fixtureId: fixture.id },
-            });
-            synced++;
-          } catch (e) { /* skip individual stat errors */ }
-        }
+    if (fixturesWithEmptyStats.length > 0) {
+      console.log(`[Fantasy Scoring] Stats recovery (vacías): ${fixturesWithEmptyStats.length} partido(s) con stats null...`);
+    }
 
-        if (synced > 0) {
-          console.log(`[Fantasy Scoring]   Recovery fixture ${fixture.externalId}: ${synced} stats recuperadas`);
-        }
-
-        await new Promise(r => setTimeout(r, 500));
-      } catch (err) {
-        console.warn(`[Fantasy Scoring]   Recovery fixture ${fixture.externalId} fallo: ${err.message}`);
-      }
+    for (const fixture of fixturesWithEmptyStats) {
+      await _resyncFixtureStats(fixture);
     }
   } catch (err) {
     console.error('[Fantasy Scoring] Error en recovery de stats:', err.message);
+  }
+}
+
+/**
+ * Re-sincroniza stats de un fixture individual desde Sportmonks.
+ * Reutilizado por ambos casos de recovery (huérfanos y vacíos).
+ * @param {object} fixture - Prisma Fixture
+ */
+async function _resyncFixtureStats(fixture) {
+  try {
+    const data = await getFixtureWithPlayerStats(fixture.externalId);
+    const lineups = data?.data?.lineups || [];
+    const events  = data?.data?.events  || [];
+
+    let synced = 0;
+    for (const lineupPlayer of lineups) {
+      const stats = mapPlayerMatchStats(lineupPlayer, events);
+      if (!stats.playerId) continue;
+
+      try {
+        await prisma.playerMatchStat.upsert({
+          where: {
+            fixtureId_playerId: {
+              fixtureId: fixture.id,
+              playerId: stats.playerId,
+            },
+          },
+          update: { ...stats, updatedAt: new Date() },
+          create: { ...stats, fixtureId: fixture.id },
+        });
+        synced++;
+      } catch (e) { /* skip individual stat errors */ }
+    }
+
+    if (synced > 0) {
+      console.log(`[Fantasy Scoring]   Recovery fixture ${fixture.externalId}: ${synced} stats recuperadas`);
+    }
+
+    await new Promise(r => setTimeout(r, 500));
+  } catch (err) {
+    console.warn(`[Fantasy Scoring]   Recovery fixture ${fixture.externalId} fallo: ${err.message}`);
   }
 }
 
