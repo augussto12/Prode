@@ -15,7 +15,7 @@ import api from "../services/api";
 import { 
   SPORTMONKS_LEAGUE_IDS,
   AF_LEAGUES_COVERED_BY_SM 
-} from '../../../server/src/constants/sportmonks.constants.js';
+} from '../constants/sportmonks.constants.js';
 import useSportmonksStore from "../store/useSportmonksStore";
 import useAuthStore from "../store/authStore";
 import { tCountry } from "../utils/translations";
