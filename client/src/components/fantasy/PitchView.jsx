@@ -1,12 +1,21 @@
 import React from 'react';
 import { UserMinus } from 'lucide-react';
+import { translatePosition } from '../../utils/positionTranslations';
 import './FantasyTeam.css';
+
+// Helper: format player name to "FirstName\nLastName" keeping it short
+function formatPlayerName(fullName) {
+  if (!fullName) return ['', ''];
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return [parts[0], ''];
+  // Use first name + last name (skip middle names)
+  return [parts[0], parts[parts.length - 1]];
+}
 
 // Componente para renderizar la cancha y los jugadores encima
 export default function PitchView({ squad, onPlayerClick, activeGameweek, formation = "4-4-2" }) {
   // Ordenar squad: Starters y Benched
   const starters = squad.filter(p => !p.isBenched);
-  const bench = squad.filter(p => p.isBenched);
 
   const [defCount, midCount, fwdCount] = formation.split('-').map(Number);
   const limits = { GK: 1, DEF: defCount, MID: midCount, FWD: fwdCount };
@@ -70,6 +79,9 @@ function PlayerCard({ player, onClick, activeGameweek, isBench }) {
      );
   }
 
+  const [firstName, lastName] = formatPlayerName(player.fullName || player.playerName);
+  const hasPhoto = player.photoUrl;
+
   return (
      <div className={`fantasy-player-card ${isBench ? 'benched' : ''} group cursor-pointer transition-transform hover:scale-105 relative`} onClick={onClick}>
         {/* Remove overlay (appears on hover) */}
@@ -77,13 +89,27 @@ function PlayerCard({ player, onClick, activeGameweek, isBench }) {
            <UserMinus className="text-white" size={24} />
         </div>
         
-        <div className="jersey relative z-0">
-           {player.playerPosition}
+        <div className="jersey relative z-0 overflow-hidden">
+           {hasPhoto ? (
+              <img 
+                src={player.photoUrl} 
+                alt={player.playerName} 
+                className="w-full h-full object-cover rounded-full"
+                loading="lazy"
+                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+              />
+           ) : null}
+           <span style={{ display: hasPhoto ? 'none' : 'flex' }} className="w-full h-full items-center justify-center">
+              {translatePosition(player.playerPosition)}
+           </span>
            {player.isCaptain && <div className="captain-badge">C</div>}
            {player.isViceCaptain && <div className="captain-badge vice">V</div>}
         </div>
         <div className="player-info-box">
-           <div className="player-name">{player.playerName.split(' ').pop()}</div>
+           <div className="player-name" style={{ whiteSpace: 'normal', lineHeight: '1.15' }}>
+              {firstName}
+              {lastName && <><br/>{lastName}</>}
+           </div>
            {activeGameweek?.isActive && player.points !== null && (
               <div className="player-pts">{player.points} pts</div>
            )}

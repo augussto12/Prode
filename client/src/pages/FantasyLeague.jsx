@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Trophy, Copy, Users, UserX, ShieldCheck, CheckCircle, ArrowRight, ArrowLeft, UserPlus, RefreshCw, Zap, Loader2, Check } from 'lucide-react';
+import { Trophy, Copy, Users, UserX, ShieldCheck, CheckCircle, ArrowRight, ArrowLeft, UserPlus, RefreshCw, Zap, Loader2, Check, Pencil, Save } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
 import useToastStore from '../store/toastStore';
@@ -20,6 +20,11 @@ function FantasyLeague() {
   const [recalculating, setRecalculating] = useState(false);
   const [recalcResult, setRecalcResult] = useState(null);
   const [codeCopied, setCodeCopied] = useState(false);
+
+  // League edit state
+  const [editLeagueName, setEditLeagueName] = useState('');
+  const [editLeagueDesc, setEditLeagueDesc] = useState('');
+  const [savingLeague, setSavingLeague] = useState(false);
 
   const [activeTab, setActiveTab] = useState('standings');
   const [calendar, setCalendar] = useState([]);
@@ -168,6 +173,56 @@ function FantasyLeague() {
           <h2 className="text-base sm:text-xl font-bold text-indigo-400 mb-4 sm:mb-6 flex items-center gap-2">
             <ShieldCheck size={18} /> Admin
           </h2>
+
+          {/* League Info Edit */}
+          <div className="bg-black/30 rounded-xl p-3 sm:p-5 border border-white/5 mb-4 sm:mb-6">
+            <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2"><Pencil size={14} className="text-indigo-400" /> Editar Liga</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-white/50 text-[10px] sm:text-xs mb-1 font-semibold">Nombre</label>
+                <input
+                  type="text" maxLength={30}
+                  defaultValue={league.name}
+                  onChange={e => setEditLeagueName(e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white text-xs sm:text-sm focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-white/50 text-[10px] sm:text-xs mb-1 font-semibold">Descripción</label>
+                <textarea
+                  rows={2} maxLength={150}
+                  defaultValue={league.description || ''}
+                  onChange={e => setEditLeagueDesc(e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white text-xs sm:text-sm focus:outline-none focus:border-indigo-500 resize-none"
+                />
+              </div>
+              <button
+                disabled={savingLeague}
+                onClick={async () => {
+                  setSavingLeague(true);
+                  try {
+                    const payload = {};
+                    if (editLeagueName) payload.name = editLeagueName;
+                    if (editLeagueDesc !== undefined && editLeagueDesc !== '') payload.description = editLeagueDesc;
+                    if (Object.keys(payload).length === 0) {
+                      useToastStore.getState().addToast({ type: 'warning', message: 'No hay cambios.' });
+                      return;
+                    }
+                    await api.put(`/fantasy/leagues/${id}`, payload);
+                    useToastStore.getState().addToast({ type: 'success', message: 'Liga actualizada ✓' });
+                    fetchData();
+                  } catch (err) {
+                    useToastStore.getState().addToast({ type: 'error', message: err.response?.data?.error || 'Error al guardar.' });
+                  } finally {
+                    setSavingLeague(false);
+                  }
+                }}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 disabled:opacity-50 transition border-none cursor-pointer"
+              >
+                {savingLeague ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Guardar
+              </button>
+            </div>
+          </div>
 
           {/* Código */}
           <div className="bg-black/30 rounded-xl p-3 sm:p-5 border border-white/5 mb-4 sm:mb-6">

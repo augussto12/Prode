@@ -6,6 +6,7 @@ import useToastStore from '../store/toastStore';
 import PitchView from '../components/fantasy/PitchView';
 import '../components/fantasy/FantasyTeam.css';
 import { Save, Search, UserPlus, Trash2, Calendar, X, ArrowLeft, Loader2, Pencil, Check } from 'lucide-react';
+import { translatePosition, translateFilterLabel } from '../utils/positionTranslations';
 
 function FantasyTeam() {
   const { id } = useParams();
@@ -147,10 +148,12 @@ function FantasyTeam() {
 
   const handlePitchPlayerClick = (p) => {
      if (p.isDummy) {
-        setPositionFilter(p.playerPosition);
-        setTimeout(() => {
-           document.getElementById('marketSearchInput')?.focus();
-        }, 100);
+        const pos = p.playerPosition;
+        setPositionFilter(pos);
+        // Fetch players for this position immediately
+        if (league?.leagueId) {
+           fetchPlayers(league.leagueId, pos, teamFilter, searchQuery);
+        }
         if (window.innerWidth < 1024) {
            setShowMarketDrawer(true);
         }
@@ -195,8 +198,10 @@ function FantasyTeam() {
      setDraftPicks([...draftPicks, {
         playerId: p.sportmonksId,
         playerName: p.name,
+        fullName: p.name,
         playerPosition: mappedPos,
         purchasePrice: p.price,
+        photoUrl: p.photoUrl || null,
         isBenched: false
      }]);
      setBudgetRemaining(prev => prev - p.price);
@@ -517,7 +522,7 @@ function FantasyTeam() {
                           onClick={() => handlePositionClick(pos)}
                           className={`flex-1 text-[10px] sm:text-xs font-bold py-1 sm:py-1.5 rounded-md transition border-none cursor-pointer ${positionFilter === pos ? 'bg-indigo-500 text-white shadow-md' : 'text-white/50 hover:bg-white/5 hover:text-white bg-transparent'}`}
                        >
-                          {pos === '' ? 'ALL' : pos}
+                          {pos === '' ? 'Todos' : translateFilterLabel(pos)}
                        </button>
                     ))}
                  </div>
@@ -559,7 +564,7 @@ function FantasyTeam() {
                                   <div className="min-w-0 flex-1">
                                      <h4 className="text-white font-bold text-[11px] sm:text-sm leading-tight flex items-center flex-wrap">{p.name} {matchBadge}</h4>
                                      <div className="flex items-center gap-1.5 text-[10px] font-semibold mt-0.5">
-                                        <span className="px-1.5 py-0.5 rounded text-white/90 bg-white/5 border border-white/10">{p.position}</span>
+                                        <span className="px-1.5 py-0.5 rounded text-white/90 bg-white/5 border border-white/10">{translatePosition(p.position)}</span>
                                      </div>
                                   </div>
                                   {inDraft ? (

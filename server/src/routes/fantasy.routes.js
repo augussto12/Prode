@@ -17,6 +17,7 @@ router.post('/leagues/:code/join', authenticate, ctrl.joinLeague);
 router.get('/leagues/:id/standings', authenticate, ctrl.getLeagueStandings);
 router.put('/leagues/:id/teams/:teamId/ban', authenticate, ctrl.banTeam);
 router.put('/leagues/:id/teams/:teamId/unban', authenticate, ctrl.unbanTeam);
+router.put('/leagues/:id', authenticate, ctrl.updateLeague);
 
 // ================================
 // GAMEWEEKS

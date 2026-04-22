@@ -264,6 +264,22 @@ export async function getMyTeam(req, res) {
     });
 
     if (!team) return res.status(404).json({ error: 'Equipo no encontrado' });
+
+    // Enrich picks with photoUrl from FantasyPlayer
+    if (team.picks && team.picks.length > 0) {
+      const playerIds = team.picks.map(p => p.playerId);
+      const fantasyPlayers = await prisma.fantasyPlayer.findMany({
+        where: { sportmonksId: { in: playerIds } },
+        select: { sportmonksId: true, photoUrl: true, name: true }
+      });
+      const photoMap = new Map(fantasyPlayers.map(fp => [fp.sportmonksId, { photoUrl: fp.photoUrl, fullName: fp.name }]));
+      team.picks = team.picks.map(pick => ({
+        ...pick,
+        photoUrl: photoMap.get(pick.playerId)?.photoUrl || null,
+        fullName: photoMap.get(pick.playerId)?.fullName || pick.playerName
+      }));
+    }
+
     return res.json(team);
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -904,5 +920,34 @@ export async function renameTeam(req, res) {
   } catch (err) {
     console.error('[Rename Team]', err.message);
     return res.status(500).json({ error: 'Error al renombrar el equipo.' });
+  }
+}
+
+export async function updateLeague(req, res) {
+  const userId = req.user.id;
+  const { id } = req.params;
+  const { name, description } = req.body;
+
+  try {
+    const league = await prisma.fantasyLeague.findUnique({ where: { id } });
+    if (!league) return res.status(404).json({ error: 'Liga no encontrada.' });
+    if (league.ownerId !== userId) return res.status(403).json({ error: 'Solo el administrador puede editar la liga.' });
+
+    const data = {};
+    if (name !== undefined) {
+      if (!name.trim() || name.trim().length < 2 || name.trim().length > 30) {
+        return res.status(400).json({ error: 'El nombre debe tener entre 2 y 30 caracteres.' });
+      }
+      data.name = name.trim();
+    }
+    if (description !== undefined) {
+      data.description = (description || '').trim().substring(0, 150);
+    }
+
+    const updated = await prisma.fantasyLeague.update({ where: { id }, data });
+    return res.json({ success: true, name: updated.name, description: updated.description });
+  } catch (err) {
+    console.error('[Update League]', err.message);
+    return res.status(500).json({ error: 'Error al actualizar la liga.' });
   }
 }

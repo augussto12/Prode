@@ -74,8 +74,8 @@ export default function ProdeMatches({
         WO: "CANCELLED",
       };
 
-      // Mapear predictions por externalFixtureId
-      const predMap = new Map(userPreds.map((p) => [p.externalFixtureId, p]));
+      // Mapear predictions por externalFixtureId (convertir a Number para match con fix.id numérico)
+      const predMap = new Map(userPreds.map((p) => [Number(p.externalFixtureId), p]));
 
       const extractedTeams = new Map();
 
@@ -145,7 +145,7 @@ export default function ProdeMatches({
 
   const stages = [...new Set(matches.map((m) => m.stage))];
   const predictionsMap = new Map(
-    predictions.map((p) => [p.externalFixtureId, p]),
+    predictions.map((p) => [Number(p.externalFixtureId), p]),
   );
 
   const toggleFavorite = async (teamName) => {

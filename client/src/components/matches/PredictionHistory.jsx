@@ -28,7 +28,7 @@ export default function PredictionHistory({
 
   const predsWithMatch = predictions
     .map((p) => {
-      const match = matches.find((m) => m.id === p.externalFixtureId);
+      const match = matches.find((m) => m.id === Number(p.externalFixtureId));
       return { ...p, match };
     })
     .filter((p) => p.match);

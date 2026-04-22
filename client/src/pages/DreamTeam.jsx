@@ -5,6 +5,7 @@ import api from "../services/api";
 import useCompetitionStore from "../store/competitionStore";
 import Pitch from "../components/dreamteam/Pitch";
 import useToastStore from "../store/toastStore";
+import { translatePosition, translateFilterLabel } from '../utils/positionTranslations';
 
 export default function DreamTeam() {
   const [formation, setFormation] = useState("1-2-1");
@@ -293,7 +294,7 @@ export default function DreamTeam() {
                       : "bg-transparent text-white/50 border border-white/10 hover:bg-white/5"
                   }`}
                 >
-                  {f}
+                  {f === 'ALL' ? 'Todos' : translateFilterLabel(f)}
                 </button>
               ))}
             </div>
@@ -336,7 +337,7 @@ export default function DreamTeam() {
                             {p.name}
                           </div>
                           <div className="text-[10px] text-white/60 uppercase tracking-widest">
-                            {p.position} • {p.country}
+                            {translatePosition(p.position)} • {p.country}
                           </div>
                         </div>
                       </div>
