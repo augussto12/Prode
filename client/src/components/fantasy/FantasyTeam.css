@@ -1,0 +1,222 @@
+.pitch-container {
+  width: 100%;
+  max-width: 450px;
+  margin: 0 auto;
+}
+
+.pitch-grass {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  background: linear-gradient(180deg, #2e7d32 0%, #388e3c 25%, #2e7d32 50%, #388e3c 75%, #2e7d32 100%);
+  border: 4px solid rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 0 50px rgba(0,0,0,0.3);
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.pitch-line {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.center-line {
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  transform: translateY(-50%);
+}
+
+.pitch-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  border: 3px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.pitch-box {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 3px solid rgba(255, 255, 255, 0.5);
+  width: 50%;
+  height: 15%;
+}
+
+.penalty-box.top {
+  top: 0;
+  border-top: none;
+}
+
+.penalty-box.bottom {
+  bottom: 0;
+  border-bottom: none;
+}
+
+.pitch-players-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding: 10px 0;
+  z-index: 10;
+}
+
+.pitch-row, .bench-row {
+  display: flex;
+  justify-content: space-evenly;
+  width: 100%;
+}
+
+.bench-container {
+  background: rgba(255,255,255,0.05);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.fantasy-player-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+  width: 70px;
+}
+
+.fantasy-player-card:hover {
+  transform: scale(1.1);
+}
+
+.jersey {
+  width: 44px;
+  height: 44px;
+  background-color: var(--theme-primary, #6366f1);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+  position: relative;
+  border: 2px solid white;
+}
+
+.captain-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: gold;
+  color: black;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.captain-badge.vice {
+  background: silver;
+}
+
+.player-info-box {
+  background: rgba(0,0,0,0.7);
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin-top: 4px;
+  text-align: center;
+  width: 100%;
+}
+
+.player-name {
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-pts {
+  color: #a7f3d0;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.player-price {
+  color: #fde047;
+  font-size: 0.7rem;
+}
+
+.team-hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  background: rgba(0,0,0,0.3);
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.hud-item {
+  flex: 1;
+  min-width: 120px;
+  text-align: center;
+}
+
+.hud-item span {
+  display: block;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 0.25rem;
+}
+
+.hud-item strong {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+/* MOBILE ADJUSTMENTS */
+@media (max-width: 1024px) {
+  .pitch-container {
+    max-width: 100%;
+  }
+  .pitch-grass {
+    aspect-ratio: 3 / 4; /* slightly taller on mobile so elements aren't as squished vertically */
+  }
+  .jersey {
+    width: 32px;
+    height: 32px;
+    font-size: 0.75rem;
+  }
+  .fantasy-player-card {
+    width: 50px;
+    margin: -10px 0;
+  }
+  .player-info-box {
+    padding: 1px 3px;
+  }
+  .player-name {
+    font-size: 0.55rem;
+  }
+  .player-pts {
+    font-size: 0.6rem;
+  }
+}

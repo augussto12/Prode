@@ -74,7 +74,7 @@ export async function upsertPrediction(userId, externalFixtureId, competitionId,
     }
 
     return tx.prediction.upsert({
-      where: { userId_externalFixtureId: { userId, externalFixtureId } },
+      where: { userId_externalFixtureId_source: { userId, externalFixtureId, source: 'api-football' } },
       update: {
         homeGoals: data.homeGoals,
         awayGoals: data.awayGoals,

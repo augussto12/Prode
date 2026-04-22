@@ -36,7 +36,7 @@ export const favoritesSchema = z.object({
 
 // --- PREDICTIONS ---
 export const predictionSchema = z.object({
-  externalFixtureId: z.number().int().positive(),
+  externalFixtureId: z.union([z.string(), z.number()]).transform(String),
   competitionId: z.number().int().positive(),
   homeGoals: z.number().int().min(0).max(20).optional().nullable(),
   awayGoals: z.number().int().min(0).max(20).optional().nullable(),

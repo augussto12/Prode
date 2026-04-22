@@ -1,4 +1,4 @@
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
 
 let socket = null;
 
@@ -9,7 +9,8 @@ export function getSocket() {
       withCredentials: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 2000,
-      transports: ['websocket'], // Forzar websockets, evitar HTTP polling
+      transports: ["websocket"], // Forzar websockets, evitar HTTP polling
+      closeOnBeforeunload: false, // Prevent socket.io from using unload listener (fixes BFCache)
     });
   }
   return socket;

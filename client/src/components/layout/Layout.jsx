@@ -1,8 +1,8 @@
-import { Suspense, useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
-import Navbar from './Navbar';
-import GuruChat from '../chat/GuruChat';
-import PageSkeleton from '../skeletons/PageSkeleton';
+import { Suspense, useEffect } from "react";
+import { Outlet, useLocation } from "react-router-dom";
+import Navbar from "./Navbar";
+import GuruChat from "../chat/GuruChat";
+import PageSkeleton from "../skeletons/PageSkeleton";
 
 export default function Layout() {
   const { pathname } = useLocation();
@@ -23,4 +23,3 @@ export default function Layout() {
     </div>
   );
 }
-

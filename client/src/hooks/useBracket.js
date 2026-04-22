@@ -1,41 +1,42 @@
-import { useState, useEffect, useCallback } from 'react';
-import api from '../services/api.js';
+import { useState, useEffect, useCallback } from "react";
+import api from "../services/api.js";
 
 // Knockout round normalization — same logic as TournamentBracket.jsx
 const PHASE_ORDER = [
-  'Round of 32',
-  'Round of 16',
-  'Quarter-finals',
-  'Semi-finals',
-  '3rd Place Final',
-  'Final',
+  "Round of 32",
+  "Round of 16",
+  "Quarter-finals",
+  "Semi-finals",
+  "3rd Place Final",
+  "Final",
 ];
 
 function normalizePhase(round) {
   if (!round) return null;
   const r = round.toLowerCase();
-  if (r.includes('round of 32')) return 'Round of 32';
-  if (r.includes('round of 16') || r.includes('1/8')) return 'Round of 16';
-  if (r.includes('quarter') || r.includes('1/4')) return 'Quarter-finals';
-  if (r.includes('semi') || r.includes('1/2')) return 'Semi-finals';
-  if (r.includes('3rd place')) return '3rd Place Final';
-  if (r === 'final') return 'Final';
-  if (r.includes('play-off') || r.includes('play off') || r.includes('playoff')) return 'Play-offs';
+  if (r.includes("round of 32")) return "Round of 32";
+  if (r.includes("round of 16") || r.includes("1/8")) return "Round of 16";
+  if (r.includes("quarter") || r.includes("1/4")) return "Quarter-finals";
+  if (r.includes("semi") || r.includes("1/2")) return "Semi-finals";
+  if (r.includes("3rd place")) return "3rd Place Final";
+  if (r === "final") return "Final";
+  if (r.includes("play-off") || r.includes("play off") || r.includes("playoff"))
+    return "Play-offs";
   return null;
 }
 
 // Group fixtures into matchups (ida/vuelta by team pairing)
 function groupMatchups(fixtures) {
   const map = {};
-  fixtures.forEach(f => {
+  fixtures.forEach((f) => {
     const homeId = f.teams.home.id;
     const awayId = f.teams.away.id;
-    const key = [Math.min(homeId, awayId), Math.max(homeId, awayId)].join('-');
+    const key = [Math.min(homeId, awayId), Math.max(homeId, awayId)].join("-");
     if (!map[key]) map[key] = [];
     map[key].push(f);
   });
 
-  return Object.values(map).map(legs => {
+  return Object.values(map).map((legs) => {
     legs.sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
     const leg1 = legs[0];
     const leg2 = legs[1] || null;
@@ -56,8 +57,12 @@ function groupMatchups(fixtures) {
     }
 
     let winnerId = null;
-    const isFinished = legs.every(l => ['FT', 'AET', 'PEN'].includes(l.fixture.status?.short));
-    const isLive = legs.some(l => ['1H', '2H', 'HT', 'ET', 'BT', 'P'].includes(l.fixture.status?.short));
+    const isFinished = legs.every((l) =>
+      ["FT", "AET", "PEN"].includes(l.fixture.status?.short),
+    );
+    const isLive = legs.some((l) =>
+      ["1H", "2H", "HT", "ET", "BT", "P"].includes(l.fixture.status?.short),
+    );
 
     if (isFinished) {
       if (aggA > aggB) winnerId = teamA.id;
@@ -110,13 +115,13 @@ export function useBracket(leagueId, season) {
 
     try {
       const { data: fixtures } = await api.get(
-        `/explorer/leagues/${leagueId}/fixtures?season=${season}`
+        `/explorer/leagues/${leagueId}/fixtures?season=${season}`,
       );
 
       // Group fixtures by normalized phase
       const phaseMap = {};
-      fixtures.forEach(f => {
-        const round = f.league?.round || '';
+      fixtures.forEach((f) => {
+        const round = f.league?.round || "";
         const phase = normalizePhase(round);
         if (phase) {
           if (!phaseMap[phase]) phaseMap[phase] = [];
@@ -125,10 +130,13 @@ export function useBracket(leagueId, season) {
       });
 
       // Filter 3rd place out of main bracket chain (rendered separately)
-      const mainPhases = PHASE_ORDER.filter(p => p !== '3rd Place Final');
-      const orderedPhases = mainPhases.filter(p => phaseMap[p]);
-      const thirdPlace = phaseMap['3rd Place Final']
-        ? { phase: '3rd Place Final', matchups: groupMatchups(phaseMap['3rd Place Final']) }
+      const mainPhases = PHASE_ORDER.filter((p) => p !== "3rd Place Final");
+      const orderedPhases = mainPhases.filter((p) => phaseMap[p]);
+      const thirdPlace = phaseMap["3rd Place Final"]
+        ? {
+            phase: "3rd Place Final",
+            matchups: groupMatchups(phaseMap["3rd Place Final"]),
+          }
         : null;
 
       // Build bracket columns
@@ -151,9 +159,12 @@ export function useBracket(leagueId, season) {
           const tAid = matchup.teamA.id;
           const tBid = matchup.teamB.id;
 
-          const nextIdx = nextCol.matchups.findIndex(nm =>
-            nm.teamA.id === tAid || nm.teamA.id === tBid ||
-            nm.teamB.id === tAid || nm.teamB.id === tBid
+          const nextIdx = nextCol.matchups.findIndex(
+            (nm) =>
+              nm.teamA.id === tAid ||
+              nm.teamA.id === tBid ||
+              nm.teamB.id === tAid ||
+              nm.teamB.id === tBid,
           );
 
           if (nextIdx !== -1) {
@@ -195,9 +206,12 @@ export function useBracket(leagueId, season) {
         currentCol.matchups.forEach((matchup) => {
           const tAid = matchup.teamA.id;
           const tBid = matchup.teamB.id;
-          const nextIdx = nextCol.matchups.findIndex(nm =>
-            nm.teamA.id === tAid || nm.teamA.id === tBid ||
-            nm.teamB.id === tAid || nm.teamB.id === tBid
+          const nextIdx = nextCol.matchups.findIndex(
+            (nm) =>
+              nm.teamA.id === tAid ||
+              nm.teamA.id === tBid ||
+              nm.teamB.id === tAid ||
+              nm.teamB.id === tBid,
           );
           matchup._nextMatchIndex = nextIdx;
         });
@@ -205,20 +219,24 @@ export function useBracket(leagueId, season) {
 
       // ─── Ensure a Final column exists for the mirrored bracket ───
       // If Semi-finals exist but Final doesn't, add a placeholder
-      const hasSF = columns.some(c => c.phase === 'Semi-finals');
-      const hasFinal = columns.some(c => c.phase === 'Final');
+      const hasSF = columns.some((c) => c.phase === "Semi-finals");
+      const hasFinal = columns.some((c) => c.phase === "Final");
       if (hasSF && !hasFinal) {
-        const sfCol = columns.find(c => c.phase === 'Semi-finals');
+        const sfCol = columns.find((c) => c.phase === "Semi-finals");
         // Try to determine finalists from SF winners
         const finalist1 = sfCol.matchups[0]?.winnerId
-          ? (sfCol.matchups[0].winnerId === sfCol.matchups[0].teamA.id ? sfCol.matchups[0].teamA : sfCol.matchups[0].teamB)
-          : { id: -1, name: '—', logo: '' };
+          ? sfCol.matchups[0].winnerId === sfCol.matchups[0].teamA.id
+            ? sfCol.matchups[0].teamA
+            : sfCol.matchups[0].teamB
+          : { id: -1, name: "—", logo: "" };
         const finalist2 = sfCol.matchups[1]?.winnerId
-          ? (sfCol.matchups[1].winnerId === sfCol.matchups[1].teamA.id ? sfCol.matchups[1].teamA : sfCol.matchups[1].teamB)
-          : { id: -2, name: '—', logo: '' };
+          ? sfCol.matchups[1].winnerId === sfCol.matchups[1].teamA.id
+            ? sfCol.matchups[1].teamA
+            : sfCol.matchups[1].teamB
+          : { id: -2, name: "—", logo: "" };
 
         const finalPlaceholder = {
-          id: 'final-placeholder',
+          id: "final-placeholder",
           teamA: finalist1,
           teamB: finalist2,
           aggA: null,
@@ -234,7 +252,7 @@ export function useBracket(leagueId, season) {
         };
 
         columns.push({
-          phase: 'Final',
+          phase: "Final",
           colIndex: columns.length,
           matchups: [finalPlaceholder],
         });
@@ -242,7 +260,7 @@ export function useBracket(leagueId, season) {
         // Connect SF matchups to the Final placeholder
         sfCol.matchups.forEach((m, mi) => {
           m._nextMatchIndex = 0;
-          m.nextMatchId = 'final-placeholder';
+          m.nextMatchId = "final-placeholder";
         });
       }
 
@@ -253,8 +271,8 @@ export function useBracket(leagueId, season) {
         hasKnockout: columns.length > 0,
       });
     } catch (err) {
-      console.error('Error fetching bracket:', err);
-      setError(err.message || 'Error al cargar las llaves');
+      console.error("Error fetching bracket:", err);
+      setError(err.message || "Error al cargar las llaves");
     } finally {
       setLoading(false);
     }

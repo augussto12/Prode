@@ -1,0 +1,38 @@
+import cron from 'node-cron';
+import prisma from '../config/database.js';
+
+export function startFantasyGameweekJob(io) {
+  // Cada 5 minutos verificar si hay que cerrar transferencias
+  // (cuando arranca el primer partido del gameweek activo)
+  cron.schedule('*/5 * * * *', async () => {
+    try {
+      // 1. Cierre de transferencias cuando llega el startDate
+      const openGameweeks = await prisma.fantasyGameweek.findMany({
+        where: { transfersOpen: true, isFinished: false }
+      });
+      
+      const now = new Date();
+      
+      for (const ag of openGameweeks) {
+        if (now >= ag.startDate) {
+          await prisma.fantasyGameweek.update({
+            where: { id: ag.id },
+            data: { transfersOpen: false }
+          });
+          console.log(`[Fantasy] Transferencias cerradas para gameweek ${ag.gameweekNumber} de liga ${ag.fantasyLeagueId}`);
+          
+          if (io) {
+            // Notificar via Socket.io a usuarios conectados
+            io.emit('fantasy:transfers_closed', { gameweekId: ag.id, leagueId: ag.fantasyLeagueId });
+          }
+        }
+      }
+      
+      // 2. Transición de gameweek terminada a la próxima
+      // Esto suele hacerlo Scoring, pero por consistencia garantizamos que si el END DATE pasó hace más de 12 horas y todo está terminado, pase
+      // (No instruido estrictamente aquí, pero el trigger es date-based)
+    } catch (err) {
+       console.error('[Fantasy] Error checking gameweek boundaries:', err.message);
+    }
+  });
+}

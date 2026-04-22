@@ -9,6 +9,17 @@ const COOKIE_NAME = 'prode_token';
 // Throttle: mínimo 1 segundo entre mensajes por socket
 const MESSAGE_COOLDOWN_MS = 1000;
 
+// Instancia de Socket.io — exportada para que otros módulos (cron jobs) puedan emitir
+let io = null;
+
+/**
+ * Devuelve la instancia de Socket.io.
+ * Usar después de llamar initSocket().
+ */
+export function getIO() {
+  return io;
+}
+
 export function initSocket(server) {
   const allowedOrigins = [
     'http://localhost:3000',
@@ -16,7 +27,7 @@ export function initSocket(server) {
     process.env.FRONTEND_URL,
   ].filter(Boolean);
 
-  const io = new Server(server, {
+  io = new Server(server, {
     cors: { 
       origin: allowedOrigins,
       credentials: true, // Necesario para que el browser envíe cookies
@@ -61,6 +72,8 @@ export function initSocket(server) {
 
   io.on('connection', (socket) => {
     
+    // ═══ GROUP CHAT ROOMS ═══
+
     // Unirse a la sala del chat del grupo (con validación de membresía)
     socket.on('join_group', async (groupId) => {
       try {
@@ -130,5 +143,22 @@ export function initSocket(server) {
       if (isNaN(parsedId) || parsedId <= 0) return;
       socket.leave(`group_${parsedId}`);
     });
+
+    // ═══ MATCH LIVE ROOMS (Sportmonks) ═══
+    // Los cron jobs emiten a estas rooms cuando hay updates en vivo.
+    // No requiere validación de membresía, solo JWT válido (ya autenticado arriba).
+
+    socket.on('join_match', (matchExternalId) => {
+      if (!matchExternalId) return;
+      socket.join(`match:${matchExternalId}`);
+    });
+
+    socket.on('leave_match', (matchExternalId) => {
+      if (!matchExternalId) return;
+      socket.leave(`match:${matchExternalId}`);
+    });
   });
+
+  return io;
 }
+

@@ -21,7 +21,10 @@ export default function PageSkeleton() {
       {/* Cards grid placeholder */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="rounded-xl p-4 h-28 bg-slate-800/70 border border-slate-700/30">
+          <div
+            key={i}
+            className="rounded-xl p-4 h-28 bg-slate-800/70 border border-slate-700/30"
+          >
             <div className="w-10 h-10 rounded-full bg-slate-700 mx-auto mb-3" />
             <div className="h-3 w-16 bg-slate-700 rounded mx-auto" />
           </div>
@@ -31,7 +34,10 @@ export default function PageSkeleton() {
       {/* List placeholder */}
       <div className="space-y-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-14 bg-slate-800/50 rounded-xl border border-slate-700/20" />
+          <div
+            key={i}
+            className="h-14 bg-slate-800/50 rounded-xl border border-slate-700/20"
+          />
         ))}
       </div>
     </div>

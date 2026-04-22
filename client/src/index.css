@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Ensure Inter uses swap to prevent FOIT */
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  src: local('Inter');
+}
+
 @theme {
   --color-primary: var(--primary-color, #6366f1);
   --color-secondary: var(--secondary-color, #8b5cf6);
@@ -34,7 +41,7 @@ body::before {
   height: 100vh;
   height: 100dvh;
   z-index: -1;
-  background: linear-gradient(to bottom, var(--color-bg-start) 0%, var(--color-bg-end) 100%);
+  background: linear-gradient(135deg, var(--color-bg-start) 0%, var(--color-bg-end) 100%);
 }
 
 .glass-card {

@@ -17,6 +17,8 @@ import guruRoutes from './routes/guru.routes.js';
 import syncRoutes from './routes/sync.routes.js';
 import competitionRoutes from './routes/competition.routes.js';
 import explorerRoutes from './routes/explorer.routes.js';
+import sportmonksRoutes from './routes/sportmonks.routes.js';
+import fantasyRoutes from './routes/fantasy.routes.js';
 import { setupCronJobs } from './cron/scheduledTasks.js';
 
 const app = express();
@@ -103,6 +105,16 @@ const guruLimiter = rateLimit({
   message: { error: 'Demasiadas consultas al Gurú. Esperá un rato.' },
 });
 
+// --- MIDDLEWARE DE CACHE ---
+// Desactivado por instrucción estricta de base de datos en tiempo real
+const noCacheMiddleware = (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+};
+app.use(noCacheMiddleware);
+
 // --- RUTAS ---
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
@@ -118,6 +130,8 @@ app.use('/api/guru', guruLimiter, guruRoutes);
 app.use('/api/admin/sync', syncRoutes);
 app.use('/api/competitions', competitionRoutes);
 app.use('/api/explorer', explorerRoutes);
+app.use('/api/sportmonks', sportmonksRoutes);
+app.use('/api/fantasy', fantasyRoutes);
 
 // Error handler centralizado
 app.use(errorHandler);

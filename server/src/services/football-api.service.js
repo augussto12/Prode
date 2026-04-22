@@ -4,6 +4,8 @@
  * Los logos/imágenes NO cuentan contra la cuota.
  */
 
+export let afRateLimit = { remaining: null, limit: null, updatedAt: null };
+
 async function apiCall(endpoint, params = {}) {
   const API_BASE = process.env.FOOTBALL_API_BASE || 'https://v3.football.api-sports.io';
   const API_KEY = process.env.FOOTBALL_API_KEY;
@@ -20,6 +22,17 @@ async function apiCall(endpoint, params = {}) {
   const res = await fetch(url.toString(), {
     headers: { 'x-apisports-key': API_KEY || '' },
   });
+
+  const remaining = res.headers.get('x-ratelimit-requests-remaining') || res.headers.get('x-ratelimit-remaining');
+  const limit = res.headers.get('x-ratelimit-requests-limit') || res.headers.get('x-ratelimit-limit');
+  
+  if (remaining) {
+    afRateLimit = {
+      remaining: parseInt(remaining, 10),
+      limit: limit ? parseInt(limit, 10) : null,
+      updatedAt: new Date()
+    };
+  }
 
   if (!res.ok) {
     throw new Error(`API Football error: ${res.status} ${res.statusText}`);

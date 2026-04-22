@@ -1,11 +1,11 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 const defaultTheme = {
-  primaryColor: '#6366f1',
-  secondaryColor: '#8b5cf6',
-  accentColor: '#f59e0b',
-  bgGradientFrom: '#0f172a',
-  bgGradientTo: '#1e1b4b',
+  primaryColor: "#6366f1",
+  secondaryColor: "#8b5cf6",
+  accentColor: "#f59e0b",
+  bgGradientFrom: "#0f172a",
+  bgGradientTo: "#1e1b4b",
 };
 
 // Regex para validar colores hex (previene CSS injection)
@@ -13,35 +13,50 @@ const isValidHex = (val) => /^#[0-9a-fA-F]{6}$/.test(val);
 
 // Sanitiza un color: si no es un hex válido, usa el fallback
 const sanitizeColor = (value, fallback) => {
-  if (typeof value === 'string' && isValidHex(value)) return value;
+  if (typeof value === "string" && isValidHex(value)) return value;
   return fallback;
 };
 
 // Handle both Group theme structure (primaryColor) and User theme structure (themePrimary)
 const extractTheme = (source) => ({
-  primaryColor: sanitizeColor(source?.themePrimary || source?.primaryColor || source?.primary, defaultTheme.primaryColor),
-  secondaryColor: sanitizeColor(source?.themeSecondary || source?.secondaryColor || source?.secondary, defaultTheme.secondaryColor),
-  accentColor: sanitizeColor(source?.themeAccent || source?.accentColor || source?.accent, defaultTheme.accentColor),
-  bgGradientFrom: sanitizeColor(source?.themeBgFrom || source?.bgGradientFrom || source?.bgFrom, defaultTheme.bgGradientFrom),
-  bgGradientTo: sanitizeColor(source?.themeBgTo || source?.bgGradientTo || source?.bgTo, defaultTheme.bgGradientTo),
+  primaryColor: sanitizeColor(
+    source?.themePrimary || source?.primaryColor || source?.primary,
+    defaultTheme.primaryColor,
+  ),
+  secondaryColor: sanitizeColor(
+    source?.themeSecondary || source?.secondaryColor || source?.secondary,
+    defaultTheme.secondaryColor,
+  ),
+  accentColor: sanitizeColor(
+    source?.themeAccent || source?.accentColor || source?.accent,
+    defaultTheme.accentColor,
+  ),
+  bgGradientFrom: sanitizeColor(
+    source?.themeBgFrom || source?.bgGradientFrom || source?.bgFrom,
+    defaultTheme.bgGradientFrom,
+  ),
+  bgGradientTo: sanitizeColor(
+    source?.themeBgTo || source?.bgGradientTo || source?.bgTo,
+    defaultTheme.bgGradientTo,
+  ),
 });
 
 const applyToCss = (theme) => {
   const root = document.documentElement;
-  root.style.setProperty('--primary-color', theme.primaryColor);
-  root.style.setProperty('--secondary-color', theme.secondaryColor);
-  root.style.setProperty('--accent-color', theme.accentColor);
-  root.style.setProperty('--bg-start-color', theme.bgGradientFrom);
-  root.style.setProperty('--bg-end-color', theme.bgGradientTo);
-  
-  // Apply background colors to html and body directly to fix overscroll bounce color on mobile
+  root.style.setProperty("--primary-color", theme.primaryColor);
+  root.style.setProperty("--secondary-color", theme.secondaryColor);
+  root.style.setProperty("--accent-color", theme.accentColor);
+  root.style.setProperty("--bg-start-color", theme.bgGradientFrom);
+  root.style.setProperty("--bg-end-color", theme.bgGradientTo);
+
+  // Fix overscroll bounce by setting HTML background, but keep body transparent to let body::before gradient show
   document.documentElement.style.backgroundColor = theme.bgGradientTo;
-  document.body.style.backgroundColor = theme.bgGradientTo;
+  document.body.style.backgroundColor = "transparent";
 
   // Actualizar meta theme-color para navegadores móviles (overscroll y status bar)
   const metaThemeColor = document.querySelector('meta[name="theme-color"]');
   if (metaThemeColor) {
-    metaThemeColor.setAttribute('content', theme.bgGradientFrom);
+    metaThemeColor.setAttribute("content", theme.bgGradientFrom);
   }
 };
 

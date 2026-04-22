@@ -88,7 +88,7 @@ export async function unban(req, res, next) {
 
 export async function getMatchPredictions(req, res, next) {
   try {
-    const preds = await groupService.getMatchPredictions(Number(req.params.id), Number(req.params.externalFixtureId));
+    const preds = await groupService.getMatchPredictions(Number(req.params.id), String(req.params.externalFixtureId));
     res.json(preds);
   } catch (err) { next(err); }
 }

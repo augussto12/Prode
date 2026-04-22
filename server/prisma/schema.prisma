@@ -40,6 +40,10 @@ model User {
   dreamTeams        DreamTeam[]
   outrightPredictions OutrightPrediction[]
 
+  // Fantasy Reverse Relations
+  fantasyOwnedLeagues FantasyLeague[] @relation("FantasyLeagueOwner")
+  fantasyTeams        FantasyTeam[]
+
   @@index([email])
   @@index([username])
 }
@@ -127,7 +131,8 @@ model GroupUser {
 
 model Team {
   id          Int      @id @default(autoincrement())
-  externalId  Int      @unique
+  externalId  Int
+  source      String   @default("api-football") // 'sportmonks' | 'api-football'
   name        String
   code        String?
   logo        String?
@@ -137,15 +142,18 @@ model Team {
   players     Player[]
   coaches     Coach[]
   
+  @@unique([externalId, source])
   @@index([externalId])
 }
 
-// Match y MatchEvent ELIMINADOS — la data de partidos viene del Explorer API en tiempo real
+// Match/MatchEvent legacy ELIMINADOS — la data de partidos de API-Football viene del Explorer cache
+// Para Sportmonks, los partidos se persisten en el model Fixture (ver abajo)
 
 model Prediction {
   id                  Int           @id @default(autoincrement())
   userId              Int
-  externalFixtureId   Int           // ID del fixture en API-Football
+  externalFixtureId   String        // ID del fixture en la API externa (Sportmonks o API-Football)
+  source              String        @default("api-football") // 'sportmonks' | 'api-football'
   competitionId       Int           // Liga/torneo al que pertenece
 
   homeGoals       Int?
@@ -181,7 +189,7 @@ model Prediction {
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   competition     Competition @relation(fields: [competitionId], references: [id])
 
-  @@unique([userId, externalFixtureId]) 
+  @@unique([userId, externalFixtureId, source]) 
   @@index([externalFixtureId])
   @@index([userId])
   @@index([competitionId])
@@ -218,7 +226,8 @@ model ScoringConfig {
 
 model Player {
   id          Int      @id @default(autoincrement())
-  externalId  Int?     @unique
+  externalId  Int?
+  source      String   @default("api-football") // 'sportmonks' | 'api-football'
   name        String
   teamId      Int?
   team        Team?    @relation(fields: [teamId], references: [id])
@@ -246,6 +255,7 @@ model Player {
   topScorers  OutrightPrediction[] @relation("TopScorer")
   bestPlayers OutrightPrediction[] @relation("BestPlayer")
 
+  @@unique([externalId, source])
   @@index([teamId])
 }
 
@@ -256,6 +266,93 @@ model Coach {
   photo       String?
   teamId      Int?
   team        Team?    @relation(fields: [teamId], references: [id])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SPORTMONKS — Modelos de persistencia para partidos y stats
+// ═══════════════════════════════════════════════════════════════
+
+model Fixture {
+  id          String   @id @default(cuid())
+  externalId  String
+  source      String   // 'sportmonks' | 'api-football'
+  leagueId    Int
+  seasonId    Int?
+  homeTeamId  Int
+  awayTeamId  Int
+  startTime   DateTime
+  status      String   // 'scheduled' | 'live' | 'finished' | 'cancelled' | 'postponed'
+  homeScore   Int?
+  awayScore   Int?
+  isLive      Boolean  @default(false)
+  round       String?
+  venueName   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  playerStats PlayerMatchStat[]
+  events      FixtureEvent[]
+
+  @@unique([externalId, source])
+  @@index([leagueId])
+  @@index([startTime])
+  @@index([isLive])
+  @@index([status])
+}
+
+model PlayerMatchStat {
+  id              String   @id @default(cuid())
+  fixtureId       String
+  playerId        Int
+  teamId          Int
+  rating          Float?
+  goals           Int?
+  assists         Int?
+  minutesPlayed   Int?
+  yellowCards     Int?
+  redCards        Int?
+  shotsOnTarget   Int?
+  passesCompleted Int?
+  saves           Int?
+  ownGoals        Int?
+  jerseyNumber    Int?
+  position        String?
+  playerName      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  fixture         Fixture  @relation(fields: [fixtureId], references: [id], onDelete: Cascade)
+
+  @@unique([fixtureId, playerId])
+  @@index([playerId])
+}
+
+model FixtureEvent {
+  id          String   @id @default(cuid())
+  fixtureId   String
+  minute      Int
+  extraMinute Int?
+  type        String   // 'goal' | 'card' | 'subst' | 'var' | 'other'
+  detail      String?
+  playerName  String?
+  assistName  String?
+  teamId      Int?
+  createdAt   DateTime @default(now())
+
+  fixture     Fixture  @relation(fields: [fixtureId], references: [id], onDelete: Cascade)
+
+  @@index([fixtureId])
+}
+
+model ExternalIdMapping {
+  id              String  @id @default(cuid())
+  entityType      String  // 'fixture' | 'team' | 'player'
+  sportmonksId    String?
+  apiFootballId   String?
+  internalId      String
+
+  @@index([entityType, sportmonksId])
+  @@index([entityType, apiFootballId])
 }
 
 model DreamTeam {
@@ -320,4 +417,176 @@ model PlayerCompetitionStats {
 
   @@unique([playerId, competitionId])
   @@index([competitionId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FANTASY FOOTBALL — Modelos principales
+// ═══════════════════════════════════════════════════════════════
+
+model FantasyLeague {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  code          String   @unique  // código de invitación de 6 chars
+  ownerId       Int
+  leagueId      Int      // Liga de fútbol (636, 8, 564, 384)
+  seasonId      Int      // Temporada de Sportmonks
+  status        String   @default("active") // active | finished
+  maxTeams      Int      @default(20)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  owner         User           @relation("FantasyLeagueOwner", fields: [ownerId], references: [id])
+  teams         FantasyTeam[]
+  gameweeks     FantasyGameweek[]
+}
+
+model FantasyGameweek {
+  id              String   @id @default(cuid())
+  fantasyLeagueId String
+  gameweekNumber  Int      // Fecha 1, 2, 3...
+  roundId         Int?     // ID de ronda en Sportmonks
+  startDate       DateTime
+  endDate         DateTime
+  isActive        Boolean  @default(false)
+  isFinished      Boolean  @default(false)
+  transfersOpen   Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  fantasyLeague   FantasyLeague  @relation(fields: [fantasyLeagueId], references: [id])
+  picks           FantasyPick[]
+  playerScores    FantasyPlayerScore[]
+
+  @@unique([fantasyLeagueId, gameweekNumber])
+}
+
+model FantasyTeam {
+  id              String   @id @default(cuid())
+  userId          Int
+  fantasyLeagueId String
+  name            String
+  totalPoints     Int      @default(0)
+  budgetRemaining Float    @default(100.0) // presupuesto en millones
+  status          String   @default("active") // active | banned | frozen
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id])
+  fantasyLeague   FantasyLeague @relation(fields: [fantasyLeagueId], references: [id])
+  picks           FantasyPick[]
+  transfers       FantasyTransfer[]
+
+  @@unique([userId, fantasyLeagueId])
+}
+
+model FantasyPick {
+  id              String   @id @default(cuid())
+  fantasyTeamId   String
+  gameweekId      String
+  playerId        Int      // ID Sportmonks del jugador
+  playerName      String   // guardado para no depender de join
+  playerPosition  String   // GK | DEF | MID | FWD
+  playerTeamId    Int
+  playerTeamName  String
+  isCaptain       Boolean  @default(false)
+  isViceCaptain   Boolean  @default(false)
+  isBenched       Boolean  @default(false) // true = suplente en el fantasy
+  purchasePrice   Float    // precio al momento de fichar
+  points          Int?     // calculado post-partido
+  createdAt       DateTime @default(now())
+
+  fantasyTeam     FantasyTeam     @relation(fields: [fantasyTeamId], references: [id])
+  gameweek        FantasyGameweek @relation(fields: [gameweekId], references: [id])
+
+  @@unique([fantasyTeamId, gameweekId, playerId])
+}
+
+model FantasyPlayerScore {
+  id              String   @id @default(cuid())
+  playerId        Int      // ID Sportmonks
+  playerName      String
+  fixtureId       Int      // ID Sportmonks del partido
+  gameweekId      String
+  
+  // Stats del partido (de Sportmonks)
+  minutesPlayed   Int      @default(0)
+  goals           Int      @default(0)
+  assists         Int      @default(0)
+  yellowCards     Int      @default(0)
+  redCards        Int      @default(0)
+  saves           Int      @default(0)
+  penaltySaves    Int      @default(0)
+  ownGoals        Int      @default(0)
+  shotsOnTarget   Int      @default(0)
+  cleanSheet      Boolean  @default(false)
+  rating          Float?   // rating de Sportmonks
+  position        String   // posición en ese partido
+  
+  // Puntos calculados por categoría (para transparencia)
+  pointsGoals         Int  @default(0)
+  pointsAssists       Int  @default(0)
+  pointsCards         Int  @default(0)
+  pointsCleanSheet    Int  @default(0)
+  pointsSaves         Int  @default(0)
+  pointsMinutes       Int  @default(0)
+  pointsRatingBonus   Int  @default(0)
+  pointsTotal         Int  @default(0) // suma final
+  
+  calculatedAt    DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  gameweek        FantasyGameweek @relation(fields: [gameweekId], references: [id])
+
+  @@unique([playerId, fixtureId])
+}
+
+model FantasyTransfer {
+  id              String   @id @default(cuid())
+  fantasyTeamId   String
+  gameweekId      String   // gameweek EN QUE se hace la transferencia
+  playerOutId     Int
+  playerOutName   String
+  playerInId      Int
+  playerInName    String
+  transferredAt   DateTime @default(now())
+
+  fantasyTeam     FantasyTeam @relation(fields: [fantasyTeamId], references: [id])
+}
+
+model FantasyPlayer {
+  id              String   @id @default(cuid())
+  sportmonksId    Int      @unique
+  name            String
+  position        String   // GK | DEF | MID | FWD
+  teamId          Int
+  teamName        String
+  leagueId        Int
+  nationality     String?
+  photoUrl        String?
+  price           Float    @default(5.0) // precio en millones
+  totalPoints     Int      @default(0)   // acumulado de la temporada
+  avgPoints       Float    @default(0)
+  selectedBy      Float    @default(0)   // % de equipos que lo tienen
+  updatedAt       DateTime @updatedAt
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SPORTMONKS ROUNDS — Rondas/Jornadas persistidas localmente
+// ═══════════════════════════════════════════════════════════════
+
+model SportmonksRound {
+  id          String    @id @default(cuid())
+  roundId     Int
+  leagueId    Int
+  seasonId    Int
+  name        String
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([roundId, leagueId])
+  @@index([leagueId])
+  @@index([seasonId])
 }

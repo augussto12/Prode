@@ -31,3 +31,34 @@ npm-debug.log*
 
 # ─── Docker volumes (si los hay locales) ───
 docker-data/
+
+# ─── Scratch / Debug / Diagnostic files ───
+server/diag*.js
+server/scratch_*.js
+server/find_maps.js
+server/fix_db.js
+server/parse_types.js
+server/temp_check.js
+server/*.json
+!server/package.json
+!server/package-lock.json
+extract.js
+fix_arrows.js
+fix_img_syntax.js
+update_explorer.js
+update_images.js
+
+# ─── Lighthouse / Perf reports ───
+*.json
+!package.json
+!package-lock.json
+!server/package.json
+!server/package-lock.json
+!client/package.json
+!client/package-lock.json
+lh-dev.json
+lighthouse-report.json
+client/lighthouse-prod*.json
+
+# ─── Vite dev service worker ───
+client/dev-dist/

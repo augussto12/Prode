@@ -8,6 +8,8 @@ import { authenticate } from '../middleware/auth.js';
 import * as footballApi from '../services/football-api.service.js';
 import { cachedApiCall, invalidateCache, getCacheStats } from '../services/cache.service.js';
 import { TOP_LEAGUE_IDS, CURATED_LEAGUES, ALLOWED_LEAGUE_IDS, LIVE_LEAGUE_IDS_STRING } from '../config/leagues.config.js';
+import * as smPlayers from '../services/sportmonks/sportmonksPlayers.js';
+import { mapPlayerProfileSportmonksToApiFootball } from '../utils/sportmonksMapper.js';
 
 const router = Router();
 
@@ -469,23 +471,71 @@ router.get('/players/:id', async (req, res, next) => {
   try {
     const playerId = Number(req.params.id);
     const season = Number(req.query.season) || getCurrentSeason();
+    const source = req.query.source;
+    
+    // Si viene de detalle de partido de Sportmonks, forzar ruta por Sportmonks
+    if (source === 'sportmonks') {
+      const cacheKey = `sm:player_profile:${playerId}`;
+      const data = await cachedApiCall(cacheKey, 21600, async () => {
+        const result = await smPlayers.getPlayerById(playerId);
+        return mapPlayerProfileSportmonksToApiFootball(result?.data);
+      });
+      res.set('Cache-Control', 'public, max-age=21600');
+      return res.json(data);
+    }
+
     const cacheKey = `player:${playerId}:${season}`;
 
     const data = await cachedApiCall(cacheKey, 21600, async () => {
-      const [statsRes, trophiesRes, transfersRes] = await Promise.all([
-        footballApi.fetchPlayerStats(playerId, season),
-        footballApi.fetchPlayerTrophies(playerId).catch(() => ({ response: [] })),
-        footballApi.fetchPlayerTransfers(playerId).catch(() => ({ response: [] })),
-      ]);
+      const statsRes = await footballApi.fetchPlayerStats(playerId, season);
 
       return {
         stats: statsRes.response?.[0] || null,
-        trophies: trophiesRes.response || [],
-        transfers: transfersRes.response?.[0]?.transfers || [],
+        // Eliminados trophies y transfers del payload inicial para lazy loading
       };
     });
 
     res.set('Cache-Control', 'public, max-age=21600');
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
+/** GET /api/explorer/players/:id/trophies — Lazy Load Trofeos */
+router.get('/players/:id/trophies', async (req, res, next) => {
+  try {
+    const playerId = Number(req.params.id);
+    // Si es Sportmonks, simulamos devolviendo vacío o podríamos implementarlo si hace falta
+    // Ya que Sportmonks trae todo de una.
+    const source = req.query.source;
+    if (source === 'sportmonks') {
+      const data = await smPlayers.getPlayerById(playerId);
+      const mapped = mapPlayerProfileSportmonksToApiFootball(data?.data);
+      return res.json(mapped?.trophies || []);
+    }
+
+    const data = await cachedApiCall(`player_trophies:${playerId}`, 86400, async () => {
+      const resApi = await footballApi.fetchPlayerTrophies(playerId).catch(() => ({ response: [] }));
+      return resApi.response || [];
+    });
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
+/** GET /api/explorer/players/:id/transfers — Lazy Load Transferencias */
+router.get('/players/:id/transfers', async (req, res, next) => {
+  try {
+    const playerId = Number(req.params.id);
+    const source = req.query.source;
+    if (source === 'sportmonks') {
+      const data = await smPlayers.getPlayerById(playerId);
+      const mapped = mapPlayerProfileSportmonksToApiFootball(data?.data);
+      return res.json(mapped?.transfers || []);
+    }
+
+    const data = await cachedApiCall(`player_transfers:${playerId}`, 86400, async () => {
+      const resApi = await footballApi.fetchPlayerTransfers(playerId).catch(() => ({ response: [] }));
+      return resApi.response?.[0]?.transfers || [];
+    });
     res.json(data);
   } catch (err) { next(err); }
 });

@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { m } from 'framer-motion';
-import { ArrowLeft, Trophy, ChevronDown, GitBranch } from 'lucide-react';
-import api from '../services/api';
-import { useBracket } from '../hooks/useBracket';
-import BracketViewer from '../components/bracket/BracketViewer';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { m } from "framer-motion";
+import { ArrowLeft, Trophy, ChevronDown, GitBranch } from "lucide-react";
+import api from "../services/api";
+import { useBracket } from "../hooks/useBracket";
+import BracketViewer from "../components/bracket/BracketViewer";
 
 /**
  * Dedicated bracket page at /bracket/:leagueId.
@@ -19,7 +19,10 @@ export default function BracketPage() {
   const [season, setSeason] = useState(null);
   const [leagueLoading, setLeagueLoading] = useState(true);
 
-  const availableSeasons = Array.from({ length: currentYear - 2019 }, (_, i) => currentYear - i);
+  const availableSeasons = Array.from(
+    { length: currentYear - 2019 },
+    (_, i) => currentYear - i,
+  );
 
   // Fetch league info
   useEffect(() => {
@@ -27,10 +30,11 @@ export default function BracketPage() {
       try {
         const { data } = await api.get(`/explorer/leagues/${leagueId}`);
         setLeague(data);
-        const activeSeason = data.seasons?.find(s => s.current)?.year || currentYear;
+        const activeSeason =
+          data.seasons?.find((s) => s.current)?.year || currentYear;
         setSeason(activeSeason);
       } catch (err) {
-        console.error('Error loading league:', err);
+        console.error("Error loading league:", err);
       } finally {
         setLeagueLoading(false);
       }
@@ -68,24 +72,38 @@ export default function BracketPage() {
 
       {/* Header */}
       <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6, #6366f1)' }}
+        <div
+          className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{
+            background: "linear-gradient(135deg, #3b82f6, #8b5cf6, #6366f1)",
+          }}
         />
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-5 w-full">
           {leagueInfo?.logo ? (
-            <img src={leagueInfo.logo} alt={leagueInfo.name} className="w-16 h-16 object-contain" loading="lazy" decoding="async" onError={(e) => { e.target.src = '/placeholder-team.svg'; }} />
+            <img               src={leagueInfo.logo}
+              alt={leagueInfo.name}
+              className="w-16 h-16 object-contain"
+              loading="lazy"
+              decoding="async"
+              width={64} height={64}
+  onError={(e) => {
+                e.target.src = "/placeholder-team.svg";
+              }}
+            />
           ) : (
             <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center">
-              <Trophy size={28} className="text-white/40" />
+              <Trophy size={28} className="text-white/60" />
             </div>
           )}
           <div className="flex-1 text-center md:text-left">
             <div className="flex items-center gap-2 justify-center md:justify-start mb-1">
               <GitBranch size={16} className="text-blue-400" />
-              <span className="text-xs text-blue-400 uppercase tracking-wider font-bold">Llaves del Torneo</span>
+              <span className="text-xs text-blue-400 uppercase tracking-wider font-bold">
+                Llaves del Torneo
+              </span>
             </div>
             <h1 className="text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              {leagueInfo?.name || 'Torneo'}
+              {leagueInfo?.name || "Torneo"}
             </h1>
           </div>
 
@@ -96,11 +114,16 @@ export default function BracketPage() {
               onChange={(e) => setSeason(Number(e.target.value))}
               className="appearance-none bg-white/10 border border-white/20 text-white text-sm font-semibold rounded-xl px-4 py-2 pr-8 cursor-pointer hover:bg-white/15 transition-all focus:outline-none focus:border-indigo-500"
             >
-              {availableSeasons.map(s => (
-                <option key={s} value={s} className="bg-gray-900 text-white">{s}</option>
+              {availableSeasons.map((s) => (
+                <option key={s} value={s} className="bg-gray-900 text-white">
+                  {s}
+                </option>
               ))}
             </select>
-            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+            <ChevronDown
+              size={14}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none"
+            />
           </div>
         </div>
       </div>
@@ -121,7 +144,7 @@ export default function BracketPage() {
           isFullPage={true}
         />
       ) : (
-        <div className="glass-card rounded-2xl p-8 text-center text-white/40">
+        <div className="glass-card rounded-2xl p-8 text-center text-white/60">
           No hay fases eliminatorias disponibles para esta temporada.
         </div>
       )}

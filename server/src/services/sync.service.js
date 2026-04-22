@@ -59,7 +59,7 @@ export async function syncTeams(leagueId = LEAGUE_ID, season = SEASON) {
   for (const item of response) {
     const team = item.team;
     const existing = await prisma.team.findUnique({
-      where: { externalId: team.id },
+      where: { externalId_source: { externalId: team.id, source: 'api-football' } },
     });
 
     const data = {
@@ -72,10 +72,10 @@ export async function syncTeams(leagueId = LEAGUE_ID, season = SEASON) {
     };
 
     if (existing) {
-      await prisma.team.update({ where: { externalId: team.id }, data });
+      await prisma.team.update({ where: { externalId_source: { externalId: team.id, source: 'api-football' } }, data });
       updated++;
     } else {
-      await prisma.team.create({ data });
+      await prisma.team.create({ data: { ...data, source: 'api-football' } });
       created++;
     }
   }
@@ -97,7 +97,7 @@ export async function syncSquad(teamExternalId, competitionId = null) {
   }
 
   // Buscar nuestro Team local para linkear via FK
-  const localTeam = await prisma.team.findUnique({ where: { externalId: teamExternalId } });
+  const localTeam = await prisma.team.findUnique({ where: { externalId_source: { externalId: teamExternalId, source: 'api-football' } } });
 
   const squadData = response[0];
   const teamName = squadData.team?.name || 'Unknown';
@@ -120,11 +120,11 @@ export async function syncSquad(teamExternalId, competitionId = null) {
       age: p.age || null,
     };
 
-    const existing = await prisma.player.findUnique({ where: { externalId: p.id } });
+    const existing = await prisma.player.findUnique({ where: { externalId_source: { externalId: p.id, source: 'api-football' } } });
 
     let playerId;
     if (existing) {
-      await prisma.player.update({ where: { externalId: p.id }, data });
+      await prisma.player.update({ where: { externalId_source: { externalId: p.id, source: 'api-football' } }, data });
       playerId = existing.id;
       updated++;
     } else {
