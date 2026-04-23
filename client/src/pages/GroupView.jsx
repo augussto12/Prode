@@ -18,7 +18,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import useAuthStore from "../store/authStore";
-import useThemeStore from "../store/themeStore";
+
 import api from "../services/api";
 import useToastStore from "../store/toastStore";
 import GroupChat from "../components/chat/GroupChat";
@@ -28,7 +28,6 @@ export default function GroupView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  const { setTheme, resetTheme } = useThemeStore();
 
   const [group, setGroup] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
@@ -41,32 +40,16 @@ export default function GroupView() {
   const [editForm, setEditForm] = useState({
     name: "",
     description: "",
-    primaryColor: "",
-    secondaryColor: "",
-    accentColor: "",
-    bgGradientFrom: "",
-    bgGradientTo: "",
   });
 
   useEffect(() => {
     loadGroup();
-    return () => resetTheme();
   }, [id]);
 
   const loadGroup = async () => {
     try {
       const { data: gData } = await api.get(`/groups/${id}`);
-      setGroup(gData);
-
-      if (gData.primaryColor) {
-        setTheme({
-          primary: gData.primaryColor,
-          secondary: gData.secondaryColor,
-          accent: gData.accentColor,
-          bgFrom: gData.bgGradientFrom,
-          bgTo: gData.bgGradientTo,
-        });
-      }
+      setGroup(gData);
 
       const { data: lbData } = await api.get(`/groups/${id}/leaderboard`);
       setLeaderboard(lbData);
@@ -221,11 +204,6 @@ export default function GroupView() {
     setEditForm({
       name: group.name || "",
       description: group.description || "",
-      primaryColor: group.primaryColor || "#6366f1",
-      secondaryColor: group.secondaryColor || "#8b5cf6",
-      accentColor: group.accentColor || "#f59e0b",
-      bgGradientFrom: group.bgGradientFrom || "#0f172a",
-      bgGradientTo: group.bgGradientTo || "#1e1b4b",
       allowMoreShots: group.allowMoreShots ?? true,
       allowMoreCorners: group.allowMoreCorners ?? true,
       allowMorePossession: group.allowMorePossession ?? true,
@@ -782,37 +760,7 @@ export default function GroupView() {
                 </p>
               </div>
 
-              <div>
-                <label className="block text-white/60 text-xs sm:text-sm mb-2">
-                  Colores del grupo
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 bg-black/20 p-3 sm:p-4 rounded-xl border border-white/5">
-                  {[
-                    { label: "Primario", key: "primaryColor" },
-                    { label: "Secundario", key: "secondaryColor" },
-                    { label: "Acento", key: "accentColor" },
-                    { label: "Fondo de", key: "bgGradientFrom" },
-                    { label: "Fondo a", key: "bgGradientTo" },
-                  ].map(({ label, key }) => (
-                    <div
-                      key={key}
-                      className="flex items-center gap-2 bg-white/5 p-2 rounded-lg"
-                    >
-                      <input
-                        type="color"
-                        value={editForm[key]}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, [key]: e.target.value })
-                        }
-                        className="w-6 h-6 rounded border border-white/20 cursor-pointer bg-transparent shrink-0"
-                      />
-                      <span className="text-[10px] sm:text-[11px] text-white/70 truncate">
-                        {label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+
 
               <div className="flex justify-end gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-white/10">
                 <button

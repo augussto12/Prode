@@ -62,7 +62,7 @@ function PublicRoute({ children }) {
 
 export default function App() {
   const user = useAuthStore((state) => state.user);
-  const { setPersonalTheme } = useThemeStore();
+  const { initFromUser } = useThemeStore();
   const fetchCompetitions = useCompetitionStore(
     (state) => state.fetchCompetitions,
   );
@@ -72,12 +72,12 @@ export default function App() {
     fetchCompetitions();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Aplicar theme personal cuando cambia el usuario
+  // Aplicar tema del usuario cuando se carga el perfil
   useEffect(() => {
     if (user) {
-      setPersonalTheme(user);
+      initFromUser(user);
     }
-  }, [user, setPersonalTheme]);
+  }, [user, initFromUser]);
 
   return (
     <BrowserRouter>

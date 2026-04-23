@@ -448,7 +448,7 @@ export default function Explorer() {
                 to={`/groups/${group.id}`}
                 className="flex-shrink-0 w-[280px] md:w-[320px] rounded-2xl p-5 border border-white/10 no-underline transition-all hover:-translate-y-1 hover:shadow-xl relative overflow-hidden group"
                 style={{
-                  background: `linear-gradient(135deg, ${group.bgGradientFrom || "#1e1b4b"}, ${group.bgGradientTo || "#312e81"})`,
+                  background: `linear-gradient(135deg, var(--color-bg-start), var(--color-bg-end))`,
                 }}
               >
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">

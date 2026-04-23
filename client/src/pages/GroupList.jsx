@@ -20,11 +20,7 @@ export default function GroupList() {
     description: "",
     isPublic: false,
     competitionId: "",
-    primaryColor: "#6366f1",
-    secondaryColor: "#8b5cf6",
-    accentColor: "#f59e0b",
-    bgGradientFrom: "#0f172a",
-    bgGradientTo: "#1e1b4b",
+
     allowMoreShots: true,
     allowMoreCorners: true,
     allowMorePossession: true,
@@ -302,32 +298,6 @@ export default function GroupList() {
               </p>
             </div>
 
-            <div>
-              <label className="block text-white/60 text-sm mb-2">
-                Colores del tema
-              </label>
-              <div className="flex flex-wrap gap-3">
-                {[
-                  { label: "Primario", key: "primaryColor" },
-                  { label: "Secundario", key: "secondaryColor" },
-                  { label: "Acento", key: "accentColor" },
-                  { label: "Fondo desde", key: "bgGradientFrom" },
-                  { label: "Fondo hasta", key: "bgGradientTo" },
-                ].map(({ label, key }) => (
-                  <div key={key} className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={createForm[key]}
-                      onChange={(e) =>
-                        setCreateForm({ ...createForm, [key]: e.target.value })
-                      }
-                      className="w-8 h-8 rounded-lg border border-white/20 cursor-pointer bg-transparent"
-                    />
-                    <span className="text-xs text-white/60">{label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
 
             <div className="flex items-center gap-2">
               <input
@@ -413,7 +383,7 @@ export default function GroupList() {
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center text-white"
                   style={{
-                    background: `linear-gradient(135deg, ${group.primaryColor}, ${group.secondaryColor})`,
+                    background: `linear-gradient(135deg, var(--color-primary), var(--color-secondary))`,
                   }}
                 >
                   <Users size={20} />

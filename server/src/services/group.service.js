@@ -17,11 +17,6 @@ export async function createGroup(userId, data) {
         isPublic: data.isPublic || false,
         createdById: userId,
         competitionId: Number(data.competitionId),
-        primaryColor: data.primaryColor || '#6366f1',
-        secondaryColor: data.secondaryColor || '#8b5cf6',
-        accentColor: data.accentColor || '#f59e0b',
-        bgGradientFrom: data.bgGradientFrom || '#0f172a',
-        bgGradientTo: data.bgGradientTo || '#1e1b4b',
         allowMoreShots: data.allowMoreShots ?? true,
         allowMoreCorners: data.allowMoreCorners ?? true,
         allowMorePossession: data.allowMorePossession ?? true,
@@ -73,7 +68,7 @@ export async function getGroupById(groupId, userId) {
         take: 50,
         orderBy: { createdAt: 'asc' },
         include: {
-          user: { select: { id: true, displayName: true, role: true, themePrimary: true } }
+          user: { select: { id: true, displayName: true, role: true, themeId: true } }
         }
       }
     },
@@ -162,13 +157,7 @@ export async function updateGroupTheme(groupId, userId, themeData) {
     throw new ForbiddenError('Solo los admins del grupo pueden cambiar el tema');
   }
 
-  const data = {
-    primaryColor: themeData.primaryColor,
-    secondaryColor: themeData.secondaryColor,
-    accentColor: themeData.accentColor,
-    bgGradientFrom: themeData.bgGradientFrom,
-    bgGradientTo: themeData.bgGradientTo,
-  };
+  const data = {};
   
   if (themeData.name !== undefined) data.name = themeData.name;
   if (themeData.description !== undefined) data.description = themeData.description;

@@ -20,11 +20,7 @@ const hexColorRegex = /^#[0-9a-fA-F]{6}$/;
 export const profileUpdateSchema = z.object({
   displayName: z.string().min(1).max(30).optional(),
   avatar: z.string().url().max(500).optional().nullable(),
-  themePrimary: z.string().regex(hexColorRegex, 'Color inválido').optional().nullable(),
-  themeSecondary: z.string().regex(hexColorRegex, 'Color inválido').optional().nullable(),
-  themeAccent: z.string().regex(hexColorRegex, 'Color inválido').optional().nullable(),
-  themeBgFrom: z.string().regex(hexColorRegex, 'Color inválido').optional().nullable(),
-  themeBgTo: z.string().regex(hexColorRegex, 'Color inválido').optional().nullable(),
+  themeId: z.enum(['default', 'emerald', 'rose', 'amber', 'sky', 'slate', 'cyberpunk', 'sunset', 'galaxy', 'forest', 'ocean', 'midnight', 'neon', 'fire', 'tropical']).optional(),
 }).strict(); // STRICT: rechaza campos extra (previene mass assignment de role, email, password)
 
 // --- FAVORITES ---
@@ -60,11 +56,6 @@ export const groupCreateSchema = z.object({
   description: z.string().max(500).optional().default(''),
   isPublic: z.boolean().optional().default(false),
   competitionId: z.number().int().positive('competitionId es requerido'),
-  primaryColor: z.string().regex(hexColorRegex).optional(),
-  secondaryColor: z.string().regex(hexColorRegex).optional(),
-  accentColor: z.string().regex(hexColorRegex).optional(),
-  bgGradientFrom: z.string().regex(hexColorRegex).optional(),
-  bgGradientTo: z.string().regex(hexColorRegex).optional(),
   allowMoreShots: z.boolean().optional(),
   allowMoreCorners: z.boolean().optional(),
   allowMorePossession: z.boolean().optional(),
@@ -77,11 +68,6 @@ export const groupCreateSchema = z.object({
 export const groupThemeSchema = z.object({
   name: z.string().min(1, 'Nombre requerido').max(50, 'Máximo 50 caracteres').trim().optional(),
   description: z.string().max(500).optional(),
-  primaryColor: z.string().regex(hexColorRegex).optional(),
-  secondaryColor: z.string().regex(hexColorRegex).optional(),
-  accentColor: z.string().regex(hexColorRegex).optional(),
-  bgGradientFrom: z.string().regex(hexColorRegex).optional(),
-  bgGradientTo: z.string().regex(hexColorRegex).optional(),
   allowMoreShots: z.boolean().optional(),
   allowMoreCorners: z.boolean().optional(),
   allowMorePossession: z.boolean().optional(),

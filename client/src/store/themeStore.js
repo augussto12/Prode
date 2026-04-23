@@ -1,47 +1,12 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { getThemeById, DEFAULT_THEME } from "../constants/themes";
 
-const defaultTheme = {
-  primaryColor: "#6366f1",
-  secondaryColor: "#8b5cf6",
-  accentColor: "#f59e0b",
-  bgGradientFrom: "#0f172a",
-  bgGradientTo: "#1e1b4b",
-};
-
-// Regex para validar colores hex (previene CSS injection)
-const isValidHex = (val) => /^#[0-9a-fA-F]{6}$/.test(val);
-
-// Sanitiza un color: si no es un hex válido, usa el fallback
-const sanitizeColor = (value, fallback) => {
-  if (typeof value === "string" && isValidHex(value)) return value;
-  return fallback;
-};
-
-// Handle both Group theme structure (primaryColor) and User theme structure (themePrimary)
-const extractTheme = (source) => ({
-  primaryColor: sanitizeColor(
-    source?.themePrimary || source?.primaryColor || source?.primary,
-    defaultTheme.primaryColor,
-  ),
-  secondaryColor: sanitizeColor(
-    source?.themeSecondary || source?.secondaryColor || source?.secondary,
-    defaultTheme.secondaryColor,
-  ),
-  accentColor: sanitizeColor(
-    source?.themeAccent || source?.accentColor || source?.accent,
-    defaultTheme.accentColor,
-  ),
-  bgGradientFrom: sanitizeColor(
-    source?.themeBgFrom || source?.bgGradientFrom || source?.bgFrom,
-    defaultTheme.bgGradientFrom,
-  ),
-  bgGradientTo: sanitizeColor(
-    source?.themeBgTo || source?.bgGradientTo || source?.bgTo,
-    defaultTheme.bgGradientTo,
-  ),
-});
-
-const applyToCss = (theme) => {
+/**
+ * Aplica los colores del tema a las CSS custom properties del document.
+ * Todos los componentes que usan var(--color-primary) etc. se actualizan automáticamente.
+ */
+function applyToCss(theme) {
   const root = document.documentElement;
   root.style.setProperty("--primary-color", theme.primaryColor);
   root.style.setProperty("--secondary-color", theme.secondaryColor);
@@ -49,38 +14,60 @@ const applyToCss = (theme) => {
   root.style.setProperty("--bg-start-color", theme.bgGradientFrom);
   root.style.setProperty("--bg-end-color", theme.bgGradientTo);
 
-  // Fix overscroll bounce by setting HTML background, but keep body transparent to let body::before gradient show
-  document.documentElement.style.backgroundColor = theme.bgGradientTo;
-  document.body.style.backgroundColor = "transparent";
+  // Fix overscroll bounce — ambos backgrounds iguales para evitar flash
+  document.documentElement.style.backgroundColor = theme.bgGradientFrom;
+  document.body.style.backgroundColor = theme.bgGradientFrom;
 
-  // Actualizar meta theme-color para navegadores móviles (overscroll y status bar)
-  const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-  if (metaThemeColor) {
-    metaThemeColor.setAttribute("content", theme.bgGradientFrom);
-  }
-};
+  // Actualizar meta theme-color para status bar en mobile
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", theme.bgGradientFrom);
+}
 
-const useThemeStore = create((set, get) => ({
-  personalTheme: defaultTheme,
-  currentTheme: defaultTheme,
+const useThemeStore = create(
+  persist(
+    (set) => ({
+      themeId: "default",
 
-  setPersonalTheme: (user) => {
-    const theme = extractTheme(user);
-    set({ personalTheme: theme, currentTheme: theme });
-    applyToCss(theme);
-  },
+      /**
+       * Aplicar tema por ID.
+       * Se llama desde el ThemeSelector en Profile y al iniciar la app.
+       */
+      setThemeById: (themeId) => {
+        const theme = getThemeById(themeId);
+        set({ themeId });
+        applyToCss(theme);
+      },
 
-  setTheme: (groupTheme) => {
-    const theme = extractTheme(groupTheme);
-    set({ currentTheme: theme });
-    applyToCss(theme);
-  },
+      /**
+       * Inicializar tema desde el perfil del usuario (post-login).
+       * El themeId de BD tiene prioridad sobre el de localStorage.
+       */
+      initFromUser: (user) => {
+        const themeId = user?.themeId || "default";
+        const theme = getThemeById(themeId);
+        set({ themeId });
+        applyToCss(theme);
+      },
 
-  resetTheme: () => {
-    const theme = get().personalTheme;
-    set({ currentTheme: theme });
-    applyToCss(theme);
-  },
-}));
+      /**
+       * Reset al tema por defecto.
+       */
+      reset: () => {
+        set({ themeId: "default" });
+        applyToCss(DEFAULT_THEME);
+      },
+    }),
+    {
+      name: "user-theme", // key en localStorage
+      // Al rehidratar desde localStorage, aplicar CSS inmediatamente
+      onRehydrateStorage: () => (state) => {
+        if (state?.themeId) {
+          const theme = getThemeById(state.themeId);
+          applyToCss(theme);
+        }
+      },
+    },
+  ),
+);
 
 export default useThemeStore;

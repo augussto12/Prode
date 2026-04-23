@@ -49,8 +49,7 @@ export async function getProfile(userId) {
     select: {
       id: true, email: true, username: true, displayName: true,
       role: true, avatar: true, createdAt: true,
-      themePrimary: true, themeSecondary: true, themeAccent: true,
-      themeBgFrom: true, themeBgTo: true,
+      themeId: true,
       favorites: true,
       _count: { select: { predictions: true, groupUsers: true } },
     },
@@ -63,15 +62,11 @@ export async function updateProfile(userId, data) {
     data: { 
       displayName: data.displayName, 
       avatar: data.avatar,
-      themePrimary: data.themePrimary,
-      themeSecondary: data.themeSecondary,
-      themeAccent: data.themeAccent,
-      themeBgFrom: data.themeBgFrom,
-      themeBgTo: data.themeBgTo
+      themeId: data.themeId,
     },
     select: { 
       id: true, email: true, username: true, displayName: true, role: true, avatar: true,
-      themePrimary: true, themeSecondary: true, themeAccent: true, themeBgFrom: true, themeBgTo: true
+      themeId: true,
     },
   });
 }

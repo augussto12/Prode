@@ -455,7 +455,7 @@ function FantasyTeam() {
        </button>
 
        {/* HUD */}
-       <div className="glass-panel p-3 sm:p-4 mb-3 sm:mb-4 rounded-xl sm:rounded-2xl">
+       <div className="glass-card bg-black/20 p-3 sm:p-4 mb-3 sm:mb-4 rounded-xl sm:rounded-2xl">
           <div className="flex flex-wrap justify-between items-center gap-2 sm:gap-4">
             {activeGw && (
               <div className="flex flex-col items-center sm:items-start w-full sm:w-auto order-2 sm:order-1">
@@ -544,7 +544,7 @@ function FantasyTeam() {
           {showFixturesDrawer && (
              <div className="lg:hidden fixed inset-0 bg-black/80 z-50 flex" onClick={() => setShowFixturesDrawer(false)}>
                 <div 
-                   className="w-[80vw] max-w-[300px] h-full bg-[#0f1117] border-r border-white/10 p-3 flex flex-col shadow-2xl animate-fade-in"
+                   className="w-[80vw] max-w-[300px] h-full glass-card bg-black/60 shadow-2xl animate-fade-in p-3 flex flex-col"
                    onClick={e => e.stopPropagation()}
                 >
                    <div className="flex justify-between items-center mb-3 border-b border-white/10 pb-2">
@@ -582,7 +582,7 @@ function FantasyTeam() {
           )}
 
           {/* COLUMNA 1: FIXTURES (Desktop Solo) */}
-          <div className="hidden lg:flex w-full lg:w-[380px] flex-shrink-0 glass-panel bg-black/40 rounded-2xl flex-col h-[800px] overflow-hidden sticky top-4">
+          <div className="hidden lg:flex w-full lg:w-[380px] flex-shrink-0 glass-card bg-black/20 rounded-2xl flex-col h-[800px] overflow-hidden sticky top-4">
              <div className="p-4 border-b border-white/5 bg-black/20 h-[72px] flex items-center justify-center sm:justify-start">
                 <h3 className="font-bold text-white text-sm m-0">Fixture Fecha {activeGw?.gameweekNumber}</h3>
              </div>
@@ -612,7 +612,7 @@ function FantasyTeam() {
 
           {/* COLUMNA 2: PITCH */}
           <div className="w-full lg:w-[480px] flex-shrink-0 flex flex-col gap-3 sm:gap-4">
-             <div className="glass-panel bg-black/20 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl relative flex flex-col pitch-wrapper">
+             <div className="glass-card bg-black/20 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl relative flex flex-col pitch-wrapper">
                 {/* Save Header / View Mode Controls */}
                 <div className="flex items-center justify-between gap-2 p-2.5 sm:p-4 border-b border-white/5 bg-black/20">
                    {viewMode === 'current' ? (
@@ -739,7 +739,7 @@ function FantasyTeam() {
              onClick={() => showMarketDrawer && setShowMarketDrawer(false)}
           >
             <div 
-               className={`glass-panel rounded-xl sm:rounded-2xl flex flex-col overflow-hidden ${showMarketDrawer ? 'w-full max-w-[380px] h-[85vh] relative bg-[#1a1c23]' : 'h-[800px] bg-black/40'}`}
+               className={`glass-card rounded-xl sm:rounded-2xl flex flex-col overflow-hidden ${showMarketDrawer ? 'w-full max-w-[380px] h-[85vh] relative bg-black/80' : 'h-[800px] bg-black/20'}`}
                onClick={e => e.stopPropagation()}
             >
                {viewMode === 'current' && activeGw?.status !== 'IN_PROGRESS' ? (

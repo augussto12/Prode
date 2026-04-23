@@ -26,12 +26,8 @@ model User {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  // Personal theme customization
-  themePrimary      String?   @default("#6366f1")
-  themeSecondary    String?   @default("#8b5cf6")
-  themeAccent       String?   @default("#f59e0b")
-  themeBgFrom       String?   @default("#0f172a")
-  themeBgTo         String?   @default("#1e1b4b")
+  // Theme selection (references predefined theme catalog)
+  themeId           String    @default("default")
 
   predictions   Prediction[]
   groupUsers        GroupUser[]
@@ -83,12 +79,7 @@ model Group {
   isPublic      Boolean       @default(false)
   createdById   Int
 
-  // Theme customization
-  primaryColor    String      @default("#6366f1")  
-  secondaryColor  String      @default("#8b5cf6")  
-  accentColor     String      @default("#f59e0b")  
-  bgGradientFrom  String      @default("#0f172a")  
-  bgGradientTo    String      @default("#1e1b4b")  
+
   logoUrl         String?
 
   // Modulos extra permitidos

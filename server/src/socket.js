@@ -57,7 +57,7 @@ export function initSocket(server) {
       // Verificar que el usuario sigue existiendo en BD
       const user = await prisma.user.findUnique({
         where: { id: decoded.id },
-        select: { id: true, displayName: true, role: true, themePrimary: true },
+        select: { id: true, displayName: true, role: true, themeId: true },
       });
 
       if (!user) return next(new Error('Authentication error'));
@@ -130,7 +130,7 @@ export function initSocket(server) {
             id: socket.user.id,
             displayName: socket.user.displayName,
             role: socket.user.role,
-            themePrimary: socket.user.themePrimary,
+            themeId: socket.user.themeId,
           }
         });
       } catch (err) {

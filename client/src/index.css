@@ -21,6 +21,7 @@
 
 html {
   background-color: var(--color-bg-start, #0f172a);
+  overscroll-behavior-y: none;
 }
 
 body {
