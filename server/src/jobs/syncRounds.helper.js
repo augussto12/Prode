@@ -15,7 +15,7 @@ export async function syncRoundsForLeague(leagueId) {
   const seasonId = lg?.data?.currentseason?.id || lg?.data?.current_season?.id;
 
   if (!seasonId) {
-    console.warn(`[Rounds] Liga ${leagueId}: no se encontró temporada actual`);
+    // No current season — skip silently
     return { created: 0, updated: 0, total: 0, seasonId: null };
   }
 
@@ -55,7 +55,7 @@ export async function syncRoundsForLeague(leagueId) {
         created++;
       }
     } catch (err) {
-      console.error(`[Rounds] Error upsert round ${round.id} liga ${leagueId}:`, err.message);
+      console.error(`[Rounds] ✗ Round ${round.id} liga ${leagueId}: ${err.message}`);
     }
   }
 
@@ -68,7 +68,6 @@ export async function syncRoundsForLeague(leagueId) {
  * @returns {{ totalCreated: number, totalUpdated: number }}
  */
 export async function syncAllRounds(leagueIds) {
-  console.log(`[Rounds] ▶ Sincronizando rounds de ${leagueIds.length} ligas...`);
   const startTime = Date.now();
   let totalCreated = 0;
   let totalUpdated = 0;
@@ -80,18 +79,18 @@ export async function syncAllRounds(leagueIds) {
       totalUpdated += result.updated;
 
       if (result.total > 0) {
-        console.log(`[Rounds]   ✓ Liga ${leagueId}: ${result.total} rounds (${result.created} nuevas, ${result.updated} actualizadas)`);
+        // Per-league detail tracked via CronJobLog
       }
 
       // Rate limit entre ligas
       await new Promise(r => setTimeout(r, 300));
     } catch (err) {
-      console.error(`[Rounds]   ✗ Error liga ${leagueId}:`, err.message);
+      console.error(`[Rounds] ✗ Liga ${leagueId}: ${err.message}`);
     }
   }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-  console.log(`[Rounds] ✅ Sync completado en ${elapsed}s — +${totalCreated} nuevas, ~${totalUpdated} actualizadas`);
+  // Summary returned to caller (logged via CronJobLog)
 
   return { totalCreated, totalUpdated };
 }

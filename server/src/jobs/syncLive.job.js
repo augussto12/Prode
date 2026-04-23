@@ -92,17 +92,17 @@ async function syncFinalPlayerStats(smFixtureId, internalFixtureId) {
       }
     }
 
-    console.log(`[Sportmonks] ✓ Stats finales partido ${smFixtureId}: ${synced} jugadores, ${eventsSynced} eventos`);
+    console.log(`[Sportmonks] ✓ Stats finales ${smFixtureId}: ${synced} jugadores, ${eventsSynced} eventos`);
 
     // Disparar cálculo de puntos fantasy automáticamente
     try {
       const result = await recalculateFixture(internalFixtureId);
-      console.log(`[Fantasy Scoring] ⚡ Auto-scoring post-partido ${smFixtureId}: ${result.processedPlayers} jugadores, ${result.updatedTeams} equipos.`);
+      console.log(`[Fantasy] ⚡ Auto-scoring ${smFixtureId}: ${result.processedPlayers} jugadores, ${result.updatedTeams} equipos`);
     } catch (scoringErr) {
-      console.error(`[Fantasy Scoring] ✗ Error en auto-scoring ${smFixtureId}:`, scoringErr.message);
+      console.error(`[Fantasy] ✗ Auto-scoring ${smFixtureId}: ${scoringErr.message}`);
     }
   } catch (err) {
-    console.error(`[Sportmonks] ✗ Error sync stats finales partido ${smFixtureId}:`, err.message);
+    console.error(`[Sportmonks] ✗ Stats finales ${smFixtureId}: ${err.message}`);
   }
 }
 
@@ -119,7 +119,7 @@ async function runLiveSync() {
       // Cooldown terminó, cerrar circuito e intentar de nuevo
       circuitOpenUntil = null;
       consecutiveFailures = 0;
-      console.log('[Live] Circuit breaker cerrado — reintentando llamadas a Sportmonks');
+      // Circuit breaker cooldown ended — retry silently
     }
 
     // --- Verificación rápida: ¿hay algo que hacer? ---
@@ -222,7 +222,7 @@ async function runLiveSync() {
       });
 
       if (staleCount.count > 0) {
-        console.log(`[Live] ${staleCount.count} partidos marcados como finalizados (ya no en feed)`);
+        console.log(`[Live] ✓ ${staleCount.count} partidos marcados como finalizados`);
       }
     }
     
@@ -241,7 +241,7 @@ async function runLiveSync() {
       console.error(`[Live] ⚡ ${msg}`);
       await logCronJob('Sportmonks Live', 'runLiveSync', 'warning', 0, msg);
     } else if (!err.message?.includes('Rate limit')) {
-      console.error(`[Cron Live] Error (${consecutiveFailures}/${CB_MAX_FAILURES}):`, err.message);
+      console.error(`[Live] ✗ Error (${consecutiveFailures}/${CB_MAX_FAILURES}): ${err.message}`);
       await logCronJob('Sportmonks Live', 'runLiveSync', 'error', 0, `Falló sync: ${err.message}`);
     }
   }
@@ -253,7 +253,7 @@ async function runLiveSync() {
  */
 export function startLiveSyncJob() {
   cron.schedule('*/20 * * * * *', runLiveSync);
-  console.log('  🔴 Live sync: programado cada 20 segundos (condicional)');
+  console.log('  🔴 Live sync: cada 20s (condicional)');
 }
 
 // Exportar para ejecución manual/testing

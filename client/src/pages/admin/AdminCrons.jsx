@@ -10,7 +10,7 @@ export default function AdminCrons() {
   const [totalPages, setTotalPages] = useState(1);
   const [moduleFilter, setModuleFilter] = useState('');
 
-  const MODULES = ['', 'Sportmonks', 'Sportmonks Live', 'Sportmonks Static', 'Fantasy Scoring', 'Fantasy Transf', 'System'];
+  const MODULES = ['', 'Prode', 'Sportmonks', 'Sportmonks Live', 'Sportmonks Static', 'Fantasy Scoring', 'Fantasy Transf', 'System'];
 
   useEffect(() => {
     fetchLogs();

@@ -356,7 +356,7 @@ export async function resetGroupScores(groupId, requestingUserId) {
     data: { totalPoints: 0 },
   });
 
-  console.log(`[Group] Puntajes reiniciados para grupo ${groupId}: ${resetResult.count} predicciones reseteadas, ${userIds.length} miembros reseteados`);
+  console.log(`[Group] ✓ Puntajes reiniciados grupo ${groupId} — ${resetResult.count} predicciones, ${userIds.length} miembros`);
 
   return { predictionsReset: resetResult.count, membersReset: userIds.length };
 }

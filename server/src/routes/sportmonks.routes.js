@@ -99,7 +99,7 @@ router.get('/fixtures/live', async (req, res, next) => {
         } catch (e) { /* skip */ }
       }
     } catch (apiErr) {
-      console.error('[Sportmonks Routes] Error fetching live:', apiErr.message);
+      // Live fetch failed — continue with BD data
     }
 
     // 2. Leer de BD (ya actualizada)
@@ -164,7 +164,7 @@ router.get('/fixtures/today-complete', async (req, res, next) => {
         } catch (e) { /* skip */ }
       }
     } catch (apiErr) {
-      console.error('[SM today-complete] Error fetching live:', apiErr.message);
+      // Live fetch failed — continue with BD data
     }
 
     // ── 2. Fetch date desde API Sportmonks (cache 2 min) ──
@@ -197,7 +197,7 @@ router.get('/fixtures/today-complete', async (req, res, next) => {
         } catch (e) { /* skip */ }
       }
     } catch (apiErr) {
-      console.error(`[SM today-complete] Error fetching date ${date}:`, apiErr.message);
+      // Date fetch failed — continue with BD data
     }
 
     // ── 3. Leer de BD (ya actualizada con ambas fuentes) ──
@@ -294,7 +294,7 @@ router.get('/fixtures/date/:date', async (req, res, next) => {
         } catch (e) { /* skip individual errors */ }
       }
     } catch (apiErr) {
-      console.error(`[Sportmonks Routes] Error fetching date ${date}:`, apiErr.message);
+      // Date fetch failed — continue with BD data
     }
 
     // Fetch desde BD (ya actualizada)
@@ -340,7 +340,7 @@ router.get('/fixtures/:fixtureId', async (req, res, next) => {
     const externalId = fixture?.externalId || fixtureId;
 
     try {
-      console.log(`[Sportmonks] Fetching BASE detail for fixture ${externalId}`);
+      // Fetch base detail from API
       const apiData = await smFixtures.getBaseFixtureById(externalId);
       const smFixture = apiData?.data;
 
@@ -367,7 +367,7 @@ router.get('/fixtures/:fixtureId', async (req, res, next) => {
         }
       }
     } catch (apiErr) {
-      console.error(`[Sportmonks Routes] API Base Error: ${apiErr.message}`);
+      // API base fetch failed — fallback to BD data
     }
 
     if (!fixture) return res.status(404).json({ error: 'Fixture not found' });
@@ -489,7 +489,7 @@ router.get('/fixtures/:fixtureId/player-stats', async (req, res, next) => {
 
         return res.json(updatedStats);
       } catch (apiErr) {
-        console.error(`[Sportmonks Routes] Error fetching player stats:`, apiErr.message);
+        // Player stats fetch failed — return empty
       }
     }
 
@@ -563,7 +563,7 @@ router.get('/teams/:teamId', async (req, res, next) => {
           });
         }
       } catch (apiErr) {
-        console.error(`[Sportmonks Routes] Error fetching team ${teamId}:`, apiErr.message);
+        // Team fetch failed — return 404 below
       }
     }
 
@@ -634,7 +634,7 @@ router.get('/leagues', async (req, res, next) => {
 router.get('/teams/:teamId/full', async (req, res, next) => {
   try {
     const teamId = req.params.teamId;
-    console.log(`[Sportmonks Routes] Proxying team profile for ${teamId}`);
+    // Proxy team profile from API on-demand
     const apiData = await smTeams.getTeamById(teamId);
     
     // No persistimos este volumen colosal en BD (stats, bajas, historico). Solo lo exponemos

@@ -333,7 +333,7 @@ router.get('/today', async (req, res, next) => {
           }
         });
       } catch (e) {
-        console.log('No pre-match odds fetched for today', e.message);
+        // Odds not available — non-critical
       }
       
       return result.response;
@@ -392,7 +392,7 @@ router.get('/fixtures/date/:date', async (req, res, next) => {
           }
         });
       } catch (e) {
-        console.log('No pre-match odds fetched for date', date);
+        // Odds not available — non-critical
       }
       
       return result.response;

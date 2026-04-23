@@ -13,7 +13,7 @@ import { startFantasyGameweekJob } from './fantasyGameweek.job.js';
  * @param {import('socket.io').Server} io - Instancia de Socket.io
  */
 export function initializeSportmonksJobs(io) {
-  console.log('[Cron] Inicializando jobs de Sportmonks...');
+  console.log('[Cron] Inicializando jobs Sportmonks + Fantasy...');
 
   // Pasar Socket.io al job de live sync
   if (io) {
@@ -29,5 +29,5 @@ export function initializeSportmonksJobs(io) {
   startFantasyScoringJob();
   startFantasyGameweekJob(io);
 
-  console.log('[Cron] ✅ Todos los jobs de Sportmonks y Fantasy inicializados');
+  console.log('[Cron] ✓ Todos los jobs inicializados');
 }

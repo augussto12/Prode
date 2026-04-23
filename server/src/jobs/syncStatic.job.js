@@ -96,14 +96,13 @@ async function syncSquadForTeam(smTeamId) {
  * Job principal: sincroniza todo lo estático.
  */
 async function runStaticSync() {
-  console.log('[Cron] ▶ Iniciando sync de datos estáticos de Sportmonks...');
   const startTime = Date.now();
 
   try {
     // 1. Sync ligas cubiertas (log informativo)
     const leagues = await getCoveredLeagues();
     const leagueList = leagues?.data || [];
-    console.log(`[Cron]   ✓ ${leagueList.length} ligas obtenidas de Sportmonks`);
+    // Ligas obtenidas — tracked via CronJobLog
 
     // 2. Para cada liga, obtener temporada actual y sincronizar equipos
     let totalTeams = { created: 0, updated: 0 };
@@ -116,7 +115,7 @@ async function runStaticSync() {
           || leagueData?.data?.current_season?.id;
 
         if (!currentSeasonId) {
-          console.warn(`[Cron]   ⚠ Liga ${leagueId}: no se encontró temporada actual`);
+          // No current season found — skip silently
           continue;
         }
 
@@ -146,11 +145,11 @@ async function runStaticSync() {
             // Rate limit: 500ms entre cada squad request
             await new Promise(r => setTimeout(r, 500));
           } catch (err) {
-            console.error(`[Cron]   ✗ Error squad equipo ${team.externalId}:`, err.message);
+            console.error(`[Static] ✗ Squad ${team.externalId}: ${err.message}`);
           }
         }
       } catch (err) {
-        console.error(`[Cron]   ✗ Error procesando liga ${leagueId}:`, err.message);
+        console.error(`[Static] ✗ Liga ${leagueId}: ${err.message}`);
       }
 
       // Rate limit: 300ms entre cada liga
@@ -159,10 +158,10 @@ async function runStaticSync() {
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     const msg = `Equipos: +${totalTeams.created}/~${totalTeams.updated} | Jugadores: +${totalSquads.created}/~${totalSquads.updated}`;
-    console.log(`[Cron] ✅ Sync estático completado en ${elapsed}s — ${msg}`);
+    // Logged via CronJobLog below
     await logCronJob('Sportmonks Static', 'runStaticSync', 'success', Date.now() - startTime, msg, { totalTeams, totalSquads });
   } catch (err) {
-    console.error('[Cron] ✗ Error fatal en sync estático:', err.message);
+    console.error(`[Static] ✗ Fatal: ${err.message}`);
     await logCronJob('Sportmonks Static', 'runStaticSync', 'error', Date.now() - startTime, `Error: ${err.message}`);
   }
 }
@@ -172,14 +171,13 @@ async function runStaticSync() {
  * Ejecuta todos los lunes a las 4:00 AM.
  */
 async function runRoundsSync() {
-  console.log('[Cron] ▶ Sync semanal de rounds...');
   const startTime = Date.now();
   try {
     const roundsResult = await syncAllRounds(SPORTMONKS_LEAGUE_IDS);
     const msg = `Rounds: +${roundsResult?.totalCreated || 0}/~${roundsResult?.totalUpdated || 0}`;
     await logCronJob('Sportmonks Static', 'runRoundsSync', 'success', Date.now() - startTime, msg, roundsResult);
   } catch (err) {
-    console.error('[Cron] ✗ Error en sync semanal de rounds:', err.message);
+    console.error(`[Rounds] ✗ ${err.message}`);
     await logCronJob('Sportmonks Static', 'runRoundsSync', 'error', Date.now() - startTime, `Error: ${err.message}`);
   }
 }
@@ -190,11 +188,11 @@ async function runRoundsSync() {
 export function startStaticSyncJob() {
   // Datos estáticos (equipos, jugadores): diario 3AM
   cron.schedule('0 3 * * *', runStaticSync);
-  console.log('  📦 Static sync: programado a las 03:00 AM diariamente');
+  console.log('  📦 Static sync: diario 03:00 AM');
 
   // Rounds completas: lunes 4AM
   cron.schedule('0 4 * * 1', runRoundsSync);
-  console.log('  📅 Rounds sync: programado lunes 04:00 AM');
+  console.log('  📅 Rounds sync: lunes 04:00 AM');
 }
 
 // Exportar para ejecución manual (sync inicial)

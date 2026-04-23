@@ -64,7 +64,7 @@ async function syncFixturesForDate(date) {
         created++;
       }
     } catch (err) {
-      console.error(`[Cron Fixtures] Error upserting fixture ${mapped.externalId}:`, err.message);
+      console.error(`[Fixtures] ✗ Fixture ${mapped.externalId}: ${err.message}`);
     }
   }
 
@@ -94,7 +94,7 @@ async function syncStandingsForLeagues() {
       await new Promise(r => setTimeout(r, 300));
     } catch (err) {
       // No es crítico — standings se pueden obtener on-demand
-      console.warn(`[Cron Fixtures] Standings liga ${leagueId}: ${err.message}`);
+      // Non-critical — standings can be fetched on-demand
     }
   }
 
@@ -105,7 +105,6 @@ async function syncStandingsForLeagues() {
  * Job principal: sincroniza fixtures de hoy, mañana y pasado mañana.
  */
 async function runFixturesSync() {
-  console.log('[Cron] ▶ Sincronizando fixtures de Sportmonks...');
   const startTime = Date.now();
 
   try {
@@ -143,10 +142,10 @@ async function runFixturesSync() {
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     const msg = `Sincronizados +${totalCreated} nuevos, ~${totalUpdated} actualizados, ${standingsSynced} standings. ${roundsMsg}`;
     
-    console.log(`[Cron] ✅ Fixtures sync completado en ${elapsed}s — ${msg}`);
+    // Logged via CronJobLog below
     await logCronJob('Sportmonks', 'syncFixtures', 'success', Date.now() - startTime, msg, { totalCreated, totalUpdated, standingsSynced, roundsMsg });
   } catch (err) {
-    console.error('[Cron] ✗ Error en sync fixtures:', err.message);
+    console.error(`[Fixtures] ✗ ${err.message}`);
     await logCronJob('Sportmonks', 'syncFixtures', 'error', Date.now() - startTime, `Error: ${err.message}`);
   }
 }
@@ -157,7 +156,7 @@ async function runFixturesSync() {
  */
 export function startFixturesSyncJob() {
   cron.schedule('0 */3 * * *', runFixturesSync);
-  console.log('  📅 Fixtures sync: programado cada 3 horas');
+  console.log('  📅 Fixtures sync: cada 3 horas');
 }
 
 // Exportar para ejecución manual

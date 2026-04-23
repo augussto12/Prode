@@ -141,7 +141,7 @@ export async function scorePendingPredictions() {
     return { message: 'No hay predicciones pendientes para calcular.', calculated: 0 };
   }
 
-  console.log(`[SCORING] Procesando ${pendingFixtures.length} fixtures pendientes...`);
+  console.log(`[Scoring] ▶ ${pendingFixtures.length} fixtures pendientes`);
 
   let totalCalculated = 0;
   const finishedFixtures = [];
@@ -150,7 +150,7 @@ export async function scorePendingPredictions() {
   for (const { externalFixtureId } of pendingFixtures) {
     const fixtureData = await getFixtureFromApi(externalFixtureId);
     if (!fixtureData) {
-      console.log(`[SCORING] Fixture ${externalFixtureId}: no data from API, skipping`);
+      // No data from API — skip silently
       continue;
     }
 
@@ -158,11 +158,11 @@ export async function scorePendingPredictions() {
     const isFinished = ['FT', 'AET', 'PEN'].includes(statusShort);
 
     if (!isFinished) {
-      console.log(`[SCORING] Fixture ${externalFixtureId}: status=${statusShort}, NOT finished, skipping`);
+      // Not finished yet — skip silently
       continue;
     }
 
-    console.log(`[SCORING] Fixture ${externalFixtureId}: ${fixtureData.teams?.home?.name} ${fixtureData.goals?.home}-${fixtureData.goals?.away} ${fixtureData.teams?.away?.name} (${statusShort})`);
+    console.log(`[Scoring] ✓ ${fixtureData.teams?.home?.name} ${fixtureData.goals?.home}-${fixtureData.goals?.away} ${fixtureData.teams?.away?.name}`);
 
     // 3. Fetch stats if we need to score shots/corners
     if (config.moreShots > 0 || config.moreCorners > 0 || config.morePossession > 0 || config.moreFouls > 0 || config.moreCards > 0 || config.moreOffsides > 0 || config.moreSaves > 0) {
@@ -214,7 +214,7 @@ export async function scorePendingPredictions() {
     for (const prediction of fixturePredictions) {
       const result = calculatePredictionPoints(prediction, fixtureData, config);
       
-      console.log(`[SCORING] User ${prediction.userId} | Fixture ${externalFixtureId} | Pred: ${prediction.homeGoals}-${prediction.awayGoals} | Result: base=${result.basePoints} total=${result.points} joker=${prediction.isJoker}`);
+      // Per-prediction detail omitted — tracked via CronJobLog summary
       
       await prisma.prediction.update({
         where: { id: prediction.id },
@@ -258,7 +258,7 @@ export async function scorePendingPredictions() {
       const before = beforeMap.get(after.id) ?? 0;
       if (after.totalPoints !== before) {
         const diff = after.totalPoints - before;
-        console.log(`[SCORING][LEADERBOARD] User ${after.userId} Group ${after.groupId}: ${before} → ${after.totalPoints} (${diff > 0 ? '+' : ''}${diff})`);
+        // Leaderboard change tracked silently (visible via admin panel)
       }
     }
   }
@@ -313,6 +313,73 @@ export async function recalculateAllLeaderboards() {
       WHERE p."competitionId" = g."competitionId"
     )
   `);
+}
+
+/**
+ * Re-verifica resultados de predicciones calculadas en las últimas 24hs.
+ * Si la API indica que un partido NO está terminado pero ya lo habíamos calculado,
+ * resetea esas predicciones para que se recalculen en el próximo ciclo.
+ * 
+ * Se ejecuta SOLO en el ciclo de las 01:00 AM para no gastar API calls.
+ */
+export async function reverifyRecentResults() {
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  
+  const recentFixtures = await prisma.prediction.findMany({
+    where: {
+      isCalculated: true,
+      updatedAt: { gte: cutoff },
+    },
+    select: { externalFixtureId: true },
+    distinct: ['externalFixtureId'],
+  });
+
+  let checked = 0;
+  let reset = 0;
+
+  for (const { externalFixtureId } of recentFixtures) {
+    checked++;
+    try {
+      // Fetch sin cache para obtener el dato más reciente
+      const result = await footballApi.fetchFixtureById(externalFixtureId);
+      const fixtureData = result.response?.[0];
+      if (!fixtureData) continue;
+
+      const statusShort = fixtureData.fixture?.status?.short;
+      const isFinished = ['FT', 'AET', 'PEN'].includes(statusShort);
+
+      if (!isFinished) {
+        // El partido NO está terminado pero nosotros ya lo calculamos → resetear
+        const resetResult = await prisma.prediction.updateMany({
+          where: { externalFixtureId, isCalculated: true },
+          data: {
+            isCalculated: false,
+            pointsEarned: 0,
+            basePoints: 0,
+            moreShotsHit: null,
+            moreCornersHit: null,
+            morePossessionHit: null,
+            moreFoulsHit: null,
+            moreCardsHit: null,
+            moreOffsidesHit: null,
+            moreSavesHit: null,
+          },
+        });
+        reset++;
+        console.log(`[Reverify] Fixture ${externalFixtureId} reseteado — status actual: ${statusShort}, ${resetResult.count} predicciones afectadas`);
+      }
+    } catch (err) {
+      // No frenar el loop si una verificación falla
+      console.warn(`[Reverify] Error verificando fixture ${externalFixtureId}: ${err.message}`);
+    }
+  }
+
+  if (reset > 0) {
+    // Recalcular leaderboards si hubo resets
+    await recalculateAllLeaderboards();
+  }
+
+  return { checked, reset };
 }
 
 export async function getScoringConfig() {

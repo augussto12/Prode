@@ -112,12 +112,12 @@ export async function recalculateFixture(internalFixtureId) {
   });
 
   if (!fixture) {
-    console.warn(`[Fantasy Scoring] Fixture ${internalFixtureId} no encontrado en BD.`);
+    console.warn(`[Fantasy] Fixture ${internalFixtureId} no encontrado`);
     return { processedPlayers: 0, updatedTeams: 0 };
   }
 
   if (fixture.playerStats.length === 0) {
-    console.log(`[Fantasy Scoring] Fixture ${fixture.externalId} no tiene PlayerMatchStat. Nada que calcular.`);
+    // No PlayerMatchStat — nothing to calculate
     return { processedPlayers: 0, updatedTeams: 0 };
   }
 
@@ -125,7 +125,7 @@ export async function recalculateFixture(internalFixtureId) {
   const gwMatches = await findGameweeksForFixture(fixture);
   if (gwMatches.length === 0) {
     if (!skippedFixturesDueToNoGameweek.has(internalFixtureId)) {
-      console.log(`[Fantasy Scoring] Fixture ${fixture.externalId} (liga ${fixture.leagueId}) no tiene gameweek asociado en ninguna liga fantasy.`);
+      // No gameweek found — skip silently (only tracked in set)
       skippedFixturesDueToNoGameweek.add(internalFixtureId);
     }
     return { processedPlayers: 0, updatedTeams: 0 };
@@ -257,8 +257,7 @@ export async function recalculateFixture(internalFixtureId) {
   const teamsUpdated = await recalculateTeamTotals([...affectedTeamIds]);
 
   console.log(
-    `[Fantasy Scoring] ✅ Fixture ${fixture.externalId} procesado: ` +
-    `${processedPlayers} jugadores, ${teamsUpdated} equipos actualizados.`
+    `[Fantasy] ✓ Fixture ${fixture.externalId}: ${processedPlayers} jugadores, ${teamsUpdated} equipos`
   );
 
   return { processedPlayers, updatedTeams: teamsUpdated };
@@ -335,7 +334,7 @@ async function ensurePicksForGameweek(gameweek) {
     }));
 
     await prisma.fantasyPick.createMany({ data: newPicks });
-    console.log(`[Fantasy Scoring] ↳ Picks propagados: equipo ${team.id} → GW ${gameweek.gameweekNumber} (${newPicks.length} jugadores)`);
+    // Picks propagated silently
   }
 }
 
@@ -421,7 +420,7 @@ async function recoverMissingStats() {
     });
 
     if (orphanFixtures.length > 0) {
-      console.log(`[Fantasy Scoring] Stats recovery (huérfanos): ${orphanFixtures.length} partido(s) sin stats...`);
+      console.log(`[Fantasy] Recovery: ${orphanFixtures.length} partido(s) sin stats`);
     }
 
     for (const fixture of orphanFixtures) {
@@ -453,14 +452,14 @@ async function recoverMissingStats() {
     });
 
     if (fixturesWithEmptyStats.length > 0) {
-      console.log(`[Fantasy Scoring] Stats recovery (vacías): ${fixturesWithEmptyStats.length} partido(s) con stats null...`);
+      console.log(`[Fantasy] Recovery: ${fixturesWithEmptyStats.length} partido(s) con stats vacias`);
     }
 
     for (const fixture of fixturesWithEmptyStats) {
       await _resyncFixtureStats(fixture);
     }
   } catch (err) {
-    console.error('[Fantasy Scoring] Error en recovery de stats:', err.message);
+    console.error(`[Fantasy] ✗ Recovery: ${err.message}`);
   }
 }
 
@@ -496,12 +495,12 @@ async function _resyncFixtureStats(fixture) {
     }
 
     if (synced > 0) {
-      console.log(`[Fantasy Scoring]   Recovery fixture ${fixture.externalId}: ${synced} stats recuperadas`);
+      console.log(`[Fantasy] Recovery fixture ${fixture.externalId}: ${synced} stats`);
     }
 
     await new Promise(r => setTimeout(r, 500));
   } catch (err) {
-    console.warn(`[Fantasy Scoring]   Recovery fixture ${fixture.externalId} fallo: ${err.message}`);
+    // Recovery failed silently for individual fixture
   }
 }
 
@@ -549,7 +548,7 @@ async function calculatePendingScores() {
       return;
     }
 
-    console.log(`[Fantasy Scoring] 🔄 ${fixturesToProcess.length} partido(s) pendiente(s) de calcular...`);
+    console.log(`[Fantasy] ▶ ${fixturesToProcess.length} partido(s) pendientes`);
 
     for (const fixture of fixturesToProcess) {
       await recalculateFixture(fixture.id);
@@ -563,10 +562,10 @@ async function calculatePendingScores() {
 
     const elapsed = ((Date.now() - startTimeTracking) / 1000).toFixed(1);
     const msg = `Puntajes recalculados para ${fixturesToProcess.length} partidos pendientes.`;
-    console.log('[Fantasy Scoring] ✅ Barrido de pendientes completado.');
+    // Logged via CronJobLog below
     await logCronJob('Fantasy Scoring', 'calculatePendingScores', 'success', Date.now() - startTimeTracking, msg, { fixturesProcessed: fixturesToProcess.length });
   } catch (err) {
-    console.error('[Fantasy Scoring] ❌ Error en barrido:', err.message);
+    console.error(`[Fantasy] ✗ Barrido: ${err.message}`);
     await logCronJob('Fantasy Scoring', 'calculatePendingScores', 'error', 0, `Error: ${err.message}`);
   }
 }
@@ -578,7 +577,7 @@ async function calculatePendingScores() {
 export function startFantasyScoringJob() {
   // Barrido general a las 04:00 AM todos los días
   cron.schedule('0 4 * * *', async () => {
-    console.log('[Fantasy Scoring] ⏰ Barrido diario 04:00 AM...');
+    console.log('[Fantasy] ⏰ Barrido diario 04:00 AM...');
     await calculatePendingScores();
   });
 
@@ -587,7 +586,7 @@ export function startFantasyScoringJob() {
     await calculatePendingScores();
   });
 
-  console.log('  ⚽ Fantasy Scoring: programado (diario 04AM + ventana 18-02h)');
+  console.log('  ⚽ Fantasy Scoring: diario 04AM + ventana 18-02h');
 }
 
 // Exportar para uso manual y desde syncLive.job.js
