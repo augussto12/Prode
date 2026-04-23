@@ -14,7 +14,7 @@ import prisma from '../config/database.js';
 import { getLiveMatches, getFixtureWithPlayerStats } from '../services/sportmonks/sportmonksFixtures.js';
 import { mapFixture, mapPlayerMatchStats, mapEvent } from '../utils/sportmonksMapper.js';
 import { recalculateFixture } from './fantasyScoring.job.js';
-
+import { logCronJob } from '../utils/cronLogger.js';
 // Instancia de Socket.io — se setea desde fuera
 let ioInstance = null;
 
@@ -146,6 +146,7 @@ async function runLiveSync() {
     if (liveCount === 0 && soonCount === 0) return;
 
     // --- Hay partidos activos → llamar a la API ---
+    const startTimeTracking = Date.now();
     const data = await getLiveMatches();
     const liveFixtures = data?.data || [];
 
@@ -224,14 +225,24 @@ async function runLiveSync() {
         console.log(`[Live] ${staleCount.count} partidos marcados como finalizados (ya no en feed)`);
       }
     }
+    
+    // Loguear solo si procesamos algo en este ciclo
+    if (processedIds.length > 0) {
+      const msg = `Sincronizados en vivo ${processedIds.length} partidos. Finalizados forzados: ${staleCount?.count || 0}`;
+      await logCronJob('Sportmonks Live', 'runLiveSync', 'success', Date.now() - startTimeTracking, msg, { processed: processedIds.length });
+    }
+
   } catch (err) {
     consecutiveFailures++;
 
     if (consecutiveFailures >= CB_MAX_FAILURES) {
       circuitOpenUntil = Date.now() + CB_COOLDOWN_MS;
-      console.error(`[Live] ⚡ Circuit breaker ABIERTO — ${consecutiveFailures} fallos consecutivos. Pausando ${CB_COOLDOWN_MS / 60000}min.`);
+      const msg = `Circuit breaker ABIERTO — ${consecutiveFailures} fallos. Pausando ${CB_COOLDOWN_MS / 60000}min.`;
+      console.error(`[Live] ⚡ ${msg}`);
+      await logCronJob('Sportmonks Live', 'runLiveSync', 'warning', 0, msg);
     } else if (!err.message?.includes('Rate limit')) {
       console.error(`[Cron Live] Error (${consecutiveFailures}/${CB_MAX_FAILURES}):`, err.message);
+      await logCronJob('Sportmonks Live', 'runLiveSync', 'error', 0, `Falló sync: ${err.message}`);
     }
   }
 }

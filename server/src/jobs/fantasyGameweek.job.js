@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import prisma from '../config/database.js';
+import { logCronJob } from '../utils/cronLogger.js';
 
 export function startFantasyGameweekJob(io) {
   // Cada 5 minutos verificar si hay que cerrar transferencias
@@ -15,11 +16,14 @@ export function startFantasyGameweekJob(io) {
       
       for (const ag of openGameweeks) {
         if (now >= ag.startDate) {
+          const startTime = Date.now();
           await prisma.fantasyGameweek.update({
             where: { id: ag.id },
             data: { transfersOpen: false }
           });
-          console.log(`[Fantasy] Transferencias cerradas para gameweek ${ag.gameweekNumber} de liga ${ag.fantasyLeagueId}`);
+          const msg = `Transferencias cerradas para GW ${ag.gameweekNumber} (Liga ${ag.fantasyLeagueId})`;
+          console.log(`[Fantasy] ${msg}`);
+          await logCronJob('Fantasy Transf', 'closeGameweekTransfers', 'success', Date.now() - startTime, msg, { gameweekId: ag.id });
           
           if (io) {
             // Notificar via Socket.io a usuarios conectados
@@ -33,6 +37,7 @@ export function startFantasyGameweekJob(io) {
       // (No instruido estrictamente aquí, pero el trigger es date-based)
     } catch (err) {
        console.error('[Fantasy] Error checking gameweek boundaries:', err.message);
+       await logCronJob('Fantasy Transf', 'closeGameweekTransfers', 'error', 0, `Error: ${err.message}`);
     }
   });
 }

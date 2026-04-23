@@ -68,3 +68,36 @@ export async function updateScoringConfig(req, res, next) {
     res.json(config);
   } catch (err) { next(err); }
 }
+
+export async function getCronLogs(req, res, next) {
+  try {
+    const { page = 1, limit = 50, module } = req.query;
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const whereParams = {};
+    if (module) {
+      whereParams.module = module;
+    }
+
+    const [logs, total] = await Promise.all([
+      prisma.cronJobLog.findMany({
+        where: whereParams,
+        orderBy: { createdAt: 'desc' },
+        take: limitNum,
+        skip
+      }),
+      prisma.cronJobLog.count({ where: whereParams })
+    ]);
+
+    res.json({
+      data: logs,
+      meta: {
+        total,
+        page: pageNum,
+        totalPages: Math.ceil(total / limitNum)
+      }
+    });
+  } catch (err) { next(err); }
+}

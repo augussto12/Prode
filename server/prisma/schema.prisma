@@ -590,3 +590,21 @@ model SportmonksRound {
   @@index([leagueId])
   @@index([seasonId])
 }
+
+// ═══════════════════════════════════════════════════════════════
+// CRON/SYSTEM LOGS — Reportes de tareas programadas
+// ═══════════════════════════════════════════════════════════════
+
+model CronJobLog {
+  id          String   @id @default(cuid())
+  module      String   // 'Sportmonks', 'Fantasy', 'Prode', 'System'
+  jobName     String   // Nombre descriptivo de la tarea
+  status      String   // 'success' | 'error' | 'warning'
+  durationMs  Int      // Milisegundos que tardó en ejecutarse
+  message     String   // Mensaje claro (ej: "Sincronizados 3 partidos")
+  metadata    Json?    // Opcional para debug interno extra si hiciera falta
+  createdAt   DateTime @default(now())
+
+  @@index([module])
+  @@index([createdAt])
+}

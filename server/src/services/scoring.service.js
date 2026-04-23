@@ -141,7 +141,7 @@ export async function scorePendingPredictions() {
     return { message: 'No hay predicciones pendientes para calcular.', calculated: 0 };
   }
 
-  console.log(`[SCORING] Procesando ${pendingFixtures.length} fixtures pendientes: ${pendingFixtures.map(f => f.externalFixtureId).join(', ')}`);
+  console.log(`[SCORING] Procesando ${pendingFixtures.length} fixtures pendientes...`);
 
   let totalCalculated = 0;
   const finishedFixtures = [];

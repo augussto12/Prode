@@ -24,6 +24,7 @@
  */
 import cron from 'node-cron';
 import prisma from '../config/database.js';
+import { logCronJob } from '../utils/cronLogger.js';
 import { calculatePlayerPoints } from '../services/fantasy/fantasyScoring.js';
 import { SPORTMONKS_LEAGUE_IDS } from '../constants/sportmonks.constants.js';
 import { getFixtureWithPlayerStats } from '../services/sportmonks/sportmonksFixtures.js';
@@ -83,6 +84,9 @@ async function findGameweeksForFixture(fixture) {
     select: {
       id: true,
       fantasyLeagueId: true,
+      gameweekNumber: true,
+      startDate: true,
+      endDate: true,
     },
   });
   return gameweeks;
@@ -294,10 +298,18 @@ async function ensurePicksForGameweek(gameweek) {
 
     if (existingCount > 0) continue;
 
-    // Buscar el gameweek más reciente ANTERIOR que tenga picks
+    // Buscar picks anteriores a ESTE gameweek
     const previousPicks = await prisma.fantasyPick.findMany({
-      where: { fantasyTeamId: team.id },
-      orderBy: { createdAt: 'desc' },
+      where: { 
+        fantasyTeamId: team.id,
+        gameweek: {
+          startDate: { lt: gameweek.startDate }
+        }
+      },
+      include: {
+        gameweek: true
+      },
+      orderBy: { gameweek: { startDate: 'desc' } },
     });
 
     if (previousPicks.length === 0) continue;
@@ -546,11 +558,16 @@ async function calculatePendingScores() {
     }
 
     // Recalcular TODOS los equipos al final del barrido
+    const startTimeTracking = Date.now();
     await recalculateTeamTotals();
 
+    const elapsed = ((Date.now() - startTimeTracking) / 1000).toFixed(1);
+    const msg = `Puntajes recalculados para ${fixturesToProcess.length} partidos pendientes.`;
     console.log('[Fantasy Scoring] ✅ Barrido de pendientes completado.');
+    await logCronJob('Fantasy Scoring', 'calculatePendingScores', 'success', Date.now() - startTimeTracking, msg, { fixturesProcessed: fixturesToProcess.length });
   } catch (err) {
     console.error('[Fantasy Scoring] ❌ Error en barrido:', err.message);
+    await logCronJob('Fantasy Scoring', 'calculatePendingScores', 'error', 0, `Error: ${err.message}`);
   }
 }
 

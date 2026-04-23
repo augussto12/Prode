@@ -288,28 +288,28 @@ export default function TeamView() {
       </m.div>
 
       {/* TABS */}
-      <div className="flex gap-1 bg-white/5 p-1 rounded-xl w-full sm:w-fit overflow-x-auto hide-scrollbar">
+      <div className="grid grid-cols-2 sm:flex gap-1.5 bg-white/5 p-1.5 rounded-xl w-full sm:w-fit">
         <button
           onClick={() => setActiveTab("squad")}
-          className={`px-4 sm:px-5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap flex-1 sm:flex-none ${activeTab === "squad" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md" : "bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5"}`}
+          className={`px-2 sm:px-5 py-2.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all border text-center ${activeTab === "squad" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md" : "bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5"}`}
         >
           Plantel
         </button>
         <button
           onClick={() => setActiveTab("fixtures")}
-          className={`px-4 sm:px-5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap flex-1 sm:flex-none ${activeTab === "fixtures" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md" : "bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5"}`}
+          className={`px-2 sm:px-5 py-2.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all border text-center ${activeTab === "fixtures" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md" : "bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5"}`}
         >
           Partidos
         </button>
         <button
           onClick={() => setActiveTab("statistics")}
-          className={`px-4 sm:px-5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap flex-1 sm:flex-none ${activeTab === "statistics" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md" : "bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5"}`}
+          className={`px-2 sm:px-5 py-2.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-bold transition-all border text-center ${activeTab === "statistics" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md" : "bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5"}`}
         >
           Estadísticas
         </button>
         <button
           onClick={() => setActiveTab("transfers")}
-          className={`px-4 sm:px-5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all border whitespace-nowrap flex-1 sm:flex-none ${activeTab === "transfers" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md" : "bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5"}`}
+          className={`px-2 sm:px-5 py-2.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all border text-center ${activeTab === "transfers" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md" : "bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5"}`}
         >
           Fichajes
         </button>

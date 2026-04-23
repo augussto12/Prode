@@ -27,6 +27,7 @@ import useCompetitionStore from "../store/competitionStore";
 import AdminFantasy from "./admin/AdminFantasy";
 import AdminUsers from "./admin/AdminUsers";
 import AdminSystem from "./admin/AdminSystem";
+import AdminCrons from "./admin/AdminCrons";
 
 export default function AdminPanel() {
   const [tab, setTab] = useState("users");
@@ -158,6 +159,7 @@ export default function AdminPanel() {
     { id: "fantasy", label: "GranDT", icon: Trophy },
     { id: "sync", label: "Config. BD", icon: Database },
     { id: "sportmonks", label: "Sportmonks", icon: Globe },
+    { id: "crons", label: "Crons / Logs", icon: Clock },
   ];
 
   if (loading) {
@@ -240,6 +242,8 @@ export default function AdminPanel() {
 
       {/* Fantasy Admin Tab */}
       {tab === "fantasy" && <AdminFantasy />}
+
+      {tab === "crons" && <AdminCrons />}
 
       {/* Admin System (Scoring, Sync, Sportmonks tabs content routing happens inside) */}
       <AdminSystem

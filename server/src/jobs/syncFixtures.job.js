@@ -14,6 +14,7 @@ import { getCurrentSeason } from '../services/sportmonks/sportmonksLeagues.js';
 import { SPORTMONKS_LEAGUE_IDS } from '../constants/sportmonks.constants.js';
 import { mapFixture } from '../utils/sportmonksMapper.js';
 import { syncAllRounds } from './syncRounds.helper.js';
+import { logCronJob } from '../utils/cronLogger.js';
 
 // Track para ejecutar sync de rounds solo 1 vez por día
 let lastRoundsSyncDate = null;
@@ -118,7 +119,6 @@ async function runFixturesSync() {
       const result = await syncFixturesForDate(date);
       totalCreated += result.created;
       totalUpdated += result.updated;
-      console.log(`[Cron]   ✓ ${date}: ${result.total} fixtures (${result.created} nuevos, ${result.updated} actualizados)`);
 
       // Rate limit entre fechas
       await new Promise(r => setTimeout(r, 500));
@@ -141,9 +141,13 @@ async function runFixturesSync() {
     }
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`[Cron] ✅ Fixtures sync completado en ${elapsed}s — +${totalCreated}/~${totalUpdated} fixtures, ${standingsSynced} standings${roundsMsg}`);
+    const msg = `Sincronizados +${totalCreated} nuevos, ~${totalUpdated} actualizados, ${standingsSynced} standings. ${roundsMsg}`;
+    
+    console.log(`[Cron] ✅ Fixtures sync completado en ${elapsed}s — ${msg}`);
+    await logCronJob('Sportmonks', 'syncFixtures', 'success', Date.now() - startTime, msg, { totalCreated, totalUpdated, standingsSynced, roundsMsg });
   } catch (err) {
     console.error('[Cron] ✗ Error en sync fixtures:', err.message);
+    await logCronJob('Sportmonks', 'syncFixtures', 'error', Date.now() - startTime, `Error: ${err.message}`);
   }
 }
 

@@ -18,6 +18,9 @@ router.get('/users', authenticate, isSuperAdmin, ctrl.getUsers);
 router.put('/users/:id/role', authenticate, isSuperAdmin, validate(roleUpdateSchema), ctrl.updateUserRole);
 router.delete('/users/:id', authenticate, isSuperAdmin, ctrl.deleteUser);
 
+// Cron Logs (SUPERADMIN only)
+router.get('/cron-logs', authenticate, isSuperAdmin, ctrl.getCronLogs);
+
 // Scoring management (ADMIN+)
 router.post('/scoring/calculate', authenticate, isAdmin, ctrl.calculateScores);
 router.post('/scoring/recalculate-leaderboards', authenticate, isAdmin, ctrl.recalculateLeaderboards);

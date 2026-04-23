@@ -300,6 +300,10 @@ export async function getMyTeam(req, res) {
 
 // Helper function to resolve active & target gameweeks based on real time dates
 export async function resolveGameweekContext(leagueId) {
+  const fantasyLeague = await prisma.fantasyLeague.findUnique({
+     where: { id: leagueId }
+  });
+
   const gameweeks = await prisma.fantasyGameweek.findMany({
     where: { fantasyLeagueId: leagueId },
     orderBy: { startDate: 'asc' }
@@ -307,16 +311,40 @@ export async function resolveGameweekContext(leagueId) {
 
   const now = new Date();
   
-  // Gameweek activo = hay partidos jugándose ahora
+  // Gameweek activo = cronológicamente hay partidos jugándose
   const active = gameweeks.find(gw => 
     gw.startDate <= now && now <= gw.endDate
   );
   
-  if (active) return { 
-    gameweek: active, 
-    transfersOpen: false,  // cerrado durante partidos
-    status: 'IN_PROGRESS' 
-  };
+  if (active && fantasyLeague) {
+     // Validar Fixtures: Si TODOS los partidos de la fecha ya terminaron o están suspendidos, 
+     // cerramos la fecha automáticamente aunque el "endDate" no haya pasado.
+     const fixtures = await prisma.fixture.findMany({
+        where: {
+           leagueId: fantasyLeague.leagueId,
+           startTime: { gte: active.startDate, lte: active.endDate }
+        },
+        select: { status: true }
+     });
+
+     let forceClose = false;
+     if (fixtures.length > 0) {
+        const allEnded = fixtures.every(f => {
+           const st = f.status.trim().toLowerCase();
+           return ['finished', 'postponed', 'cancelled', 'ft', 'pen_ft', 'aet'].includes(st);
+        });
+        if (allEnded) forceClose = true;
+     }
+
+     if (!forceClose) {
+        return { 
+          gameweek: active, 
+          transfersOpen: false,  // cerrado durante partidos
+          status: 'IN_PROGRESS' 
+        };
+     }
+     // Si forceClose === true, cae a la lógica del siguiente GW (Mercado Abierto).
+  }
   
   // Entre fechas = transferencias abiertas
   const next = gameweeks
@@ -672,10 +700,20 @@ export async function getPlayerScores(req, res) {
  */
 export async function getGameweeks(req, res) {
    try {
-     const gws = await prisma.fantasyGameweek.findMany({
+     const team = await prisma.fantasyTeam.findUnique({
+       where: { userId_fantasyLeagueId: { userId: req.user.id, fantasyLeagueId: req.params.id } }
+     });
+
+     let gws = await prisma.fantasyGameweek.findMany({
        where: { fantasyLeagueId: req.params.id },
        orderBy: { gameweekNumber: 'asc' }
      });
+
+     if (team) {
+       // Filter out old gameweeks that finished before the team was created
+       gws = gws.filter(gw => new Date(gw.endDate) >= new Date(team.createdAt));
+     }
+
      return res.json(gws);
    } catch(err) {
      return res.status(500).json({ error: err.message });

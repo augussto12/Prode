@@ -13,6 +13,7 @@ import { getSquadByTeam } from '../services/sportmonks/sportmonksPlayers.js';
 import { SPORTMONKS_LEAGUE_IDS } from '../constants/sportmonks.constants.js';
 import { mapTeam, mapPlayer } from '../utils/sportmonksMapper.js';
 import { syncAllRounds } from './syncRounds.helper.js';
+import { logCronJob } from '../utils/cronLogger.js';
 
 /**
  * Sincroniza equipos de una temporada y los persiste en BD.
@@ -123,7 +124,6 @@ async function runStaticSync() {
         const teamResult = await syncTeamsForSeason(currentSeasonId);
         totalTeams.created += teamResult.created;
         totalTeams.updated += teamResult.updated;
-        console.log(`[Cron]   ✓ Liga ${leagueId}: ${teamResult.total} equipos (${teamResult.created} nuevos, ${teamResult.updated} actualizados)`);
 
         // Pequeña espera para no saturar el rate limit
         await new Promise(r => setTimeout(r, 500));
@@ -158,9 +158,12 @@ async function runStaticSync() {
     }
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`[Cron] ✅ Sync estático completado en ${elapsed}s — Equipos: +${totalTeams.created}/~${totalTeams.updated} | Jugadores: +${totalSquads.created}/~${totalSquads.updated}`);
+    const msg = `Equipos: +${totalTeams.created}/~${totalTeams.updated} | Jugadores: +${totalSquads.created}/~${totalSquads.updated}`;
+    console.log(`[Cron] ✅ Sync estático completado en ${elapsed}s — ${msg}`);
+    await logCronJob('Sportmonks Static', 'runStaticSync', 'success', Date.now() - startTime, msg, { totalTeams, totalSquads });
   } catch (err) {
     console.error('[Cron] ✗ Error fatal en sync estático:', err.message);
+    await logCronJob('Sportmonks Static', 'runStaticSync', 'error', Date.now() - startTime, `Error: ${err.message}`);
   }
 }
 
@@ -170,10 +173,14 @@ async function runStaticSync() {
  */
 async function runRoundsSync() {
   console.log('[Cron] ▶ Sync semanal de rounds...');
+  const startTime = Date.now();
   try {
-    await syncAllRounds(SPORTMONKS_LEAGUE_IDS);
+    const roundsResult = await syncAllRounds(SPORTMONKS_LEAGUE_IDS);
+    const msg = `Rounds: +${roundsResult?.totalCreated || 0}/~${roundsResult?.totalUpdated || 0}`;
+    await logCronJob('Sportmonks Static', 'runRoundsSync', 'success', Date.now() - startTime, msg, roundsResult);
   } catch (err) {
     console.error('[Cron] ✗ Error en sync semanal de rounds:', err.message);
+    await logCronJob('Sportmonks Static', 'runRoundsSync', 'error', Date.now() - startTime, `Error: ${err.message}`);
   }
 }
 
