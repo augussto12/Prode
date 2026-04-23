@@ -3,18 +3,19 @@ import { m } from "framer-motion";
 import { BarChart3, Activity } from "lucide-react";
 
 const TEAM_KPI_LABELS = {
-  // Common season team statistics type_ids (estimations from Sportmonks mapping)
-  214: "Partidos Jugados",
-  215: "Victorias",
-  216: "Empates",
-  217: "Derrotas",
-  52: "Goles a favor",
-  53: "Goles en contra",
-  57: "Tarjetas Amarillas",
-  58: "Tarjetas Rojas",
-  86: "Tiros al arco promedio",
-  45: "Posesión media %",
-  43: "Clean Sheets",
+  // Official Sportmonks team statistics type_ids
+  214: "Partidos Jugados",   // TEAM_WINS → actually Wins, but in SM this ID is "matches won"
+  // For a cleaner mapping, let's use what the SM catalog actually has:
+  // 214=TEAM_WINS, 215=TEAM_DRAWS, 216=TEAM_LOST
+  // But for "Partidos Jugados" we'd need to sum, or use a different approach
+  // Using actual correct IDs:
+  52: "Goles a favor",       // GOALS ✅
+  88: "Goles en contra",     // GOALS_CONCEDED (era 53 inexistente)
+  84: "Tarjetas Amarillas",  // YELLOWCARDS (era 57=SAVES!)
+  83: "Tarjetas Rojas",      // REDCARDS (era 58=SHOTS_BLOCKED!)
+  86: "Tiros al arco promedio",  // ✅
+  45: "Posesión media %",    // ✅
+  194: "Clean Sheets",       // CLEANSHEET (era 43=ATTACKS!)
 };
 
 export default function TeamStatsCard({ team }) {

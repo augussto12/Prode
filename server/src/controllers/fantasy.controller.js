@@ -29,7 +29,7 @@ export async function createFantasyLeague(req, res) {
   try {
     const lg = await getCurrentSeason(Number(leagueId));
     if (!lg?.data?.currentseason?.id) {
-       return res.status(400).json({ error: 'La liga real seleccionada no tiene temporada activa en Sportmonks' });
+      return res.status(400).json({ error: 'La liga real seleccionada no tiene temporada activa en Sportmonks' });
     }
     const seasonId = lg.data.currentseason.id;
 
@@ -37,7 +37,7 @@ export async function createFantasyLeague(req, res) {
     const ownedLeaguesCount = await prisma.fantasyLeague.count({
       where: { ownerId: userId }
     });
-    
+
     if (ownedLeaguesCount >= 3) {
       return res.status(400).json({ error: 'Límite alcanzado: solo podés crear un máximo de 3 ligas.' });
     }
@@ -65,14 +65,14 @@ export async function createFantasyLeague(req, res) {
 
     // Auto-create initial Gameweek to allow drafts instantly
     await prisma.fantasyGameweek.create({
-       data: {
-          fantasyLeagueId: league.id,
-          gameweekNumber: 1,
-          startDate: new Date(),
-          endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), // +7 days
-          isActive: true,
-          transfersOpen: true
-       }
+      data: {
+        fantasyLeagueId: league.id,
+        gameweekNumber: 1,
+        startDate: new Date(),
+        endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), // +7 days
+        isActive: true,
+        transfersOpen: true
+      }
     });
 
     return res.status(201).json({ league, team });
@@ -105,13 +105,13 @@ export async function joinLeague(req, res) {
     });
 
     if (!league) return res.status(404).json({ error: 'Liga no encontrada' });
-    
+
     if (league.status !== 'active') {
-       return res.status(400).json({ error: 'La liga no está activa' });
+      return res.status(400).json({ error: 'La liga no está activa' });
     }
 
     if (league._count.teams >= league.maxTeams) {
-       return res.status(400).json({ error: 'La liga está llena' });
+      return res.status(400).json({ error: 'La liga está llena' });
     }
 
     const existingTeam = await prisma.fantasyTeam.findUnique({
@@ -119,7 +119,7 @@ export async function joinLeague(req, res) {
     });
 
     if (existingTeam) {
-       return res.status(400).json({ error: 'Ya estás en esta liga' });
+      return res.status(400).json({ error: 'Ya estás en esta liga' });
     }
 
     const team = await prisma.fantasyTeam.create({
@@ -143,7 +143,7 @@ export async function getLeagueStandings(req, res) {
       orderBy: { totalPoints: 'desc' },
       include: { user: { select: { username: true, displayName: true, avatar: true } } }
     });
-    
+
     // Enrich with position rank
     const standings = teams.map((t, idx) => ({ ...t, rank: idx + 1 }));
     return res.json(standings);
@@ -164,21 +164,21 @@ export async function getLeagueDetails(req, res) {
     const league = await prisma.fantasyLeague.findUnique({
       where: { id: req.params.id },
       include: {
-         teams: {
-            include: { user: { select: { username: true } } }
-         }
+        teams: {
+          include: { user: { select: { username: true } } }
+        }
       }
     });
     if (!league) return res.status(404).json({ error: 'Liga no encontrada' });
-    
+
     // Si NO es el owner, ocultamos los equipos baneados de los detalles
     if (league.ownerId !== req.user.id) {
-       league.teams = league.teams.filter(t => t.status === 'active');
+      league.teams = league.teams.filter(t => t.status === 'active');
     }
 
     return res.json({
-       ...league,
-       realLeagueName: REAL_LEAGUES[league.leagueId] || 'Liga Desconocida'
+      ...league,
+      realLeagueName: REAL_LEAGUES[league.leagueId] || 'Liga Desconocida'
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -194,14 +194,14 @@ export async function getMyLeagues(req, res) {
         fantasyLeague: true
       }
     });
-    
+
     const leagues = teams.map(t => ({
       ...t.fantasyLeague,
       realLeagueName: REAL_LEAGUES[t.fantasyLeague.leagueId] || 'Liga Desconocida',
       teamStatus: t.status,
       teamId: t.id
     }));
-    
+
     return res.json(leagues);
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -211,7 +211,7 @@ export async function getMyLeagues(req, res) {
 export async function banTeam(req, res) {
   const userId = req.user.id;
   const { id, teamId } = req.params;
-  
+
   try {
     // Verificar propiedad
     const league = await prisma.fantasyLeague.findUnique({ where: { id } });
@@ -223,7 +223,7 @@ export async function banTeam(req, res) {
       where: { id: teamId },
       data: { status: 'frozen' }
     });
-    
+
     return res.json({ success: true });
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -233,7 +233,7 @@ export async function banTeam(req, res) {
 export async function unbanTeam(req, res) {
   const userId = req.user.id;
   const { id, teamId } = req.params;
-  
+
   try {
     const league = await prisma.fantasyLeague.findUnique({ where: { id } });
     if (!league) return res.status(404).json({ error: 'Liga no encontrada.' });
@@ -243,7 +243,7 @@ export async function unbanTeam(req, res) {
       where: { id: teamId },
       data: { status: 'active' }
     });
-    
+
     return res.json({ success: true });
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -301,7 +301,7 @@ export async function getMyTeam(req, res) {
 // Helper function to resolve active & target gameweeks based on real time dates
 export async function resolveGameweekContext(leagueId) {
   const fantasyLeague = await prisma.fantasyLeague.findUnique({
-     where: { id: leagueId }
+    where: { id: leagueId }
   });
 
   const gameweeks = await prisma.fantasyGameweek.findMany({
@@ -310,63 +310,63 @@ export async function resolveGameweekContext(leagueId) {
   });
 
   const now = new Date();
-  
+
   // Gameweek activo = cronológicamente hay partidos jugándose
-  const active = gameweeks.find(gw => 
+  const active = gameweeks.find(gw =>
     gw.startDate <= now && now <= gw.endDate
   );
-  
+
   if (active && fantasyLeague) {
-     // Validar Fixtures: Si TODOS los partidos de la fecha ya terminaron o están suspendidos, 
-     // cerramos la fecha automáticamente aunque el "endDate" no haya pasado.
-     const fixtures = await prisma.fixture.findMany({
-        where: {
-           leagueId: fantasyLeague.leagueId,
-           startTime: { gte: active.startDate, lte: active.endDate }
-        },
-        select: { status: true }
-     });
+    // Validar Fixtures: Si TODOS los partidos de la fecha ya terminaron o están suspendidos, 
+    // cerramos la fecha automáticamente aunque el "endDate" no haya pasado.
+    const fixtures = await prisma.fixture.findMany({
+      where: {
+        leagueId: fantasyLeague.leagueId,
+        startTime: { gte: active.startDate, lte: active.endDate }
+      },
+      select: { status: true }
+    });
 
-     let forceClose = false;
-     if (fixtures.length > 0) {
-        const allEnded = fixtures.every(f => {
-           const st = f.status.trim().toLowerCase();
-           return ['finished', 'postponed', 'cancelled', 'ft', 'pen_ft', 'aet'].includes(st);
-        });
-        if (allEnded) forceClose = true;
-     }
+    let forceClose = false;
+    if (fixtures.length > 0) {
+      const allEnded = fixtures.every(f => {
+        const st = f.status.trim().toLowerCase();
+        return ['finished', 'postponed', 'cancelled', 'ft', 'pen_ft', 'aet'].includes(st);
+      });
+      if (allEnded) forceClose = true;
+    }
 
-     if (!forceClose) {
-        return { 
-          gameweek: active, 
-          transfersOpen: false,  // cerrado durante partidos
-          status: 'IN_PROGRESS' 
-        };
-     }
-     // Si forceClose === true, cae a la lógica del siguiente GW (Mercado Abierto).
+    if (!forceClose) {
+      return {
+        gameweek: active,
+        transfersOpen: false,  // cerrado durante partidos
+        status: 'IN_PROGRESS'
+      };
+    }
+    // Si forceClose === true, cae a la lógica del siguiente GW (Mercado Abierto).
   }
-  
+
   // Entre fechas = transferencias abiertas
   const next = gameweeks
     .filter(gw => gw.startDate > now)
     .sort((a, b) => a.startDate - b.startDate)[0];
-    
-  if (next) return { 
-    gameweek: next, 
+
+  if (next) return {
+    gameweek: next,
     transfersOpen: true,   // abierto entre fechas
     status: 'OPEN',
     opensUntil: next.startDate
   };
-  
+
   // Temporada terminada
   const last = gameweeks
     .filter(gw => gw.endDate < now)
     .sort((a, b) => b.endDate - a.endDate)[0];
-    
-  return { 
-    gameweek: last, 
+
+  return {
+    gameweek: last,
     transfersOpen: true,   // abierto al final de temporada
-    status: 'SEASON_END' 
+    status: 'SEASON_END'
   };
 }
 
@@ -520,14 +520,14 @@ export async function setCaptain(req, res) {
 
     // Reset all captains
     await prisma.fantasyPick.updateMany({
-       where: { fantasyTeamId: team.id, gameweekId: gameweek.id },
-       data: { isCaptain: false }
+      where: { fantasyTeamId: team.id, gameweekId: gameweek.id },
+      data: { isCaptain: false }
     });
 
     if (captainId) {
       await prisma.fantasyPick.updateMany({
-         where: { fantasyTeamId: team.id, gameweekId: gameweek.id, playerId: captainId },
-         data: { isCaptain: true }
+        where: { fantasyTeamId: team.id, gameweekId: gameweek.id, playerId: captainId },
+        data: { isCaptain: true }
       });
     }
 
@@ -545,7 +545,7 @@ export async function getTransfers(req, res) {
   const { leagueId } = req.params;
 
   try {
-     const team = await prisma.fantasyTeam.findUnique({
+    const team = await prisma.fantasyTeam.findUnique({
       where: { userId_fantasyLeagueId: { userId, fantasyLeagueId: leagueId } },
       include: { transfers: { orderBy: { transferredAt: 'desc' } } }
     });
@@ -559,14 +559,14 @@ export async function makeTransfer(req, res) {
   const userId = req.user.id;
   const { leagueId } = req.params;
   const { playerOutId, playerInId } = req.body;
-  
+
   try {
     const { gameweek, status } = await resolveGameweekContext(leagueId);
-    
+
     if (status === 'IN_PROGRESS') {
       return res.status(400).json({ error: 'Mercado cerrado: Hay un gameweek en curso.' });
     }
-    
+
     if (!gameweek) {
       return res.status(400).json({ error: 'No hay ninguna fecha disponible.' });
     }
@@ -581,7 +581,7 @@ export async function makeTransfer(req, res) {
     const inPlayer = await prisma.fantasyPlayer.findUnique({ where: { sportmonksId: playerInId } });
 
     if (!outPlayer || !inPlayer) {
-       return res.status(404).json({ error: 'Jugadores involucrados no encontrados.' });
+      return res.status(404).json({ error: 'Jugadores involucrados no encontrados.' });
     }
 
     const pickToDrop = team.picks.find(p => p.playerId === playerOutId);
@@ -591,7 +591,7 @@ export async function makeTransfer(req, res) {
     const newBudget = team.budgetRemaining + budgetRecovered - inPlayer.price;
 
     if (newBudget < 0) {
-       return res.status(400).json({ error: 'Presupuesto insuficiente.' });
+      return res.status(400).json({ error: 'Presupuesto insuficiente.' });
     }
 
     // Delete old pick
@@ -615,12 +615,12 @@ export async function makeTransfer(req, res) {
     });
 
     await prisma.fantasyTeam.update({
-       where: { id: team.id },
-       data: { budgetRemaining: newBudget }
+      where: { id: team.id },
+      data: { budgetRemaining: newBudget }
     });
 
     return res.json({ success: true, budgetRemaining: newBudget });
-  } catch(err) {
+  } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 }
@@ -649,11 +649,11 @@ export async function getPlayersExposed(req, res) {
     });
 
     return res.json({
-       data: players,
-       meta: { total, page: p, pages: Math.ceil(total / 50) }
+      data: players,
+      meta: { total, page: p, pages: Math.ceil(total / 50) }
     });
   } catch (err) {
-     return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 }
 
@@ -676,18 +676,18 @@ export async function getLeagueTeams(req, res) {
 
 export async function getPlayerScores(req, res) {
   const { sportmonksId } = req.params;
-  
+
   try {
     // Siempre primero de BD
     const cachedScores = await prisma.fantasyPlayerScore.findMany({
       where: { playerId: Number(sportmonksId) },
       orderBy: { createdAt: 'desc' }
     });
-    
+
     if (cachedScores.length > 0) {
       return res.json({ data: cachedScores, source: 'cache' });
     }
-    
+
     // Si no hay nada en BD, el partido probablemente no terminó o no fue escrutado.
     return res.json({ data: [], source: 'pending' });
   } catch (err) {
@@ -699,109 +699,109 @@ export async function getPlayerScores(req, res) {
  * GAMEWEEKS
  */
 export async function getGameweeks(req, res) {
-   try {
-     const team = await prisma.fantasyTeam.findUnique({
-       where: { userId_fantasyLeagueId: { userId: req.user.id, fantasyLeagueId: req.params.id } }
-     });
+  try {
+    const team = await prisma.fantasyTeam.findUnique({
+      where: { userId_fantasyLeagueId: { userId: req.user.id, fantasyLeagueId: req.params.id } }
+    });
 
-     let gws = await prisma.fantasyGameweek.findMany({
-       where: { fantasyLeagueId: req.params.id },
-       orderBy: { gameweekNumber: 'asc' }
-     });
+    let gws = await prisma.fantasyGameweek.findMany({
+      where: { fantasyLeagueId: req.params.id },
+      orderBy: { gameweekNumber: 'asc' }
+    });
 
-     if (team) {
-       // Filter out old gameweeks that finished before the team was created
-       gws = gws.filter(gw => new Date(gw.endDate) >= new Date(team.createdAt));
-     }
+    if (team) {
+      // Filter out old gameweeks that finished before the team was created
+      gws = gws.filter(gw => new Date(gw.endDate) >= new Date(team.createdAt));
+    }
 
-     return res.json(gws);
-   } catch(err) {
-     return res.status(500).json({ error: err.message });
-   }
+    return res.json(gws);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 }
 
 export async function getActiveGameweek(req, res) {
-   try {
-     const { gameweek, status, transfersOpen, opensUntil } = await resolveGameweekContext(req.params.id);
-     
-     if (!gameweek) {
-       return res.status(404).json({ error: 'No gameweeks available' });
-     }
+  try {
+    const { gameweek, status, transfersOpen, opensUntil } = await resolveGameweekContext(req.params.id);
 
-     const gw = gameweek;
-     
-     gw.status = status;
-     gw.transfersOpen = transfersOpen;
-     if (opensUntil) gw.opensUntil = opensUntil;
+    if (!gameweek) {
+      return res.status(404).json({ error: 'No gameweeks available' });
+    }
 
-     // Calculate fixtures for this gameweek to provide tactical data to frontend
-     let fixtures = [];
-     if (gw && gw.fantasyLeagueId) {
-       const lg = await prisma.fantasyLeague.findUnique({ where: { id: gw.fantasyLeagueId } });
-       if (lg) {
-         fixtures = await prisma.fixture.findMany({
-           where: {
-             leagueId: lg.leagueId,
-             startTime: {
-               gte: gw.startDate,
-               lte: gw.endDate
-             }
-           },
-           select: {
-             id: true,
-             homeTeamId: true,
-             awayTeamId: true,
-             startTime: true
-           }
-         });
-         
-         // Note: we can inject it
-         gw.fixtures = fixtures;
-       }
-     }
+    const gw = gameweek;
 
-      return res.json(gw);
-   } catch(err) {
-     return res.status(500).json({ error: err.message });
-   }
+    gw.status = status;
+    gw.transfersOpen = transfersOpen;
+    if (opensUntil) gw.opensUntil = opensUntil;
+
+    // Calculate fixtures for this gameweek to provide tactical data to frontend
+    let fixtures = [];
+    if (gw && gw.fantasyLeagueId) {
+      const lg = await prisma.fantasyLeague.findUnique({ where: { id: gw.fantasyLeagueId } });
+      if (lg) {
+        fixtures = await prisma.fixture.findMany({
+          where: {
+            leagueId: lg.leagueId,
+            startTime: {
+              gte: gw.startDate,
+              lte: gw.endDate
+            }
+          },
+          select: {
+            id: true,
+            homeTeamId: true,
+            awayTeamId: true,
+            startTime: true
+          }
+        });
+
+        // Note: we can inject it
+        gw.fixtures = fixtures;
+      }
+    }
+
+    return res.json(gw);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 }
 
 export async function getNextFixtures(req, res) {
-   try {
-     const { gameweek } = await resolveGameweekContext(req.params.id);
-     if (!gameweek) {
-       return res.json([]);
-     }
+  try {
+    const { gameweek } = await resolveGameweekContext(req.params.id);
+    if (!gameweek) {
+      return res.json([]);
+    }
 
-     const lg = await prisma.fantasyLeague.findUnique({ where: { id: req.params.id } });
-     if (!lg) return res.json([]);
+    const lg = await prisma.fantasyLeague.findUnique({ where: { id: req.params.id } });
+    if (!lg) return res.json([]);
 
-     const fixtures = await prisma.fixture.findMany({
-       where: {
-         source: 'sportmonks',
-         leagueId: lg.leagueId,
-         startTime: {
-           gte: gameweek.startDate,
-           lte: gameweek.endDate
-         }
-       },
-       orderBy: { startTime: 'asc' },
-       select: {
-         id: true,
-         startTime: true,
-         status: true,
-         homeTeamId: true,
-         awayTeamId: true,
-         homeScore: true,
-         awayScore: true,
-         isLive: true
-       }
-     });
+    const fixtures = await prisma.fixture.findMany({
+      where: {
+        source: 'sportmonks',
+        leagueId: lg.leagueId,
+        startTime: {
+          gte: gameweek.startDate,
+          lte: gameweek.endDate
+        }
+      },
+      orderBy: { startTime: 'asc' },
+      select: {
+        id: true,
+        startTime: true,
+        status: true,
+        homeTeamId: true,
+        awayTeamId: true,
+        homeScore: true,
+        awayScore: true,
+        isLive: true
+      }
+    });
 
-     return res.json(fixtures);
-   } catch (err) {
-     return res.status(500).json({ error: err.message });
-   }
+    return res.json(fixtures);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 }
 
 
@@ -824,38 +824,38 @@ export async function getLeagueCalendar(req, res) {
 
     // Attach fixtures to each gameweek
     const calendar = await Promise.all(gameweeks.map(async (gw) => {
-       const fixtures = await prisma.fixture.findMany({
-          where: {
-            source: 'sportmonks',
-            leagueId: league.leagueId,
-            seasonId: league.seasonId,
-            startTime: { gte: gw.startDate, lte: gw.endDate }
-          },
-          orderBy: { startTime: 'asc' }
-       });
+      const fixtures = await prisma.fixture.findMany({
+        where: {
+          source: 'sportmonks',
+          leagueId: league.leagueId,
+          seasonId: league.seasonId,
+          startTime: { gte: gw.startDate, lte: gw.endDate }
+        },
+        orderBy: { startTime: 'asc' }
+      });
 
-       // Dynamically resolve status specifically for the calendar display
-       let status = 'SCHEDULED';
-       if (now > gw.endDate) status = 'FINISHED';
-       else if (now >= gw.startDate && now <= gw.endDate) status = 'IN_PROGRESS';
+      // Dynamically resolve status specifically for the calendar display
+      let status = 'SCHEDULED';
+      if (now > gw.endDate) status = 'FINISHED';
+      else if (now >= gw.startDate && now <= gw.endDate) status = 'IN_PROGRESS';
 
-       return {
-         ...gw,
-         status,
-         fixtures
-       };
+      return {
+        ...gw,
+        status,
+        fixtures
+      };
     }));
 
     // Obtener info de los equipos involucrados para mostrar en UI
     const teamIdsSet = new Set();
     calendar.forEach(gw => gw.fixtures.forEach(f => {
-       teamIdsSet.add(f.homeTeamId);
-       teamIdsSet.add(f.awayTeamId);
+      teamIdsSet.add(f.homeTeamId);
+      teamIdsSet.add(f.awayTeamId);
     }));
 
     const teamsInfo = await prisma.team.findMany({
-       where: { source: 'sportmonks', externalId: { in: Array.from(teamIdsSet) } },
-       select: { externalId: true, name: true, logo: true }
+      where: { source: 'sportmonks', externalId: { in: Array.from(teamIdsSet) } },
+      select: { externalId: true, name: true, logo: true }
     });
 
     const teamMap = {};
@@ -863,14 +863,14 @@ export async function getLeagueCalendar(req, res) {
 
     // Mapear el nombre y logo en cada partido
     const enrichedCalendar = calendar.map(gw => ({
-       ...gw,
-       fixtures: gw.fixtures.map(f => ({
-          ...f,
-          homeTeamName: teamMap[f.homeTeamId]?.name || `Team ${f.homeTeamId}`,
-          homeTeamLogo: teamMap[f.homeTeamId]?.logo || null,
-          awayTeamName: teamMap[f.awayTeamId]?.name || `Team ${f.awayTeamId}`,
-          awayTeamLogo: teamMap[f.awayTeamId]?.logo || null,
-       }))
+      ...gw,
+      fixtures: gw.fixtures.map(f => ({
+        ...f,
+        homeTeamName: teamMap[f.homeTeamId]?.name || `Team ${f.homeTeamId}`,
+        homeTeamLogo: teamMap[f.homeTeamId]?.logo || null,
+        awayTeamName: teamMap[f.awayTeamId]?.name || `Team ${f.awayTeamId}`,
+        awayTeamLogo: teamMap[f.awayTeamId]?.logo || null,
+      }))
     }));
 
     return res.json(enrichedCalendar);
@@ -888,11 +888,11 @@ export async function getGameweekPoints(req, res) {
       where: { userId_fantasyLeagueId: { userId, fantasyLeagueId: leagueId } },
       include: { picks: { where: { gameweekId: gwId } } }
     });
-    
+
     if (!team) return res.status(404).json({ error: 'Equipo no encontrado' });
-    
+
     return res.json(team.picks);
-  } catch(err) {
+  } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 }
@@ -1027,5 +1027,101 @@ export async function updateLeague(req, res) {
   } catch (err) {
     console.error('[Update League]', err.message);
     return res.status(500).json({ error: 'Error al actualizar la liga.' });
+  }
+}
+
+/**
+ * GET /api/fantasy/leagues/:id/ideal-team?gwId=xxx
+ * Devuelve el "11 Ideal de la Fecha" pre-calculado por el cron.
+ * Solo lee de la tabla IdealTeamEntry — sin cálculos al vuelo.
+ *
+ * Si no se pasa gwId, usa la última fecha terminada.
+ */
+export async function getIdealTeam(req, res) {
+  const { id } = req.params;
+  let { gwId } = req.query;
+
+  try {
+    const league = await prisma.fantasyLeague.findUnique({ where: { id } });
+    if (!league) return res.status(404).json({ error: 'Liga no encontrada' });
+
+    const gameweeks = await prisma.fantasyGameweek.findMany({
+      where: { fantasyLeagueId: id },
+      orderBy: { gameweekNumber: 'asc' },
+    });
+
+    if (gameweeks.length === 0) {
+      return res.json({ players: [], gameweek: null, formation: null, totalPoints: 0, message: 'No hay fechas disponibles.' });
+    }
+
+    const now = new Date();
+
+    if (!gwId) {
+      // Última fecha terminada (endDate < now)
+      const finishedGws = gameweeks.filter(gw => new Date(gw.endDate) < now);
+      if (finishedGws.length === 0) {
+        return res.json({ players: [], gameweek: null, formation: null, totalPoints: 0, message: 'Todavía no hay fechas finalizadas.' });
+      }
+      gwId = finishedGws[finishedGws.length - 1].id;
+    }
+
+    const selectedGw = gameweeks.find(gw => gw.id === gwId);
+    if (!selectedGw) {
+      return res.status(404).json({ error: 'Fecha no encontrada.' });
+    }
+
+    // ── Leer de la tabla pre-calculada ──
+    const entries = await prisma.idealTeamEntry.findMany({
+      where: { gameweekId: gwId },
+      orderBy: { pointsTotal: 'desc' },
+    });
+
+    if (entries.length === 0) {
+      return res.json({
+        players: [],
+        gameweek: { id: selectedGw.id, number: selectedGw.gameweekNumber },
+        formation: null,
+        totalPoints: 0,
+        message: 'No hay datos de puntuación para esta fecha.',
+      });
+    }
+
+    // Mapear al formato esperado por el frontend
+    const posOrder = { GK: 0, DEF: 1, MID: 2, FWD: 3 };
+    const players = entries
+      .map(e => ({
+        playerId: e.playerId,
+        playerName: e.playerName,
+        displayName: e.playerName,
+        position: e.position,
+        role: e.position,
+        photoUrl: e.photoUrl,
+        teamName: e.teamName,
+        teamId: e.teamId,
+        pointsTotal: e.pointsTotal,
+        goals: e.goals,
+        assists: e.assists,
+        minutesPlayed: e.minutesPlayed,
+        rating: e.rating,
+        cleanSheet: e.cleanSheet,
+      }))
+      .sort((a, b) => (posOrder[a.role] ?? 9) - (posOrder[b.role] ?? 9));
+
+    const gwList = gameweeks.map(gw => ({
+      id: gw.id,
+      number: gw.gameweekNumber,
+      status: new Date(gw.endDate) < now ? 'FINISHED' : (new Date(gw.startDate) <= now ? 'IN_PROGRESS' : 'SCHEDULED'),
+    }));
+
+    return res.json({
+      players,
+      gameweek: { id: selectedGw.id, number: selectedGw.gameweekNumber },
+      formation: entries[0].formation,
+      totalPoints: entries[0].totalPoints,
+      gameweeks: gwList,
+    });
+  } catch (err) {
+    console.error('[Ideal Team]', err.message);
+    return res.status(500).json({ error: err.message });
   }
 }

@@ -447,6 +447,7 @@ model FantasyGameweek {
   fantasyLeague   FantasyLeague  @relation(fields: [fantasyLeagueId], references: [id])
   picks           FantasyPick[]
   playerScores    FantasyPlayerScore[]
+  idealTeam       IdealTeamEntry[]
 
   @@unique([fantasyLeagueId, gameweekNumber])
 }
@@ -598,4 +599,36 @@ model CronJobLog {
 
   @@index([module])
   @@index([createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// IDEAL TEAM — 11 ideal de la fecha, calculado por cron
+// ═══════════════════════════════════════════════════════════════
+
+model IdealTeamEntry {
+  id              String   @id @default(cuid())
+  gameweekId      String
+  formation       String   // "4-3-3", "4-4-2", etc.
+  totalPoints     Int      @default(0) // suma total del equipo ideal
+
+  // Datos del jugador
+  playerId        Int      // Sportmonks ID
+  playerName      String
+  position        String   // GK | DEF | MID | FWD
+  photoUrl        String?
+  teamName        String?
+  teamId          Int?
+  pointsTotal     Int      @default(0)
+  goals           Int      @default(0)
+  assists         Int      @default(0)
+  minutesPlayed   Int      @default(0)
+  rating          Float?
+  cleanSheet      Boolean  @default(false)
+
+  calculatedAt    DateTime @default(now())
+
+  gameweek        FantasyGameweek @relation(fields: [gameweekId], references: [id])
+
+  @@unique([gameweekId, playerId])
+  @@index([gameweekId])
 }

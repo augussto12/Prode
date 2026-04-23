@@ -21,18 +21,18 @@ import LineupPlayer from "./LineupPlayer";
 
 // ═══════ TEAM STAT TYPE IDS ═══════
 const TEAM_STAT = {
-  POSSESSION: 45,
-  SHOTS_TOTAL: 50,
-  SHOTS_ON_TARGET: 86,
-  CORNERS: 34,
-  FOULS: 54,
-  OFFSIDES: 51,
-  PASSES: 80,
-  ACCURATE_PASSES: 81,
-  DANGEROUS_ATTACKS: 84,
-  SAVES: 52,
-  YELLOWS: 57,
-  REDS: 58,
+  POSSESSION: 45,          // BALL_POSSESSION ✅
+  SHOTS_TOTAL: 42,          // SHOTS_TOTAL (1677 es solo season-level)
+  SHOTS_ON_TARGET: 86,     // ✅
+  CORNERS: 34,             // ✅
+  FOULS: 56,               // FOULS (era 54 inexistente)
+  OFFSIDES: 51,            // ✅
+  PASSES: 80,              // ✅
+  ACCURATE_PASSES: 81,     // SUCCESSFUL_PASSES (116 es player-level, 81 es team fixture-level)
+  DANGEROUS_ATTACKS: 44,   // DANGEROUS_ATTACKS (era 84=YELLOWCARDS!)
+  SAVES: 57,               // SAVES (era 52=GOALS!)
+  YELLOWS: 84,             // YELLOWCARDS (era 57=SAVES!)
+  REDS: 83,                // REDCARDS (era 58=SHOTS_BLOCKED!)
 };
 
 // ═══════ EVENT TYPE IDS ═══════
@@ -121,7 +121,7 @@ export default function SmFixtureDetail() {
   // Lazy Loading de Tabs
   useEffect(() => {
     if (!selectedFixture || !id) return;
-    
+
     const fetchTab = async () => {
       try {
         if (activeTab === "lineup" && !tabData.lineups) {
@@ -316,7 +316,7 @@ function H2hView({ h2h, fix }) {
         const aName = h.participants?.find(p => p.meta.location === 'away')?.name || "Visitante";
         const hScore = h.scores?.find(s => s.description === 'CURRENT' && s.score?.participant === 'home')?.score?.goals ?? "-";
         const aScore = h.scores?.find(s => s.description === 'CURRENT' && s.score?.participant === 'away')?.score?.goals ?? "-";
-        
+
         const date = new Date(h.starting_at).toLocaleDateString("es-AR", {
           day: "2-digit",
           month: "short",
@@ -391,11 +391,11 @@ function Header({ fix, isLive, isFinished, flash }) {
                 <Clock size={10} />
                 {fix.startTime
                   ? new Date(fix.startTime).toLocaleString("es-AR", {
-                      day: "numeric",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
                   : "—"}
               </span>
             )}
@@ -445,10 +445,10 @@ function TeamBadge({ name, logo, id }) {
       onClick={() => id && navigate(`/sm-equipo/${id}`)}
     >
       {logo && (
-        <img           src={logo}
+        <img src={logo}
           alt=""
           className="w-10 h-10 md:w-14 md:h-14 object-contain mb-1.5 drop-shadow-lg"
-        loading="lazy" decoding="async" width={40} height={40} />
+          loading="lazy" decoding="async" width={40} height={40} />
       )}
       <div className="text-xs md:text-sm font-bold text-white leading-tight max-w-[90px] md:max-w-[140px] group-hover:text-indigo-400 transition-colors">
         {name || "—"}
@@ -487,11 +487,11 @@ function FormationView({ fix, activeTeam, setActiveTeam }) {
 
         // Filter out old unreliable instances directly from details to prevent duplicates
         const safeDetails = (lp.details || []).filter(
-          (d) => ![52, 98, 580].includes(d.type_id),
+          (d) => ![52, 84, 83].includes(d.type_id),
         );
         if (goals > 0) safeDetails.push({ type_id: 52, value: goals });
-        if (yellows > 0) safeDetails.push({ type_id: 98, value: yellows });
-        if (reds > 0) safeDetails.push({ type_id: 580, value: reds });
+        if (yellows > 0) safeDetails.push({ type_id: 84, value: yellows });
+        if (reds > 0) safeDetails.push({ type_id: 83, value: reds });
 
         return {
           playerId: lp.player_id,
@@ -583,10 +583,10 @@ function FormationView({ fix, activeTeam, setActiveTeam }) {
           {/* Formation title */}
           <div className="flex items-center justify-center gap-2 mb-2">
             {currentLogo && (
-              <img                 src={currentLogo}
+              <img src={currentLogo}
                 alt=""
                 className="w-4 h-4 object-contain"
-              loading="lazy" decoding="async" width={16} height={16} />
+                loading="lazy" decoding="async" width={16} height={16} />
             )}
             <span className="text-xs font-bold text-white/60">
               {currentName} — Formación {formationStr || "?"}
@@ -661,11 +661,10 @@ function TeamToggleBtn({ active, onClick, name, logo }) {
   return (
     <button
       onClick={onClick}
-      className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-        active
-          ? "bg-indigo-600/20 border-indigo-500/40 text-white shadow-lg shadow-indigo-500/10"
-          : "bg-white/5 border-white/5 text-white/60 hover:text-white/60 hover:bg-white/8"
-      }`}
+      className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${active
+        ? "bg-indigo-600/20 border-indigo-500/40 text-white shadow-lg shadow-indigo-500/10"
+        : "bg-white/5 border-white/5 text-white/60 hover:text-white/60 hover:bg-white/8"
+        }`}
     >
       {logo && <img src={logo} alt="" className="w-5 h-5 object-contain" loading="lazy" decoding="async" width={20} height={20} />}
       <span className="truncate max-w-[100px]">{name || "—"}</span>
@@ -1007,10 +1006,10 @@ function PlayerStatsModal({ player, onClose }) {
           {/* Player Header */}
           <div className="flex items-center gap-4">
             {player.imagePath ? (
-              <img                 src={player.imagePath}
+              <img src={player.imagePath}
                 alt=""
                 className="w-16 h-16 rounded-full object-cover bg-slate-800 ring-2 ring-white/10"
-              loading="lazy" decoding="async" width={64} height={64} />
+                loading="lazy" decoding="async" width={64} height={64} />
             ) : (
               <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center ring-2 ring-white/10">
                 <span className="text-2xl font-black text-white/50">

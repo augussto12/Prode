@@ -24,6 +24,7 @@ router.put('/leagues/:id', authenticate, ctrl.updateLeague);
 // ================================
 router.get('/leagues/:id/gameweeks', authenticate, ctrl.getGameweeks);
 router.get('/leagues/:id/gameweeks/active', authenticate, ctrl.getActiveGameweek);
+router.get('/leagues/:id/ideal-team', authenticate, ctrl.getIdealTeam);
 router.get('/leagues/:id/calendar', authenticate, ctrl.getLeagueCalendar);
 router.get('/leagues/:id/next-fixtures', authenticate, ctrl.getNextFixtures);
 

@@ -1,23 +1,12 @@
 /**
  * Mapper: Transforma respuestas de Sportmonks v3 al formato de los modelos de Prisma.
- *
- * Sportmonks Type IDs funcionales (v3 types api):
- *   52  = Goals
- *   79  = Assists
- *  119  = Minutes Played
- *  118  = Rating
- *   84  = Yellowcards
- *   83  = Redcards
- *   86  = Shots On Target
- *  116  = Accurate Passes
- *   57  = Saves
- *  324  = Own Goals
+ * Los Type IDs oficiales están centralizados en sportmonks.constants.js (STAT_TYPE).
  */
 
-import { 
-  STAT_TYPE, 
-  LIVE_DEVELOPER_NAMES, 
-  FINISHED_DEVELOPER_NAMES 
+import {
+  STAT_TYPE,
+  LIVE_DEVELOPER_NAMES,
+  FINISHED_DEVELOPER_NAMES
 } from '../constants/sportmonks.constants.js';
 
 // ═══════════════════════════════════════
@@ -126,9 +115,9 @@ export function mapFixture(smFixture) {
     seasonId: smFixture.season_id || null,
     homeTeamId: homeTeam?.id || smFixture.home_team_id || 0,
     awayTeamId: awayTeam?.id || smFixture.away_team_id || 0,
-    startTime: smFixture.starting_at_timestamp 
-                 ? new Date(smFixture.starting_at_timestamp * 1000) 
-                 : new Date(smFixture.starting_at + 'Z'),
+    startTime: smFixture.starting_at_timestamp
+      ? new Date(smFixture.starting_at_timestamp * 1000)
+      : new Date(smFixture.starting_at + 'Z'),
     status,
     homeScore: hasStarted ? extractScore(smFixture.scores, 'home') : null,
     awayScore: hasStarted ? extractScore(smFixture.scores, 'away') : null,
@@ -208,7 +197,7 @@ export function mapPlayerMatchStats(lineupPlayer, fixtureEvents = []) {
     yellowCards,
     redCards,
     shotsOnTarget: getStatValue(details, STAT_TYPE.SHOTS_ON_TARGET),
-    passesCompleted: getStatValue(details, STAT_TYPE.PASSES_COMPLETED),
+    passesCompleted: getStatValue(details, STAT_TYPE.ACCURATE_PASSES),
     saves: getStatValue(details, STAT_TYPE.SAVES),
     ownGoals: getStatValue(details, STAT_TYPE.OWN_GOALS),
     jerseyNumber: lineupPlayer.jersey_number || null,
@@ -288,7 +277,7 @@ export function mapPlayer(smPlayer, localTeamId = null) {
  */
 export function mapPlayerProfileSportmonksToApiFootball(smPlayer) {
   if (!smPlayer) return null;
-  
+
   const player = {
     id: smPlayer.id,
     name: smPlayer.name || smPlayer.common_name,
@@ -311,11 +300,11 @@ export function mapPlayerProfileSportmonksToApiFootball(smPlayer) {
   const statistics = smStats.map(s => {
     // Map data fields from details
     const getStat = (typeId) => s.details?.find(d => d.type_id === typeId)?.value?.total || 0;
-    
+
     return {
       team: {
         id: s.team_id,
-        name: "Equipo", // Require hydration if needed, but often nested inside player if includes exist
+        name: "Equipo",
         logo: null
       },
       league: {
@@ -330,47 +319,47 @@ export function mapPlayerProfileSportmonksToApiFootball(smPlayer) {
         rating: null,
       },
       goals: {
-        total: getStat(52), // Goals
-        conceded: getStat(88), // Goals conceded
-        assists: getStat(110), // Assists
-        saves: getStat(87), // Saves
+        total: getStat(52),   // GOALS
+        conceded: getStat(88), // GOALS_CONCEDED
+        assists: getStat(79),  // ASSISTS (era 110=DRIBBLED_PAST)
+        saves: getStat(57),    // SAVES (era 87=INJURIES)
       },
       shots: {
-        total: getStat(50),
-        on: getStat(86),
+        total: getStat(42),    // SHOTS_TOTAL (era 50 inexistente)
+        on: getStat(86),       // SHOTS_ON_TARGET
       },
       passes: {
-        total: getStat(80),
-        key: getStat(85),
-        accuracy: null, // Hard to compute without attempts
+        total: getStat(80),    // PASSES
+        key: getStat(117),     // KEY_PASSES (era 85=YELLOWRED_CARDS)
+        accuracy: null,
       },
       tackles: {
-        total: getStat(84), // Interceptions/Tackles
-        blocks: getStat(107),
-        interceptions: getStat(84),
+        total: getStat(78),    // TACKLES (era 84=YELLOWCARDS)
+        blocks: getStat(97),   // BLOCKED_SHOTS (era 107=AERIALS_WON)
+        interceptions: getStat(100), // INTERCEPTIONS (era 84=YELLOWCARDS)
       },
       duels: {
-        total: getStat(60),
-        won: getStat(61),
+        total: getStat(105),   // TOTAL_DUELS (era 60 inexistente)
+        won: getStat(106),     // DUELS_WON (era 61 inexistente)
       },
       dribbles: {
-        attempts: getStat(53),
-        success: getStat(54),
+        attempts: getStat(108), // DRIBBLE_ATTEMPTS (era 53 inexistente)
+        success: getStat(109),  // SUCCESSFUL_DRIBBLES (era 54 inexistente)
       },
       fouls: {
-        drawn: getStat(55),
-        committed: getStat(54),
+        drawn: getStat(96),     // FOULS_DRAWN (era 55 inexistente)
+        committed: getStat(56), // FOULS (era 54 inexistente)
       },
       cards: {
-        yellow: getStat(57),
-        yellowred: getStat(58),
-        red: getStat(58),
+        yellow: getStat(84),    // YELLOWCARDS (era 57=SAVES)
+        yellowred: getStat(85), // YELLOWRED_CARDS (era 58=SHOTS_BLOCKED)
+        red: getStat(83),       // REDCARDS (era 58=SHOTS_BLOCKED)
       },
       penalty: {
         won: null,
         commited: null,
-        scored: getStat(16),
-        missed: getStat(17),
+        scored: getStat(47),    // PENALTIES (era 16 inexistente)
+        missed: null,
         saved: null,
       }
     };

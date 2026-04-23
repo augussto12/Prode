@@ -53,26 +53,37 @@ function shortName(name) {
 
 /**
  * Stat type IDs for player match stats in Sportmonks lineups.details
+ * Source: Official Sportmonks v3 type catalog
  */
 const PLAYER_STAT_TYPES = {
   118: "Rating",
   52: "Goles",
-  110: "Asistencias",
+  79: "Asistencias",        // era 110=DRIBBLED_PAST
   119: "Minutos",
-  98: "Amarillas",
-  580: "Rojas",
+  84: "Amarillas",           // era 98=TOTAL_CROSSES
+  85: "Doble Amarilla",
+  83: "Rojas",               // era 580=BIG_CHANCES_CREATED
   86: "Tiros al arco",
   42: "Tiros totales",
   78: "Entradas",
   117: "Pases clave",
   80: "Pases totales",
   116: "Pases precisos",
-  51: "Intercepciones",
-  1535: "Atajadas",
-  96: "Faltas cometidas",
-  122: "Duelos ganados",
-  123: "Duelos perdidos",
-  9706: "Goles en contra",
+  100: "Intercepciones",     // era 51=OFFSIDES
+  57: "Atajadas",            // era 1535 (no existe)
+  56: "Faltas cometidas",    // era 96=FOULS_DRAWN (invertido)
+  96: "Faltas recibidas",
+  105: "Duelos totales",
+  106: "Duelos ganados",     // era 122=LONG_BALLS
+  107: "Duelos aéreos",      // era 123=LONG_BALLS_WON
+  101: "Despejes",
+  109: "Regates exitosos",
+  88: "Goles en contra",     // GOALS_CONCEDED
+  120: "Toques",              // TOUCHES
+  1491: "Duelos perdidos",    // DUELS_LOST
+  98: "Centros totales",     // TOTAL_CROSSES
+  108: "Regates intentados", // DRIBBLE_ATTEMPTS
+  581: "Chances grandes fallados", // BIG_CHANCES_MISSED
 };
 
 function extractPlayerStats(details) {
@@ -143,11 +154,11 @@ export default function LineupPlayer({ player, index = 0, onPlayerClick }) {
         {imagePath ? (
           <>
             {/* Player Photo */}
-            <img               src={imagePath}
+            <img src={imagePath}
               alt={name}
               className="w-full h-full object-cover rounded-full overflow-hidden"
               loading="lazy" decoding="async"
-  onError={(e) => {
+              onError={(e) => {
                 e.target.style.display = "none";
               }}
             />

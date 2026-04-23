@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Trophy, Copy, Users, UserX, ShieldCheck, CheckCircle, ArrowRight, ArrowLeft, UserPlus, RefreshCw, Zap, Loader2, Check, Pencil, Save } from 'lucide-react';
+import { Trophy, Copy, Users, UserX, ShieldCheck, CheckCircle, ArrowRight, ArrowLeft, UserPlus, RefreshCw, Zap, Loader2, Check, Pencil, Save, Star } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
 import useToastStore from '../store/toastStore';
+import IdealTeamTab from '../components/fantasy/IdealTeamTab';
 import './Fantasy.css';
 
 function FantasyLeague() {
@@ -342,6 +343,9 @@ function FantasyLeague() {
         <button onClick={() => setActiveTab('calendar')} className={`px-3 sm:px-4 py-2 font-bold rounded-xl transition-colors cursor-pointer text-xs sm:text-sm whitespace-nowrap ${activeTab === 'calendar' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-white/50 hover:text-white hover:bg-white/5 border border-transparent'}`}>
           Fechas y Partidos
         </button>
+        <button onClick={() => setActiveTab('idealteam')} className={`px-3 sm:px-4 py-2 font-bold rounded-xl transition-colors cursor-pointer text-xs sm:text-sm whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'idealteam' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-white/50 hover:text-white hover:bg-white/5 border border-transparent'}`}>
+          <Star size={14} /> Equipo de la Fecha
+        </button>
       </div>
 
       {/* TAB: STANDINGS */}
@@ -495,6 +499,11 @@ function FantasyLeague() {
             <div className="text-white/50 text-center py-8 glass-card rounded-xl text-sm">Cronograma no disponible aún.</div>
           )}
         </div>
+      )}
+
+      {/* TAB: IDEAL TEAM */}
+      {activeTab === 'idealteam' && (
+        <IdealTeamTab leagueId={id} />
       )}
     </div>
   );

@@ -43,9 +43,9 @@ function normalizePosition(pos) {
   if (!pos) return 'MID';
   const p = pos.toLowerCase();
   if (p.includes('goalkeeper') || p.includes('gk') || p === '24' || p === '1') return 'GK';
-  if (p.includes('defender')   || p.includes('def') || p === '25' || p === '2') return 'DEF';
+  if (p.includes('defender') || p.includes('def') || p === '25' || p === '2') return 'DEF';
   if (p.includes('midfielder') || p.includes('mid') || p === '26' || p === '3') return 'MID';
-  if (p.includes('attacker')   || p.includes('forward') || p.includes('fwd') || p === '27' || p === '4') return 'FWD';
+  if (p.includes('attacker') || p.includes('forward') || p.includes('fwd') || p === '27' || p === '4') return 'FWD';
   return 'MID';
 }
 
@@ -79,7 +79,7 @@ async function findGameweeksForFixture(fixture) {
     where: {
       fantasyLeague: { leagueId: fixture.leagueId },
       startDate: { lte: fixture.startTime },
-      endDate:   { gte: fixture.startTime },
+      endDate: { gte: fixture.startTime },
     },
     select: {
       id: true,
@@ -160,56 +160,56 @@ export async function recalculateFixture(internalFixtureId) {
           },
         },
         update: {
-          playerName:       stat.playerName || fantasyPlayer?.name || 'Desconocido',
-          gameweekId:       gw.id,
-          minutesPlayed:    stat.minutesPlayed ?? 0,
-          goals:            stat.goals ?? 0,
-          assists:          stat.assists ?? 0,
-          yellowCards:      stat.yellowCards ?? 0,
-          redCards:         stat.redCards ?? 0,
-          saves:            stat.saves ?? 0,
-          penaltySaves:     0,
-          ownGoals:         stat.ownGoals ?? 0,
-          shotsOnTarget:    stat.shotsOnTarget ?? 0,
-          cleanSheet:       cleanSheet && (stat.minutesPlayed ?? 0) >= 60,
-          rating:           stat.rating,
+          playerName: stat.playerName || fantasyPlayer?.name || 'Desconocido',
+          gameweekId: gw.id,
+          minutesPlayed: stat.minutesPlayed ?? 0,
+          goals: stat.goals ?? 0,
+          assists: stat.assists ?? 0,
+          yellowCards: stat.yellowCards ?? 0,
+          redCards: stat.redCards ?? 0,
+          saves: stat.saves ?? 0,
+          penaltySaves: 0,
+          ownGoals: stat.ownGoals ?? 0,
+          shotsOnTarget: stat.shotsOnTarget ?? 0,
+          cleanSheet: cleanSheet && (stat.minutesPlayed ?? 0) >= 60,
+          rating: stat.rating,
           position,
-          pointsGoals:      pts.goals,
-          pointsAssists:    pts.assists,
-          pointsCards:      pts.cards,
+          pointsGoals: pts.goals,
+          pointsAssists: pts.assists,
+          pointsCards: pts.cards,
           pointsCleanSheet: pts.cleanSheet,
-          pointsSaves:      pts.saves,
-          pointsMinutes:    pts.minutes,
+          pointsSaves: pts.saves,
+          pointsMinutes: pts.minutes,
           pointsRatingBonus: pts.ratingBonus,
-          pointsTotal:      pts.total,
-          calculatedAt:     new Date(),
+          pointsTotal: pts.total,
+          calculatedAt: new Date(),
         },
         create: {
-          playerId:         stat.playerId,
-          playerName:       stat.playerName || fantasyPlayer?.name || 'Desconocido',
-          fixtureId:        Number(fixture.externalId),
-          gameweekId:       gw.id,
-          minutesPlayed:    stat.minutesPlayed ?? 0,
-          goals:            stat.goals ?? 0,
-          assists:          stat.assists ?? 0,
-          yellowCards:      stat.yellowCards ?? 0,
-          redCards:         stat.redCards ?? 0,
-          saves:            stat.saves ?? 0,
-          penaltySaves:     0,
-          ownGoals:         stat.ownGoals ?? 0,
-          shotsOnTarget:    stat.shotsOnTarget ?? 0,
-          cleanSheet:       cleanSheet && (stat.minutesPlayed ?? 0) >= 60,
-          rating:           stat.rating,
+          playerId: stat.playerId,
+          playerName: stat.playerName || fantasyPlayer?.name || 'Desconocido',
+          fixtureId: Number(fixture.externalId),
+          gameweekId: gw.id,
+          minutesPlayed: stat.minutesPlayed ?? 0,
+          goals: stat.goals ?? 0,
+          assists: stat.assists ?? 0,
+          yellowCards: stat.yellowCards ?? 0,
+          redCards: stat.redCards ?? 0,
+          saves: stat.saves ?? 0,
+          penaltySaves: 0,
+          ownGoals: stat.ownGoals ?? 0,
+          shotsOnTarget: stat.shotsOnTarget ?? 0,
+          cleanSheet: cleanSheet && (stat.minutesPlayed ?? 0) >= 60,
+          rating: stat.rating,
           position,
-          pointsGoals:      pts.goals,
-          pointsAssists:    pts.assists,
-          pointsCards:      pts.cards,
+          pointsGoals: pts.goals,
+          pointsAssists: pts.assists,
+          pointsCards: pts.cards,
           pointsCleanSheet: pts.cleanSheet,
-          pointsSaves:      pts.saves,
-          pointsMinutes:    pts.minutes,
+          pointsSaves: pts.saves,
+          pointsMinutes: pts.minutes,
           pointsRatingBonus: pts.ratingBonus,
-          pointsTotal:      pts.total,
-          calculatedAt:     new Date(),
+          pointsTotal: pts.total,
+          calculatedAt: new Date(),
         },
       });
 
@@ -245,11 +245,11 @@ export async function recalculateFixture(internalFixtureId) {
       select: { pointsTotal: true },
     });
     const totalPoints = allScores.reduce((sum, s) => sum + s.pointsTotal, 0);
-    const avgPoints   = allScores.length > 0 ? totalPoints / allScores.length : 0;
+    const avgPoints = allScores.length > 0 ? totalPoints / allScores.length : 0;
 
     await prisma.fantasyPlayer.updateMany({
       where: { sportmonksId: pid },
-      data:  { totalPoints, avgPoints: Math.round(avgPoints * 10) / 10 },
+      data: { totalPoints, avgPoints: Math.round(avgPoints * 10) / 10 },
     });
   }
 
@@ -299,7 +299,7 @@ async function ensurePicksForGameweek(gameweek) {
 
     // Buscar picks anteriores a ESTE gameweek
     const previousPicks = await prisma.fantasyPick.findMany({
-      where: { 
+      where: {
         fantasyTeamId: team.id,
         gameweek: {
           startDate: { lt: gameweek.startDate }
@@ -379,7 +379,7 @@ async function recalculateTeamTotals(teamIds = []) {
 
     await prisma.fantasyTeam.update({
       where: { id: team.id },
-      data:  { totalPoints },
+      data: { totalPoints },
     });
     updatedCount++;
   }
@@ -472,7 +472,7 @@ async function _resyncFixtureStats(fixture) {
   try {
     const data = await getFixtureWithPlayerStats(fixture.externalId);
     const lineups = data?.data?.lineups || [];
-    const events  = data?.data?.events  || [];
+    const events = data?.data?.events || [];
 
     let synced = 0;
     for (const lineupPlayer of lineups) {
@@ -521,7 +521,7 @@ async function calculatePendingScores() {
 
     // Obtener fixtures ya calculados
     const alreadyCalculated = await prisma.fantasyPlayerScore.findMany({
-      select:   { fixtureId: true },
+      select: { fixtureId: true },
       distinct: ['fixtureId'],
     });
     const calculatedExternalIds = alreadyCalculated.map(s => String(s.fixtureId));
@@ -564,10 +564,153 @@ async function calculatePendingScores() {
     const msg = `Puntajes recalculados para ${fixturesToProcess.length} partidos pendientes.`;
     // Logged via CronJobLog below
     await logCronJob('Fantasy Scoring', 'calculatePendingScores', 'success', Date.now() - startTimeTracking, msg, { fixturesProcessed: fixturesToProcess.length });
+
+    // ── Calcular el 11 ideal para cada gameweek afectado ──
+    try {
+      const affectedGwIds = new Set();
+      for (const fixture of fixturesToProcess) {
+        const gwMatches = await findGameweeksForFixture(fixture);
+        for (const gw of gwMatches) affectedGwIds.add(gw.id);
+      }
+      for (const gwId of affectedGwIds) {
+        await calculateIdealTeam(gwId);
+      }
+    } catch (idealErr) {
+      console.error(`[Fantasy] ✗ Ideal Team post-scoring: ${idealErr.message}`);
+    }
   } catch (err) {
     console.error(`[Fantasy] ✗ Barrido: ${err.message}`);
     await logCronJob('Fantasy Scoring', 'calculatePendingScores', 'error', 0, `Error: ${err.message}`);
   }
+}
+
+// ═══════════════════════════════════════
+// 11 IDEAL DE LA FECHA (CRON)
+// ═══════════════════════════════════════
+
+/**
+ * Calcula y persiste el 11 ideal para un gameweek.
+ * Prueba múltiples formaciones y guarda la que maximice puntos.
+ * Es idempotente: borra las entradas anteriores del GW y las recrea.
+ *
+ * @param {string} gameweekId - ID del gameweek
+ */
+export async function calculateIdealTeam(gameweekId) {
+  const FORMATIONS = [
+    { name: '4-3-3', slots: { GK: 1, DEF: 4, MID: 3, FWD: 3 } },
+    { name: '4-4-2', slots: { GK: 1, DEF: 4, MID: 4, FWD: 2 } },
+    { name: '3-5-2', slots: { GK: 1, DEF: 3, MID: 5, FWD: 2 } },
+    { name: '3-4-3', slots: { GK: 1, DEF: 3, MID: 4, FWD: 3 } },
+    { name: '5-3-2', slots: { GK: 1, DEF: 5, MID: 3, FWD: 2 } },
+    { name: '5-4-1', slots: { GK: 1, DEF: 5, MID: 4, FWD: 1 } },
+  ];
+
+  // 1. Traer todos los scores del gameweek
+  const allScores = await prisma.fantasyPlayerScore.findMany({
+    where: { gameweekId },
+    orderBy: { pointsTotal: 'desc' },
+  });
+
+  if (allScores.length === 0) return;
+
+  // 2. Agrupar por playerId (sumar si jugó más de un partido)
+  const playerMap = new Map();
+  for (const score of allScores) {
+    if (playerMap.has(score.playerId)) {
+      const existing = playerMap.get(score.playerId);
+      existing.pointsTotal += score.pointsTotal;
+      existing.goals += score.goals;
+      existing.assists += score.assists;
+      existing.minutesPlayed += score.minutesPlayed;
+    } else {
+      playerMap.set(score.playerId, {
+        playerId: score.playerId,
+        playerName: score.playerName,
+        position: score.position === 'ATT' ? 'FWD' : score.position,
+        pointsTotal: score.pointsTotal,
+        goals: score.goals,
+        assists: score.assists,
+        minutesPlayed: score.minutesPlayed,
+        rating: score.rating,
+        cleanSheet: score.cleanSheet,
+      });
+    }
+  }
+
+  const players = [...playerMap.values()];
+
+  // 3. Separar por posición
+  const byPos = { GK: [], DEF: [], MID: [], FWD: [] };
+  for (const p of players) {
+    if (byPos[p.position]) byPos[p.position].push(p);
+  }
+  for (const pos of Object.keys(byPos)) {
+    byPos[pos].sort((a, b) => b.pointsTotal - a.pointsTotal);
+  }
+
+  // 4. Probar formaciones y elegir la mejor
+  let bestFormation = null;
+  let bestTeam = [];
+  let bestTotal = -1;
+
+  for (const f of FORMATIONS) {
+    let valid = true;
+    for (const [pos, count] of Object.entries(f.slots)) {
+      if (byPos[pos].length < count) { valid = false; break; }
+    }
+    if (!valid) continue;
+
+    const team = [];
+    let total = 0;
+    for (const [pos, count] of Object.entries(f.slots)) {
+      const selected = byPos[pos].slice(0, count);
+      for (const p of selected) {
+        team.push({ ...p, role: pos });
+        total += p.pointsTotal;
+      }
+    }
+
+    if (total > bestTotal) {
+      bestTotal = total;
+      bestFormation = f.name;
+      bestTeam = team;
+    }
+  }
+
+  if (bestTeam.length === 0) return;
+
+  // 5. Enriquecer con FantasyPlayer (foto, equipo)
+  const playerIds = bestTeam.map(p => p.playerId);
+  const fantasyPlayers = await prisma.fantasyPlayer.findMany({
+    where: { sportmonksId: { in: playerIds } },
+    select: { sportmonksId: true, photoUrl: true, teamName: true, teamId: true, name: true },
+  });
+  const fpMap = new Map(fantasyPlayers.map(fp => [fp.sportmonksId, fp]));
+
+  // 6. Persistir (idempotente: borrar y recrear)
+  await prisma.idealTeamEntry.deleteMany({ where: { gameweekId } });
+
+  const entries = bestTeam.map(p => ({
+    gameweekId,
+    formation: bestFormation,
+    totalPoints: bestTotal,
+    playerId: p.playerId,
+    playerName: fpMap.get(p.playerId)?.name || p.playerName,
+    position: p.role,
+    photoUrl: fpMap.get(p.playerId)?.photoUrl || null,
+    teamName: fpMap.get(p.playerId)?.teamName || null,
+    teamId: fpMap.get(p.playerId)?.teamId || null,
+    pointsTotal: p.pointsTotal,
+    goals: p.goals,
+    assists: p.assists,
+    minutesPlayed: p.minutesPlayed,
+    rating: p.rating,
+    cleanSheet: p.cleanSheet,
+  }));
+
+  await prisma.idealTeamEntry.createMany({ data: entries });
+
+  console.log(`[Fantasy] ⭐ Ideal Team GW ${gameweekId}: ${bestFormation} (${bestTotal} pts)`);
 }
 
 // ═══════════════════════════════════════

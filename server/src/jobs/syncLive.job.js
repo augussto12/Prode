@@ -42,7 +42,7 @@ async function syncFinalPlayerStats(smFixtureId, internalFixtureId) {
   try {
     const data = await getFixtureWithPlayerStats(smFixtureId);
     const lineups = data?.data?.lineups || [];
-    const events  = data?.data?.events  || [];
+    const events = data?.data?.events || [];
 
     let synced = 0;
 
@@ -203,7 +203,7 @@ async function runLiveSync() {
           });
 
           // Sync stats finales en background (no bloquea el loop)
-          syncFinalPlayerStats(fixture.id, upserted.id).catch(() => {});
+          syncFinalPlayerStats(fixture.id, upserted.id).catch(() => { });
         }
       } catch (err) {
         console.error(`[Live] Error procesando fixture ${mapped.externalId}:`, err.message);
@@ -224,11 +224,8 @@ async function runLiveSync() {
       if (staleCount.count > 0) {
         console.log(`[Live] ✓ ${staleCount.count} partidos marcados como finalizados`);
       }
-    }
-    
-    // Loguear solo si procesamos algo en este ciclo
-    if (processedIds.length > 0) {
-      const msg = `Sincronizados en vivo ${processedIds.length} partidos. Finalizados forzados: ${staleCount?.count || 0}`;
+
+      const msg = `Sincronizados en vivo ${processedIds.length} partidos. Finalizados forzados: ${staleCount.count}`;
       await logCronJob('Sportmonks Live', 'runLiveSync', 'success', Date.now() - startTimeTracking, msg, { processed: processedIds.length });
     }
 

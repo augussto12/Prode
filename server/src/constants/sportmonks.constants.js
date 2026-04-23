@@ -5,19 +5,74 @@
  */
 
 // TYPE IDS — Stats de jugadores (lineups.details)
+// Fuente: catálogo oficial Sportmonks v3
 export const STAT_TYPE = {
+  // ── Core stats ──
   GOALS: 52,
   ASSISTS: 79,
   MINUTES_PLAYED: 119,
   RATING: 118,
-  YELLOW_CARDS: 84,
-  RED_CARDS: 83,
-  SHOTS_ON_TARGET: 86,
-  PASSES_COMPLETED: 116,
   SAVES: 57,
-  OWN_GOALS: 324,
-  PENALTY_SAVES: 113,
-  CLEAN_SHEET: 194,
+  CLEAN_SHEET: 194,       // Stat de temporada, no per-match
+
+  // ── Tarjetas ──
+  YELLOW_CARDS: 84,
+  YELLOWRED_CARDS: 85,    // Segunda amarilla → roja
+  RED_CARDS: 83,
+
+  // ── Tiros ──
+  SHOTS_TOTAL: 42,
+  SHOTS_ON_TARGET: 86,
+  SHOTS_OFF_TARGET: 41,
+  SHOTS_BLOCKED: 58,
+
+  // ── Pases ──
+  PASSES: 80,             // Total de pases intentados
+  ACCURATE_PASSES: 116,   // Pases completados
+  KEY_PASSES: 117,
+  LONG_BALLS: 122,
+  LONG_BALLS_WON: 123,
+  THROUGH_BALLS: 124,
+  THROUGH_BALLS_WON: 125,
+
+  // ── Defensivas ──
+  TACKLES: 78,
+  INTERCEPTIONS: 100,
+  CLEARANCES: 101,
+  BLOCKED_SHOTS: 97,
+
+  // ── Duelos ──
+  TOTAL_DUELS: 105,
+  DUELS_WON: 106,
+  AERIALS_WON: 107,
+
+  // ── Dribbles ──
+  DRIBBLE_ATTEMPTS: 108,
+  SUCCESSFUL_DRIBBLES: 109,
+  DRIBBLED_PAST: 110,
+  DISPOSSESSED: 94,
+
+  // ── Faltas y cruces ──
+  FOULS: 56,
+  FOULS_DRAWN: 96,
+  TOTAL_CROSSES: 98,
+  ACCURATE_CROSSES: 99,
+
+  // ── Arquero ──
+  SAVES_INSIDE_BOX: 104,
+  GOALS_CONCEDED: 88,
+
+  // ── Otros ──
+  CAPTAIN: 40,
+  OFFSIDES: 51,
+  OWN_GOALS: 324,         // ⚠️ Season-level only — NO aparece en lineups.details per-match
+  HIT_WOODWORK: 64,
+  PENALTIES: 47,
+  TOUCHES: 120,
+  DUELS_LOST: 1491,
+  ERROR_LEAD_TO_GOAL: 571,
+  BIG_CHANCES_CREATED: 580,
+  BIG_CHANCES_MISSED: 581,
 };
 
 // STATE IDs — Estados numéricos de partidos
@@ -30,7 +85,7 @@ export const STATE_IDS = {
 // DEVELOPER NAMES — Estados de partidos (más confiable que state_id o short_code)
 export const LIVE_DEVELOPER_NAMES = [
   'INPLAY_1ST_HALF',
-  'INPLAY_2ND_HALF', 
+  'INPLAY_2ND_HALF',
   'INPLAY_ET',
   'INPLAY_ET_2ND_HALF',
   'INPLAY_PENALTIES',

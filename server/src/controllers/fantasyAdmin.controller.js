@@ -96,10 +96,10 @@ export async function seedPlayers(req, res) {
       }
     }
 
-    return res.json({ 
-      success: true, 
+    return res.json({
+      success: true,
       message: `¡Seeding de jugadores completo!`,
-      playersImported: importedCount 
+      playersImported: importedCount
     });
   } catch (error) {
     console.error('[Fantasy Admin] Error seeding players:', error);
@@ -111,6 +111,9 @@ export async function seedPlayers(req, res) {
  * POST /api/admin/fantasy/sync-season/:leagueId
  * Descarga TODOS los fixtures de la temporada completa desde Sportmonks
  * y los guarda en BD con upsert por externalId+source.
+ * 
+ * Responde inmediatamente (202) y ejecuta en background para evitar
+ * timeout de Nginx (504).
  */
 export async function syncSeason(req, res) {
   const { leagueId } = req.params;
@@ -130,6 +133,13 @@ export async function syncSeason(req, res) {
     return res.status(400).json({ error: `No hay seasonId para la liga ${numLeagueId} (ni dinámico ni hardcoded)` });
   }
 
+  // Responder inmediatamente — el sync corre en background
+  res.status(202).json({
+    success: true,
+    message: `Sync de temporada ${seasonId} iniciado en background. Revisá el panel de Cron Logs para ver el progreso.`,
+  });
+
+  // ── Background sync ──
   const startTime = Date.now();
   let created = 0;
   let updated = 0;
@@ -171,24 +181,39 @@ export async function syncSeason(req, res) {
     }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    const msg = `Sync completo: ${fixtures.length} fixtures (${created} creados, ${updated} actualizados) en ${duration}s`;
+    console.log(`[Fantasy Admin] ${msg}`);
 
-    console.log(`[Fantasy Admin] Sync completo: ${fixtures.length} fixtures (${created} creados, ${updated} actualizados) en ${duration}s`);
+    // Guardar en CronJobLog para que se vea en el panel admin
+    try {
+      await prisma.cronJobLog.create({
+        data: {
+          module: 'Fantasy',
+          jobName: 'syncSeason',
+          status: 'success',
+          durationMs: Date.now() - startTime,
+          message: msg,
+          metadata: { leagueId: numLeagueId, seasonId, created, updated, pagesProcessed },
+        }
+      });
+    } catch (_) { }
 
-    return res.json({
-      success: true,
-      total: fixtures.length,
-      created,
-      updated,
-      pagesProcessed,
-      duration: `${duration}s`
-    });
   } catch (error) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     console.error('[Fantasy Admin] Error en sync season:', error);
-    return res.status(500).json({
-      error: error.message,
-      partialResult: { created, updated, pagesProcessed, duration: `${duration}s` }
-    });
+
+    try {
+      await prisma.cronJobLog.create({
+        data: {
+          module: 'Fantasy',
+          jobName: 'syncSeason',
+          status: 'error',
+          durationMs: Date.now() - startTime,
+          message: `Error: ${error.message} (parcial: ${created} creados, ${updated} actualizados en ${duration}s)`,
+          metadata: { leagueId: numLeagueId, seasonId, created, updated, pagesProcessed },
+        }
+      });
+    } catch (_) { }
   }
 }
 
@@ -222,7 +247,7 @@ export async function seedGameweeks(req, res) {
       console.log(`[Fantasy Admin] SportmonksRound vacía para liga ${numLeagueId} — sincronizando on-demand...`);
       const { syncRoundsForLeague } = await import('../jobs/syncRounds.helper.js');
       const syncResult = await syncRoundsForLeague(numLeagueId);
-      
+
       if (syncResult.total === 0) {
         return res.status(404).json({ error: 'No se encontraron rondas para la temporada' });
       }
@@ -246,8 +271,8 @@ export async function seedGameweeks(req, res) {
 
     if (fantasyLeagues.length === 0) {
       // Sin ligas fantasy — las rounds ya están persistidas, retornamos éxito
-      return res.json({ 
-        success: true, 
+      return res.json({
+        success: true,
         message: `${rounds.length} rounds sincronizadas en SportmonksRound. No hay ligas Fantasy creadas para vincular gameweeks aún.`,
         roundsFound: rounds.length,
         stats,
@@ -261,7 +286,7 @@ export async function seedGameweeks(req, res) {
 
       for (let i = 0; i < rounds.length; i++) {
         const round = rounds[i];
-        
+
         let start = round.startDate ? new Date(round.startDate) : null;
         let end = round.endDate ? new Date(round.endDate) : null;
 
@@ -297,18 +322,18 @@ export async function seedGameweeks(req, res) {
           console.warn(`[Fantasy Admin] Round "${round.name}" (${round.roundId}): sin fecha y sin fixtures en BD — skip`);
           continue;
         }
-        
+
         const isActive = now >= start && now <= end;
         const isFinished = now > end;
 
         const existingMatch = existingGWs.find(g => g.gameweekNumber === i + 1);
 
         if (!existingMatch) {
-           stats.created++;
+          stats.created++;
         } else if (!existingMatch.roundId) {
-           stats.updatedNull++;
+          stats.updatedNull++;
         } else {
-           stats.updatedExisting++;
+          stats.updatedExisting++;
         }
 
         await prisma.fantasyGameweek.upsert({
@@ -339,8 +364,8 @@ export async function seedGameweeks(req, res) {
       }
     }
 
-    return res.json({ 
-      success: true, 
+    return res.json({
+      success: true,
       message: `¡Seeding de gameweeks completo!`,
       roundsFound: rounds.length,
       stats,
@@ -365,7 +390,7 @@ export async function getStatus(req, res) {
       where: { isActive: true },
       orderBy: { startDate: 'desc' }
     });
-    
+
     const totalTeams = await prisma.fantasyTeam.count();
     const totalLeagues = await prisma.fantasyLeague.count();
 
@@ -373,35 +398,35 @@ export async function getStatus(req, res) {
     const leaguesContext = [];
 
     for (const lg of leagues) {
-       const ctx = await resolveGameweekContext(lg.id);
-       let fixtures = [];
-       if (ctx.gameweek) {
-         fixtures = await prisma.fixture.findMany({
-           where: {
-             source: 'sportmonks',
-             leagueId: lg.leagueId,
-             startTime: {
-               gte: ctx.gameweek.startDate,
-               lte: ctx.gameweek.endDate
-             }
-           },
-           orderBy: { startTime: 'asc' },
-           select: { homeTeamId: true, awayTeamId: true, startTime: true, status: true, homeScore: true, awayScore: true }
-         });
-       }
-       leaguesContext.push({
-         leagueDetails: lg,
-         context: ctx,
-         fixtures
-       });
+      const ctx = await resolveGameweekContext(lg.id);
+      let fixtures = [];
+      if (ctx.gameweek) {
+        fixtures = await prisma.fixture.findMany({
+          where: {
+            source: 'sportmonks',
+            leagueId: lg.leagueId,
+            startTime: {
+              gte: ctx.gameweek.startDate,
+              lte: ctx.gameweek.endDate
+            }
+          },
+          orderBy: { startTime: 'asc' },
+          select: { homeTeamId: true, awayTeamId: true, startTime: true, status: true, homeScore: true, awayScore: true }
+        });
+      }
+      leaguesContext.push({
+        leagueDetails: lg,
+        context: ctx,
+        fixtures
+      });
     }
 
     res.json({
-       playersCount,
-       activeGameweek,
-       totalTeams,
-       totalLeagues,
-       leaguesContext
+      playersCount,
+      activeGameweek,
+      totalTeams,
+      totalLeagues,
+      leaguesContext
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -417,13 +442,13 @@ export async function forceActivateGameweek(req, res) {
     const gameweek = await prisma.fantasyGameweek.findUnique({
       where: { id }
     });
-    
+
     if (!gameweek) return res.status(404).json({ error: 'Gameweek no encontrado' });
 
     // Desactivar todos los demás gameweeks de ESA liga
     await prisma.fantasyGameweek.updateMany({
-       where: { fantasyLeagueId: gameweek.fantasyLeagueId, id: { not: gameweek.id } },
-       data: { isActive: false, transfersOpen: false }
+      where: { fantasyLeagueId: gameweek.fantasyLeagueId, id: { not: gameweek.id } },
+      data: { isActive: false, transfersOpen: false }
     });
 
     // Activar el deseado y abrir/cerrar traspasos según se indique
@@ -432,8 +457,8 @@ export async function forceActivateGameweek(req, res) {
     const transfersOpen = gameweek.startDate > now;
 
     const activated = await prisma.fantasyGameweek.update({
-       where: { id },
-       data: { isActive: true, transfersOpen }
+      where: { id },
+      data: { isActive: true, transfersOpen }
     });
 
     res.json({ success: true, gameweek: activated });

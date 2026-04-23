@@ -10,61 +10,62 @@
 
 // ═══════════════════════════════════════
 // TYPE ID REGISTRY
+// Source: Official Sportmonks v3 type catalog
 // ═══════════════════════════════════════
 export const SM_STAT_TYPES = {
   // ── Performance ──
-  MVP: 211, // { rating, player_name, player_id }
-  RATING: 118, // { value: "6.99" } (string!)
-  PPG: 9676, // { average_points_per_game }
-  DANGEROUS_ATTACKS: 84, // { count, average, player_id, player_name }
+  MVP: 211,               // HIGHEST_RATED_PLAYER ✅
+  RATING: 118,            // RATING ✅
+  PPG: 9676,              // AVERAGE_POINTS_PER_GAME ✅
+  DANGEROUS_ATTACKS: 44,  // DANGEROUS_ATTACKS (era 84=YELLOWCARDS!)
 
   // ── Partidos ──
-  MATCHES_PLAYED: 214, // { all: { count }, home: { count }, away: { count } }
-  WINS: 194, // { all: { count, percentage }, home, away }
-  DRAWS: 216, // { all: { count, percentage }, home, away }
-  LOSSES: 192, // { all: { count, percentage }, home, away }
+  MATCHES_PLAYED: 27263,  // GAMES_PLAYED
+  WINS: 214,              // TEAM_WINS
+  DRAWS: 215,             // TEAM_DRAWS ✅
+  LOSSES: 216,            // TEAM_LOST (era 192=BTTS!)
 
   // ── Ataque ──
-  GOALS: 52, // { all: { count, average }, home, away }
-  SHOTS: 1677, // { total, on_target, off_target, inside_box, outside_box, blocked, average }
-  ASSISTS: 27254, // { minutes_per_assist, assists_per_game, total_assists }
-  SCORING_FREQ: 27248, // { avg minutes per goal, etc. }
-  PENALTIES: 47, // { scored, missed }
-  GOALS_SCORED_FIRST: 88, // { all: { count, average, first } }
-  SCORING_HALF: 27250, // { most_scored_half, most_scored_half_goals, details }
-  SHOT_SIDE: 9675, // { left, right, unknown }
+  GOALS: 52,              // GOALS ✅
+  SHOTS: 1677,            // SHOTS ✅
+  ASSISTS: 27254,         // ASSIST_STATS ✅
+  SCORING_FREQ: 27248,    // SCORING_FREQUENCY ✅
+  PENALTIES: 47,          // PENALTIES ✅
+  GOALS_SCORED_FIRST: 196, // SCORING_MINUTES (era 88=GOALS_CONCEDED!)
+  SCORING_HALF: 27250,    // MOST_SCORED_HALF ✅
+  SHOT_SIDE: 9675,        // PLAYERS_FOOTING ✅
 
   // ── Defensa ──
-  CLEAN_SHEETS: 215, // { all: { count, percentage }, home, away }
-  INTERCEPTIONS: 27252, // { total_interceptions, interceptions_per_game }
-  GOALS_AGAINST: 27260, // { avg_per_game, total, etc. }
-  TACKLES: 78, // { count, average, tackles_per_foul, tackles_per_card }
-  FOULS: 124, // { total }
+  CLEAN_SHEETS: 194,      // CLEANSHEET (era 215=TEAM_DRAWS!)
+  INTERCEPTIONS: 27252,   // INTERCEPTION_STATS ✅
+  GOALS_AGAINST: 88,      // GOALS_CONCEDED (era 27260=INJURY_TIME_GOALS)
+  TACKLES: 78,            // TACKLES ✅
+  FOULS: 56,              // FOULS (era 124=THROUGH_BALLS!)
 
   // ── Disciplina ──
-  YELLOW_CARDS: 43, // { count, average }
-  RED_CARDS: 51, // { count, average }
-  CARDS: 575, // { all: { count, percentage }, home, away }
+  YELLOW_CARDS: 84,       // YELLOWCARDS (era 43=ATTACKS!)
+  RED_CARDS: 83,          // REDCARDS (era 51=OFFSIDES!)
+  CARDS: 575,             // FAILED_TO_SCORE — keeping as-is, may need review
 
   // ── Posesión / Pases ──
-  POSSESSION: 45, // { count, average } (percentage)
-  PASSES: 27253, // { passes_per_game, passes_per_goal, total_passes, passes_per_shot }
-  CORNERS: 34, // { count, average }
+  POSSESSION: 45,         // BALL_POSSESSION ✅
+  PASSES: 27253,          // PASS_STATS ✅
+  CORNERS: 34,            // CORNERS ✅
 
   // ── Timing / Distribución temporal ──
-  GOALS_TIMING: 213, // { "0-15": { count, percentage }, "15-30": {...}, ... }
-  GA_TIMING: 196, // { "0-15": { count, percentage }, ... }
+  GOALS_TIMING: 196,      // SCORING_MINUTES
+  GA_TIMING: 213,         // CONCEDED_SCORING_MINUTES ✅
+  MOST_FREQ_MINUTE: 27251, // MOST_FREQUENT_SCORING_MINUTE ✅
 
   // ── Over/Under ──
-  OVER_UNDER: 191, // { over_0_5: { matches, team }, over_1_5, ... }
+  OVER_UNDER: 191,        // NUMBER_OF_GOALS ✅
 
   // ── Plantilla / Físico ──
-  MINUTES_PLAYED: 27249, // { total_minutes_played }
-  MOST_APPEARING: 9677, // { most_appearing_players[], longest_appearing_players[] }
-  MOST_SUBSTITUTED: 9678, // { most_substituted_players[] }
-  NATIONAL_PLAYERS: 27258, // { national_team_players[] }
-  AVG_HEIGHT: 9672, // { avg_defender_height, avg_midfielder_height, ... }
-  MOST_FREQ_MINUTE: 27251, // { most_frequent_scoring_minute, amount_of_goals }
+  MINUTES_PLAYED: 27249,  // TOTAL_MINUTES_PLAYED ✅
+  MOST_APPEARING: 9677,   // APPEARING_PLAYERS ✅
+  MOST_SUBSTITUTED: 9678, // MOST_SUBSTITUTED_PLAYERS ✅
+  NATIONAL_PLAYERS: 27258, // NATIONAL_TEAM_PLAYERS ✅
+  AVG_HEIGHT: 9672,       // AVERAGE_PLAYER_HEIGHT ✅
 };
 
 // ═══════════════════════════════════════
