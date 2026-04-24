@@ -473,25 +473,34 @@ function FormationView({ fix, activeTeam, setActiveTeam }) {
           ? (lp.details || []).find((d) => d.type_id === 118)
           : null;
 
-        // Extract reliable stats from events (since lineups.details drops them sometimes)
-        const pEvs = (fix.events || []).filter(
-          (e) => e.player_id === lp.player_id,
-        );
-        const goals = pEvs.filter((e) => e.type_id === 14).length;
-        const yellows = pEvs.filter(
-          (e) => e.type_id === 19 || e.type_id === 21,
-        ).length;
-        const reds = pEvs.filter(
-          (e) => e.type_id === 20 || e.type_id === 21,
-        ).length;
+        // Only use event-based enrichment if events are actually loaded
+        const hasEvents = fix.events && fix.events.length > 0;
+        let safeDetails;
 
-        // Filter out old unreliable instances directly from details to prevent duplicates
-        const safeDetails = (lp.details || []).filter(
-          (d) => ![52, 84, 83].includes(d.type_id),
-        );
-        if (goals > 0) safeDetails.push({ type_id: 52, value: goals });
-        if (yellows > 0) safeDetails.push({ type_id: 84, value: yellows });
-        if (reds > 0) safeDetails.push({ type_id: 83, value: reds });
+        if (hasEvents) {
+          // Extract reliable stats from events (since lineups.details drops them sometimes)
+          const pEvs = fix.events.filter(
+            (e) => e.player_id === lp.player_id,
+          );
+          const goals = pEvs.filter((e) => e.type_id === 14).length;
+          const yellows = pEvs.filter(
+            (e) => e.type_id === 19 || e.type_id === 21,
+          ).length;
+          const reds = pEvs.filter(
+            (e) => e.type_id === 20 || e.type_id === 21,
+          ).length;
+
+          // Filter out old unreliable instances directly from details to prevent duplicates
+          safeDetails = (lp.details || []).filter(
+            (d) => ![52, 84, 83].includes(d.type_id),
+          );
+          if (goals > 0) safeDetails.push({ type_id: 52, value: goals });
+          if (yellows > 0) safeDetails.push({ type_id: 84, value: yellows });
+          if (reds > 0) safeDetails.push({ type_id: 83, value: reds });
+        } else {
+          // No events loaded — keep original details intact
+          safeDetails = lp.details || [];
+        }
 
         return {
           playerId: lp.player_id,
