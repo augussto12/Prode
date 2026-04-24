@@ -304,11 +304,23 @@ model PlayerMatchStat {
   redCards        Int?
   shotsOnTarget   Int?
   passesCompleted Int?
+  passesAttempted Int?
   saves           Int?
   ownGoals        Int?
   jerseyNumber    Int?
   position        String?
   playerName      String?
+  // ── Expanded stats (v2) ──
+  tackles         Int?
+  interceptions   Int?
+  clearances      Int?
+  keyPasses       Int?
+  dribblesWon     Int?
+  duelsWon        Int?
+  accurateCrosses Int?
+  foulsCommitted  Int?
+  foulsDrawn      Int?
+  penaltyMissed   Int?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

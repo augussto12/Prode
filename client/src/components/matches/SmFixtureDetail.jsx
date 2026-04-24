@@ -45,14 +45,16 @@ const EV = {
   YELLOW: 19,
   RED: 20,
   SECOND_YELLOW: 21,
-  VAR: 22,
+  VAR: 10,
+  PEN_SHOOTOUT_MISS: 22,
+  PEN_SHOOTOUT_GOAL: 23,
 };
 
 const TABS = [
-  { id: "lineup", label: "Alineación", icon: Users },
-  { id: "stats", label: "Estadísticas", icon: BarChart3 },
-  { id: "timeline", label: "Cronología", icon: Timer },
-  { id: "h2h", label: "H2H", icon: MapPin },
+  { id: "lineup", label: "Alineación", shortLabel: "Aline.", icon: Users },
+  { id: "stats", label: "Estadísticas", shortLabel: "Stats", icon: BarChart3 },
+  { id: "timeline", label: "Cronología", shortLabel: "Crono.", icon: Timer },
+  { id: "h2h", label: "H2H", shortLabel: "H2H", icon: MapPin },
 ];
 
 // ═══════ MAIN ═══════
@@ -196,7 +198,7 @@ export default function SmFixtureDetail() {
       </AnimatePresence>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-white/5 rounded-xl p-1 border border-white/5">
+      <div className="flex gap-0.5 sm:gap-1 bg-white/5 rounded-xl p-0.5 sm:p-1 border border-white/5 overflow-x-auto scrollbar-hide">
         {TABS.filter((tab) => {
           // If match hasn't started, only show 'lineup' tab
           if (
@@ -214,9 +216,11 @@ export default function SmFixtureDetail() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer border-none ${active ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : "bg-transparent text-white/60 hover:text-white/60"}`}
+              className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all cursor-pointer border-none whitespace-nowrap min-w-0 ${active ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : "bg-transparent text-white/60 hover:text-white/60"}`}
             >
-              <Icon size={14} /> {tab.label}
+              <Icon size={14} className="shrink-0" />
+              <span className="sm:hidden">{tab.shortLabel}</span>
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           );
         })}
@@ -622,14 +626,30 @@ function FormationView({ fix, activeTeam, setActiveTeam }) {
                 key={p.playerId || i}
                 className="flex items-center gap-1 bg-white/5 rounded-lg px-2 py-1 text-[10px] cursor-pointer hover:bg-white/10 transition-colors"
                 onClick={() => {
-                  const stats = p.details?.length > 0 ? null : null; // subs usually have no stats
+                  // Extract stats from details (subs who entered HAVE stats)
+                  const PLAYER_STAT_TYPES = { 118: "Rating", 52: "Goles", 79: "Asistencias", 119: "Minutos", 84: "Amarillas", 83: "Rojas", 86: "Tiros al arco", 78: "Entradas", 116: "Pases precisos", 57: "Atajadas", 100: "Intercepciones", 106: "Duelos ganados" };
+                  let stats = null;
+                  if (p.details?.length > 0) {
+                    stats = [];
+                    for (const d of p.details) {
+                      const label = PLAYER_STAT_TYPES[d.type_id];
+                      if (!label) continue;
+                      let value = d.data?.value ?? d.value;
+                      if (value == null) continue;
+                      if (typeof value === 'object' && value.total !== undefined) value = value.total;
+                      if (typeof value === 'object') continue;
+                      if (value === 0 && d.type_id !== 118 && d.type_id !== 119) continue;
+                      stats.push({ label, value, typeId: d.type_id });
+                    }
+                    if (stats.length === 0) stats = null;
+                  }
                   setSelectedPlayer({
                     playerId: p.player_id || p.playerId,
                     name: p.playerName,
                     number: p.jerseyNumber,
                     rating: p.rating ? parseFloat(p.rating) : 0,
                     imagePath: p.imagePath,
-                    stats: null,
+                    stats,
                     isSub: true,
                   });
                 }}

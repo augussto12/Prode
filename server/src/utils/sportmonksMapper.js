@@ -167,9 +167,9 @@ function getStatValue(details, typeId) {
 /**
  * Transforma la data de un jugador en un lineup a PlayerMatchStat de Prisma.
  * Soporta tanto `lineups.details` como `lineups.player.statistics`.
- * Cards are extracted from fixture events since lineups.details doesn't consistently have them.
+ * Cards / own goals / penalty misses extracted from fixture events.
  * @param {object} lineupPlayer - Lineup entry de Sportmonks
- * @param {array} fixtureEvents - Events array from the fixture (for cards)
+ * @param {array} fixtureEvents - Events array from the fixture
  * @returns {object} - Objeto listo para Prisma upsert
  */
 export function mapPlayerMatchStats(lineupPlayer, fixtureEvents = []) {
@@ -179,13 +179,20 @@ export function mapPlayerMatchStats(lineupPlayer, fixtureEvents = []) {
     lineupPlayer.player?.statistics ||
     [];
 
-
   const playerId = lineupPlayer.player_id || lineupPlayer.player?.id;
 
-  // Extract cards from stats or fallback to events (event type_id 19 = yellow, 20 = red, 21 = second yellow)
+  // Extract events for this player
   const playerEvents = fixtureEvents.filter(e => e.player_id === playerId);
+
+  // Cards from stats, fallback to events
   const yellowCards = getStatValue(details, STAT_TYPE.YELLOW_CARDS) ?? (playerEvents.filter(e => e.type_id === 19 || e.type_id === 21).length || null);
   const redCards = getStatValue(details, STAT_TYPE.RED_CARDS) ?? (playerEvents.filter(e => e.type_id === 20 || e.type_id === 21).length || null);
+
+  // Own goals: detected from events type 15 (OWN_GOAL) — stat 324 is season-only
+  const ownGoals = playerEvents.filter(e => e.type_id === 15).length || null;
+
+  // Penalty missed: detected from events type 17 (PEN_MISSED)
+  const penaltyMissed = playerEvents.filter(e => e.type_id === 17).length || null;
 
   return {
     playerId,
@@ -198,8 +205,20 @@ export function mapPlayerMatchStats(lineupPlayer, fixtureEvents = []) {
     redCards,
     shotsOnTarget: getStatValue(details, STAT_TYPE.SHOTS_ON_TARGET),
     passesCompleted: getStatValue(details, STAT_TYPE.ACCURATE_PASSES),
+    passesAttempted: getStatValue(details, STAT_TYPE.PASSES),
     saves: getStatValue(details, STAT_TYPE.SAVES),
-    ownGoals: getStatValue(details, STAT_TYPE.OWN_GOALS),
+    ownGoals,
+    penaltyMissed,
+    // ── Expanded stats (v2) ──
+    tackles: getStatValue(details, STAT_TYPE.TACKLES),
+    interceptions: getStatValue(details, STAT_TYPE.INTERCEPTIONS),
+    clearances: getStatValue(details, STAT_TYPE.CLEARANCES),
+    keyPasses: getStatValue(details, STAT_TYPE.KEY_PASSES),
+    dribblesWon: getStatValue(details, STAT_TYPE.SUCCESSFUL_DRIBBLES),
+    duelsWon: getStatValue(details, STAT_TYPE.DUELS_WON),
+    accurateCrosses: getStatValue(details, STAT_TYPE.ACCURATE_CROSSES),
+    foulsCommitted: getStatValue(details, STAT_TYPE.FOULS),
+    foulsDrawn: getStatValue(details, STAT_TYPE.FOULS_DRAWN),
     jerseyNumber: lineupPlayer.jersey_number || null,
     position: lineupPlayer.position?.name || (lineupPlayer.position_id ? String(lineupPlayer.position_id) : null),
     playerName: lineupPlayer.player_name || lineupPlayer.player?.display_name || null,
@@ -286,13 +305,15 @@ export function mapPlayerProfileSportmonksToApiFootball(smPlayer) {
     age: smPlayer.date_of_birth ? new Date().getFullYear() - new Date(smPlayer.date_of_birth).getFullYear() : null,
     birth: {
       date: smPlayer.date_of_birth,
-      place: null,
+      place: smPlayer.city?.name || null,
       country: smPlayer.nationality?.name || smPlayer.country?.name,
     },
-    nationality: smPlayer.nationality?.name,
+    nationality: smPlayer.nationality?.name || smPlayer.country?.name,
     height: smPlayer.height ? `${smPlayer.height} cm` : null,
     weight: smPlayer.weight ? `${smPlayer.weight} kg` : null,
     photo: smPlayer.image_path,
+    position: smPlayer.position?.name,
+    detailedPosition: smPlayer.detailedposition?.name || smPlayer.detailed_position?.name,
   };
 
   // Convertir statistics
@@ -304,12 +325,12 @@ export function mapPlayerProfileSportmonksToApiFootball(smPlayer) {
     return {
       team: {
         id: s.team_id,
-        name: "Equipo",
-        logo: null
+        name: s.team?.name || "Desconocido",
+        logo: s.team?.image_path || null
       },
       league: {
-        name: s.season?.league?.name || "Liga",
-        season: s.season?.name || "Temporada",
+        name: s.season?.league?.name || "Desconocida",
+        season: s.season?.name || "Temp.",
       },
       games: {
         appearences: s.appearences,
@@ -370,17 +391,17 @@ export function mapPlayerProfileSportmonksToApiFootball(smPlayer) {
     date: t.date,
     type: t.type === 'buy' ? "Traspaso" : "Préstamo",
     teams: {
-      in: { name: t.to_team?.name || "Desconocido", logo: t.to_team?.image_path },
-      out: { name: t.from_team?.name || "Desconocido", logo: t.from_team?.image_path },
+      in: { name: (t.toTeam || t.toteam || t.to_team)?.name || "Desconocido", logo: (t.toTeam || t.toteam || t.to_team)?.image_path },
+      out: { name: (t.fromTeam || t.fromteam || t.from_team)?.name || "Desconocido", logo: (t.fromTeam || t.fromteam || t.from_team)?.image_path },
     }
   }));
 
   // Convert trophies (if available, otherwise empty)
   const trophies = (smPlayer.trophies || []).map(t => ({
-    league: t.league?.name,
-    country: t.country?.name,
-    season: t.season?.name,
-    place: t.status === "Winner" ? "Ganador" : t.status,
+    league: t.league?.name || (t.league_id ? `Torneo #${t.league_id}` : "Torneo Desconocido"),
+    country: t.country?.name || "Mundo",
+    season: t.season?.name || (t.season_id ? `Temp. #${t.season_id}` : "Temp. Desconocida"),
+    place: t.trophy?.name === "Winner" ? "🏆 Campeón" : (t.trophy?.name || "Destacado"),
   }));
 
   return {

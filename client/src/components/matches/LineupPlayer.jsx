@@ -78,7 +78,6 @@ const PLAYER_STAT_TYPES = {
   107: "Duelos aéreos",      // era 123=LONG_BALLS_WON
   101: "Despejes",
   109: "Regates exitosos",
-  88: "Goles en contra",     // GOALS_CONCEDED
   120: "Toques",              // TOUCHES
   1491: "Duelos perdidos",    // DUELS_LOST
   98: "Centros totales",     // TOTAL_CROSSES

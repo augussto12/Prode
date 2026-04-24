@@ -116,8 +116,8 @@ export default function PlayerProfile() {
               className="w-28 h-28 rounded-2xl object-cover bg-white/10 border-2 border-white/20"
               loading="lazy"
               decoding="async"
-              
-  onError={(e) => {
+
+              onError={(e) => {
                 e.target.src = "/placeholder-team.svg";
               }}
             />
@@ -131,22 +131,25 @@ export default function PlayerProfile() {
               {player?.firstname} {player?.lastname}
             </h1>
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-2">
-              <span className="text-sm text-white/50">
-                {tCountry(player?.nationality)}
+              <span className="text-sm font-semibold px-2.5 py-0.5 rounded-full bg-primary/20 text-primary-light border border-primary/30">
+                {player.detailedPosition || player.position || "Jugador"}
               </span>
-              {player?.age && (
+              <span className="text-sm text-white/70">
+                {tCountry(player.nationality)}
+              </span>
+              {player.age && (
                 <span className="text-sm text-white/50">{player.age} años</span>
               )}
-              {player?.height && (
+              {player.height && (
                 <span className="text-sm text-white/50">{player.height}</span>
               )}
-              {player?.weight && (
+              {player.weight && (
                 <span className="text-sm text-white/50">{player.weight}</span>
               )}
             </div>
-            {player?.birth?.date && (
-              <div className="flex items-center justify-center md:justify-start gap-1 mt-1 text-xs text-white/60">
-                <Calendar size={10} />
+            {player.birth?.date && (
+              <div className="flex items-center justify-center md:justify-start gap-1.5 mt-3 text-xs text-white/60">
+                <Calendar size={12} className="text-accent" />
                 Nacido el{" "}
                 {new Date(player.birth.date).toLocaleDateString("es-AR", {
                   day: "numeric",
@@ -167,11 +170,10 @@ export default function PlayerProfile() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all cursor-pointer border-none whitespace-nowrap shrink-0 flex-1 sm:flex-none ${
-              tab === t.id
+            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all cursor-pointer border-none whitespace-nowrap shrink-0 flex-1 sm:flex-none ${tab === t.id
                 ? "bg-white/10 text-white shadow-sm"
                 : "text-white/50 hover:text-white/70 bg-transparent"
-            }`}
+              }`}
           >
             <t.icon size={14} className="sm:w-4 sm:h-4" />{" "}
             <span>{t.label}</span>
@@ -200,8 +202,8 @@ export default function PlayerProfile() {
                     className="w-8 h-8 object-contain"
                     loading="lazy"
                     decoding="async"
-                    
-  onError={(e) => {
+
+                    onError={(e) => {
                       e.target.src = "/placeholder-team.svg";
                     }}
                   />
@@ -230,11 +232,17 @@ export default function PlayerProfile() {
                     value: s.goals?.assists,
                     color: "text-blue-400",
                   },
-                  { label: "Tiros", value: s.shots?.total },
                   { label: "Tiros al arco", value: s.shots?.on },
-                  { label: "Pases clave", value: s.passes?.key },
-                  { label: "Duelos ganados", value: s.duels?.won },
                   { label: "Regates", value: s.dribbles?.success },
+                  { label: "Pases totales", value: s.passes?.total },
+                  { label: "Pases clave", value: s.passes?.key, color: "text-accent" },
+                  { label: "Duelos int.", value: s.duels?.total },
+                  { label: "Duelos ganados", value: s.duels?.won, color: "text-primary" },
+                  { label: "Entradas", value: s.tackles?.total },
+                  { label: "Intercepciones", value: s.tackles?.interceptions },
+                  { label: "Bloqueos", value: s.tackles?.blocks },
+                  { label: "Faltas recibidas", value: s.fouls?.drawn, color: "text-emerald-400/80" },
+                  { label: "Faltas cometidas", value: s.fouls?.committed, color: "text-red-400/80" },
                   {
                     label: "Amarillas",
                     value: s.cards?.yellow,
@@ -243,10 +251,10 @@ export default function PlayerProfile() {
                   {
                     label: "Rojas",
                     value: s.cards?.red,
-                    color: "text-red-400",
+                    color: "text-red-500",
                   },
                 ]
-                  .filter((x) => x.value != null)
+                  .filter((x) => x.value != null && x.value !== 0)
                   .map((stat) => (
                     <div
                       key={stat.label}
@@ -288,11 +296,10 @@ export default function PlayerProfile() {
                   className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5"
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                      t.place === "Winner"
+                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${t.place === "Winner"
                         ? "bg-amber-500/20 text-amber-400"
                         : "bg-white/5 text-white/40"
-                    }`}
+                      }`}
                   >
                     <Trophy size={16} />
                   </div>
@@ -305,11 +312,10 @@ export default function PlayerProfile() {
                     </div>
                   </div>
                   <span
-                    className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                      t.place === "Winner"
+                    className={`px-2.5 py-1 rounded-full text-xs font-bold ${t.place === "Winner"
                         ? "bg-amber-500/20 text-amber-400"
                         : "bg-white/10 text-white/50"
-                    }`}
+                      }`}
                   >
                     {t.place === "Winner" ? "🏆 Campeón" : t.place}
                   </span>
@@ -343,19 +349,18 @@ export default function PlayerProfile() {
                     <span className="text-[10px] sm:text-xs font-mono text-white/60 uppercase tracking-widest">
                       {t.date
                         ? new Date(t.date).toLocaleDateString("es-AR", {
-                            month: "short",
-                            year: "numeric",
-                          })
+                          month: "short",
+                          year: "numeric",
+                        })
                         : "Fecha Desc."}
                     </span>
                     <span
-                      className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded ${
-                        t.type === "Free"
+                      className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded ${t.type === "Free"
                           ? "text-green-400 bg-green-500/10 border border-green-500/20"
                           : t.type === "Loan"
                             ? "text-blue-400 bg-blue-500/10 border border-blue-500/20"
                             : "text-white/60 bg-white/5 border border-white/10"
-                      }`}
+                        }`}
                     >
                       {t.type === "Free"
                         ? "Libre"
@@ -375,8 +380,8 @@ export default function PlayerProfile() {
                           className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
                           loading="lazy"
                           decoding="async"
-                          
-  onError={(e) => {
+
+                          onError={(e) => {
                             e.target.src = "/placeholder-team.svg";
                           }}
                         />
@@ -401,8 +406,8 @@ export default function PlayerProfile() {
                           className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
                           loading="lazy"
                           decoding="async"
-                          
-  onError={(e) => {
+
+                          onError={(e) => {
                             e.target.src = "/placeholder-team.svg";
                           }}
                         />

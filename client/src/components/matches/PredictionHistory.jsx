@@ -119,9 +119,9 @@ export default function PredictionHistory({
         </div>
       </div>
 
-      {/* Sort Order Toggle */}
-      <div className="flex items-center justify-between relative z-[46]">
-        <div className="flex gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide pb-0.5 -mx-1 px-1">
+      {/* Filter Tabs + Sort Order */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 relative z-[46]">
+        <div className="flex gap-1 sm:gap-1.5 overflow-x-auto scrollbar-hide pb-0.5 -mx-1 px-1">
           {[
             { id: "all", label: "Todas", count: predsWithMatch.length },
             {
@@ -138,7 +138,7 @@ export default function PredictionHistory({
             },
             {
               id: "pending",
-              label: "Pendientes",
+              label: "Pend.",
               count: pendingPreds.length,
               color: "text-amber-400",
             },
@@ -146,11 +146,10 @@ export default function PredictionHistory({
             <button
               key={f.id}
               onClick={() => setPredFilter(f.id)}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
-                predFilter === f.id
+              className={`px-2 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${predFilter === f.id
                   ? "bg-white/10 text-white"
                   : "bg-transparent text-white/60 hover:text-white/60"
-              }`}
+                }`}
             >
               {f.label}{" "}
               <span className={f.color || "text-white/50"}>({f.count})</span>
@@ -161,7 +160,7 @@ export default function PredictionHistory({
           onClick={() =>
             setSortOrder((prev) => (prev === "newest" ? "oldest" : "newest"))
           }
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-medium text-white/60 hover:text-white/60 bg-white/5 hover:bg-white/10 transition-all border-none cursor-pointer shrink-0"
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-medium text-white/60 hover:text-white/60 bg-white/5 hover:bg-white/10 transition-all border-none cursor-pointer shrink-0 self-end sm:self-auto"
         >
           <ArrowUpDown size={12} />
           {sortOrder === "newest" ? "Más nuevos" : "Más viejos"}
@@ -210,15 +209,14 @@ export default function PredictionHistory({
                 key={pred.id}
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`glass-card rounded-xl p-3 sm:p-4 border-l-[3px] ${
-                  !isFinished
+                className={`glass-card rounded-xl p-3 sm:p-4 border-l-[3px] ${!isFinished
                     ? "border-l-amber-500/50"
                     : mainHit
                       ? "border-l-emerald-500"
                       : pred.pointsEarned > 0
                         ? "border-l-blue-500/50"
                         : "border-l-red-500/50"
-                }`}
+                  }`}
               >
                 {/* Top row: Match info + Score Prediction + Result */}
                 <div className="flex flex-col gap-2 sm:gap-0 sm:flex-row sm:items-center sm:justify-between">
@@ -236,13 +234,13 @@ export default function PredictionHistory({
                     </div>
                     <div className="flex items-center gap-2 sm:gap-3">
                       {matchObj.homeTeamLogo && (
-                        <img                           src={matchObj.homeTeamLogo}
+                        <img src={matchObj.homeTeamLogo}
                           alt=""
                           className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0"
                           loading="lazy"
                           decoding="async"
                           width={16} height={16}
-  onError={(e) => {
+                          onError={(e) => {
                             e.target.src = "/placeholder-team.svg";
                           }}
                         />
@@ -257,13 +255,13 @@ export default function PredictionHistory({
                         {matchObj.awayTeam}
                       </span>
                       {matchObj.awayTeamLogo && (
-                        <img                           src={matchObj.awayTeamLogo}
+                        <img src={matchObj.awayTeamLogo}
                           alt=""
                           className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0"
                           loading="lazy"
                           decoding="async"
                           width={16} height={16}
-  onError={(e) => {
+                          onError={(e) => {
                             e.target.src = "/placeholder-team.svg";
                           }}
                         />
@@ -299,15 +297,14 @@ export default function PredictionHistory({
                             {matchObj.homeGoals} - {matchObj.awayGoals}
                           </div>
                           <div
-                            className={`text-[9px] sm:text-[10px] font-bold ${
-                              isExact
+                            className={`text-[9px] sm:text-[10px] font-bold ${isExact
                                 ? "text-emerald-400"
                                 : isWinnerCorrect
                                   ? "text-blue-400"
                                   : pred.pointsEarned > 0
                                     ? "text-violet-400"
                                     : "text-red-400"
-                            }`}
+                              }`}
                           >
                             {isExact
                               ? "EXACTO"

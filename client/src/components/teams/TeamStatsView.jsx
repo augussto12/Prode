@@ -27,7 +27,7 @@ export default function TeamStatsView({ team }) {
       .filter((s) => s.has_values && s.details?.length > 10) // at least 10 details = real data
       .map((s) => {
         // Try to find season name
-        const season =
+        const season = s.season ||
           (team.seasons || []).find((se) => se.id === s.season_id) ||
           (team.activeseasons || []).find((se) => se.id === s.season_id);
         return {
@@ -82,11 +82,10 @@ export default function TeamStatsView({ team }) {
             <button
               key={s.seasonId}
               onClick={() => setSelectedSeasonIdx(i)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border-none cursor-pointer ${
-                i === selectedSeasonIdx
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border-none cursor-pointer ${i === selectedSeasonIdx
                   ? "bg-indigo-600 text-white shadow-lg"
                   : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/60"
-              }`}
+                }`}
             >
               {s.name}
             </button>

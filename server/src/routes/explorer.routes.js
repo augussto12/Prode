@@ -316,7 +316,7 @@ router.get('/today', async (req, res, next) => {
 
     const data = await cachedApiCall(cacheKey, 600, async () => {
       const result = await footballApi.fetchFixturesByDate(todayStr, null, tz);
-      
+
       // Intentar fetchear pre-match odds (Bookmaker 8=Bet365, Bet 1=Match Winner)
       try {
         const oddsResult = await footballApi.fetchOdds({ date: todayStr, timezone: tz, bookmaker: 8, bet: 1 });
@@ -325,7 +325,7 @@ router.get('/today', async (req, res, next) => {
           const betWinner = o.bookmakers?.[0]?.bets?.[0];
           if (betWinner) oddsMap[o.fixture.id] = betWinner.values;
         });
-        
+
         // Attach
         (result.response || []).forEach(m => {
           if (oddsMap[m.fixture.id]) {
@@ -335,7 +335,7 @@ router.get('/today', async (req, res, next) => {
       } catch (e) {
         // Odds not available — non-critical
       }
-      
+
       return result.response;
     });
 
@@ -376,7 +376,7 @@ router.get('/fixtures/date/:date', async (req, res, next) => {
 
     const data = await cachedApiCall(cacheKey, 3600, async () => {
       const result = await footballApi.fetchFixturesByDate(date, leagueId);
-      
+
       try {
         // Fetch real pre-match odds
         const oddsResult = await footballApi.fetchOdds({ date, bookmaker: 8, bet: 1 });
@@ -385,7 +385,7 @@ router.get('/fixtures/date/:date', async (req, res, next) => {
           const betWinner = o.bookmakers?.[0]?.bets?.[0];
           if (betWinner) oddsMap[o.fixture.id] = betWinner.values;
         });
-        
+
         (result.response || []).forEach(m => {
           if (oddsMap[m.fixture.id]) {
             m.odds = oddsMap[m.fixture.id];
@@ -394,7 +394,7 @@ router.get('/fixtures/date/:date', async (req, res, next) => {
       } catch (e) {
         // Odds not available — non-critical
       }
-      
+
       return result.response;
     });
 
@@ -472,7 +472,7 @@ router.get('/players/:id', async (req, res, next) => {
     const playerId = Number(req.params.id);
     const season = Number(req.query.season) || getCurrentSeason();
     const source = req.query.source;
-    
+
     // Si viene de detalle de partido de Sportmonks, forzar ruta por Sportmonks
     if (source === 'sportmonks') {
       const cacheKey = `sm:player_profile:${playerId}`;
@@ -508,7 +508,7 @@ router.get('/players/:id/trophies', async (req, res, next) => {
     // Ya que Sportmonks trae todo de una.
     const source = req.query.source;
     if (source === 'sportmonks') {
-      const data = await smPlayers.getPlayerById(playerId);
+      const data = await smPlayers.getPlayerTrophies(playerId);
       const mapped = mapPlayerProfileSportmonksToApiFootball(data?.data);
       return res.json(mapped?.trophies || []);
     }
@@ -527,7 +527,7 @@ router.get('/players/:id/transfers', async (req, res, next) => {
     const playerId = Number(req.params.id);
     const source = req.query.source;
     if (source === 'sportmonks') {
-      const data = await smPlayers.getPlayerById(playerId);
+      const data = await smPlayers.getPlayerTransfers(playerId);
       const mapped = mapPlayerProfileSportmonksToApiFootball(data?.data);
       return res.json(mapped?.transfers || []);
     }
@@ -637,15 +637,15 @@ router.get('/teams/:id', async (req, res, next) => {
   try {
     const teamId = Number(req.params.id);
     const cacheKey = `team:info:${teamId}`;
-    
+
     // Cache for 24 hours (86400s)
     const data = await cachedApiCall(cacheKey, 86400, async () => {
       const result = await footballApi.fetchTeams(null, null).catch(async () => {
-         // footballApi.fetchTeams expects league/season, but there is an endpoint for just team ID
-         // Let's implement team info via apiCall('teams', { id: teamId })
-         const url = `${process.env.FOOTBALL_API_BASE || 'https://v3.football.api-sports.io'}/teams?id=${teamId}`;
-         const r = await fetch(url, { headers: { 'x-apisports-key': process.env.FOOTBALL_API_KEY } });
-         return r.json();
+        // footballApi.fetchTeams expects league/season, but there is an endpoint for just team ID
+        // Let's implement team info via apiCall('teams', { id: teamId })
+        const url = `${process.env.FOOTBALL_API_BASE || 'https://v3.football.api-sports.io'}/teams?id=${teamId}`;
+        const r = await fetch(url, { headers: { 'x-apisports-key': process.env.FOOTBALL_API_KEY } });
+        return r.json();
       });
       return result.response?.[0] || null;
     });
@@ -660,7 +660,7 @@ router.get('/teams/:id/squad', async (req, res, next) => {
   try {
     const teamId = Number(req.params.id);
     const cacheKey = `team:squad:${teamId}`;
-    
+
     // Cache for 24 hours (86400s)
     const data = await cachedApiCall(cacheKey, 86400, async () => {
       const result = await footballApi.fetchSquad(teamId);
@@ -677,7 +677,7 @@ router.get('/teams/:id/coach', async (req, res, next) => {
   try {
     const teamId = Number(req.params.id);
     const cacheKey = `team:coach:${teamId}`;
-    
+
     // Cache for 24 hours
     const data = await cachedApiCall(cacheKey, 86400, async () => {
       const url = `${process.env.FOOTBALL_API_BASE || 'https://v3.football.api-sports.io'}/coachs?team=${teamId}`;
@@ -698,12 +698,12 @@ router.get('/teams/:id/fixtures', async (req, res, next) => {
     const currentYear = getCurrentSeason();
     const prevYear = currentYear - 1;
     const cacheKey = `team:fixtures:${teamId}:${prevYear}-${currentYear}`;
-    
+
     // Cache for 1 hour (3600s) — fixtures change frequently during active seasons
     const data = await cachedApiCall(cacheKey, 3600, async () => {
       const baseUrl = `${process.env.FOOTBALL_API_BASE || 'https://v3.football.api-sports.io'}/fixtures`;
       const headers = { 'x-apisports-key': process.env.FOOTBALL_API_KEY };
-      
+
       // Fetch both seasons in parallel — European leagues use prev year (e.g., 2025 for 2025-2026)
       const [currentRes, prevRes] = await Promise.all([
         fetch(`${baseUrl}?team=${teamId}&season=${currentYear}`, { headers }).then(r => r.json()).catch(() => ({ response: [] })),
@@ -731,11 +731,11 @@ router.get('/teams/:id/statistics', async (req, res, next) => {
     const teamId = Number(req.params.id);
     const season = Number(req.query.season) || getCurrentSeason();
     const leagueId = Number(req.query.league);
-    
+
     if (!leagueId) return res.status(400).json({ error: 'league query parameter required' });
 
     const cacheKey = `team:stats:${teamId}:${leagueId}:${season}`;
-    
+
     const data = await cachedApiCall(cacheKey, 86400, async () => {
       const result = await footballApi.fetchTeamStatistics(leagueId, season, teamId);
       return result.response || null;
@@ -750,7 +750,7 @@ router.get('/teams/:id/transfers', async (req, res, next) => {
   try {
     const teamId = Number(req.params.id);
     const cacheKey = `team:transfers:${teamId}`;
-    
+
     // Cache for 24 hours (86400s) since transfers don't change that rapidly outside of windows
     const data = await cachedApiCall(cacheKey, 86400, async () => {
       const result = await footballApi.fetchTeamTransfers(teamId);

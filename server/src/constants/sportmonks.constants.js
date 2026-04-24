@@ -77,9 +77,9 @@ export const STAT_TYPE = {
 
 // STATE IDs — Estados numéricos de partidos
 export const STATE_IDS = {
-  LIVE: [2, 3, 4, 6, 7, 8, 9, 11, 22],
-  FINISHED: [5, 10, 13, 14, 15, 16],
-  NOT_STARTED: [1, 17, 18, 21],
+  LIVE: [2, 3, 4, 6, 9, 21, 22, 25],
+  FINISHED: [5, 7, 8, 14, 17],
+  NOT_STARTED: [1, 10, 11, 12, 13, 15, 16, 18, 19, 20, 26],
 };
 
 // DEVELOPER NAMES — Estados de partidos (más confiable que state_id o short_code)
@@ -87,14 +87,15 @@ export const LIVE_DEVELOPER_NAMES = [
   'INPLAY_1ST_HALF',
   'INPLAY_2ND_HALF',
   'INPLAY_ET',
-  'INPLAY_ET_2ND_HALF',
   'INPLAY_PENALTIES',
   'HT',
   'BREAK',
+  'EXTRA_TIME_BREAK',
+  'PEN_BREAK'
 ];
 
 export const FINISHED_DEVELOPER_NAMES = [
-  'FT', 'AET', 'FT_PEN', 'AWARDED', 'CANCELLATION'
+  'FT', 'AET', 'FT_PEN', 'AWARDED', 'WO'
 ];
 
 // LEAGUE IDs — Entorno Sportmonks (Ligas cubiertas)

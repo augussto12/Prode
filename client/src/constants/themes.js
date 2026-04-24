@@ -154,6 +154,46 @@ export const THEMES = [
     bgGradientFrom: '#001a14',
     bgGradientTo: '#1a1200',
   },
+  {
+    id: 'royal',
+    name: 'Real',
+    preview: ['#3b82f6', '#d4af37', '#0a0a1a'],
+    primaryColor: '#3b82f6',    // azul real
+    secondaryColor: '#d4af37',  // dorado
+    accentColor: '#fbbf24',     // dorado claro
+    bgGradientFrom: '#0a0a1a',
+    bgGradientTo: '#0f172a',
+  },
+  {
+    id: 'aurora',
+    name: 'Aurora',
+    preview: ['#34d399', '#818cf8', '#030712'],
+    primaryColor: '#34d399',    // verde menta
+    secondaryColor: '#818cf8',  // violeta suave
+    accentColor: '#f0abfc',     // rosa
+    bgGradientFrom: '#030712',
+    bgGradientTo: '#0d1a2e',
+  },
+  {
+    id: 'lava',
+    name: 'Lava',
+    preview: ['#ef4444', '#0ea5e9', '#1a0000'],
+    primaryColor: '#ef4444',    // rojo
+    secondaryColor: '#0ea5e9',  // celeste
+    accentColor: '#fca5a5',     // rojo claro
+    bgGradientFrom: '#1a0000',
+    bgGradientTo: '#001a2e',
+  },
+  {
+    id: 'gold',
+    name: 'Dorado',
+    preview: ['#d4af37', '#92400e', '#1a1000'],
+    primaryColor: '#d4af37',    // dorado
+    secondaryColor: '#b45309',  // bronce/cobre
+    accentColor: '#fcd34d',     // amarillo claro
+    bgGradientFrom: '#1a1000',
+    bgGradientTo: '#0f0a00',
+  },
 ];
 
 export const VALID_THEME_IDS = THEMES.map(t => t.id);

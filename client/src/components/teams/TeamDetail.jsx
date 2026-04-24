@@ -116,10 +116,10 @@ export default function TeamDetail() {
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 md:gap-4 text-xs md:text-sm text-white/60 font-medium">
               {team.country?.name && (
                 <span className="flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-                  <img                     src={team.country.image_path}
+                  <img src={team.country.image_path}
                     alt={team.country.name}
                     className="w-4 h-4 rounded-full object-cover"
-                  loading="lazy" decoding="async" width={16} height={16} />
+                    loading="lazy" decoding="async" width={16} height={16} />
                   {team.country.name}
                 </span>
               )}
@@ -148,11 +148,10 @@ export default function TeamDetail() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider transition-all whitespace-nowrap outline-none focus:outline-none ring-0 border-none cursor-pointer ${
-                  active
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
-                    : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80"
-                }`}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider transition-all whitespace-nowrap outline-none focus:outline-none ring-0 border-none cursor-pointer ${active
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
+                  : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80"
+                  }`}
               >
                 <Icon size={16} /> {tab.label}
               </button>
@@ -178,10 +177,10 @@ export default function TeamDetail() {
                 {team.venue && (
                   <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden relative group">
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10" />
-                    <img                       src={team.venue.image_path || team.image_path}
+                    <img src={team.venue.image_path || team.image_path}
                       alt={team.venue.name}
                       className="w-full h-full object-cover absolute inset-0 group-hover:scale-105 transition-transform duration-700"
-                    loading="lazy" decoding="async" />
+                      loading="lazy" decoding="async" />
                     <div className="relative z-20 p-6 h-full flex flex-col justify-end min-h-[220px]">
                       <div className="flex items-center gap-2 text-indigo-400 mb-1">
                         <MapPin size={16} />
@@ -221,17 +220,13 @@ export default function TeamDetail() {
                       {Object.entries(
                         team.trophies.reduce((acc, t) => {
                           const name =
-                            TROPHY_MAP[t.league_id] || `Torneo ${t.league_id}`;
+                            TROPHY_MAP[t.league_id] || t.league?.name || `Torneo ${t.league_id}`;
                           if (!acc[name]) acc[name] = { count: 0, years: [] };
                           acc[name].count++;
-                          const season = team.seasons?.find(
-                            (s) => s.id === t.season_id,
-                          );
-                          if (season)
-                            acc[name].years.push(
-                              season.name ||
-                                new Date(season.starting_at).getFullYear(),
-                            );
+                          const seasonName = t.season?.name
+                            || team.seasons?.find((s) => s.id === t.season_id)?.name
+                            || "N/A";
+                          acc[name].years.push(seasonName);
                           return acc;
                         }, {}),
                       )
@@ -299,10 +294,10 @@ export default function TeamDetail() {
                         className="bg-white/5 border border-white/5 flex flex-col items-center p-4 rounded-2xl hover:bg-white/10 transition-colors"
                       >
                         <div className="relative w-16 h-16 mb-3">
-                          <img                             src={pl.image_path}
+                          <img src={pl.image_path}
                             alt={pl.name}
                             className="w-full h-full rounded-full object-cover bg-slate-800"
-                          loading="lazy" decoding="async" />
+                            loading="lazy" decoding="async" />
                           {p.jersey_number && (
                             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-indigo-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-[#121827]">
                               {p.jersey_number}
@@ -315,8 +310,8 @@ export default function TeamDetail() {
                         <span className="text-[10px] text-white/60 uppercase tracking-widest">
                           {pl.date_of_birth
                             ? new Date().getFullYear() -
-                              new Date(pl.date_of_birth).getFullYear() +
-                              " años"
+                            new Date(pl.date_of_birth).getFullYear() +
+                            " años"
                             : ""}
                         </span>
                       </div>
@@ -501,10 +496,10 @@ export default function TeamDetail() {
                           key={s.id}
                           className="flex items-center gap-4 bg-red-950/20 border border-red-900/30 p-4 rounded-2xl"
                         >
-                          <img                             src={pl.image_path}
+                          <img src={pl.image_path}
                             alt={pl.name}
                             className="w-12 h-12 rounded-full object-cover bg-black/50"
-                          loading="lazy" decoding="async" width={48} height={48} />
+                            loading="lazy" decoding="async" width={48} height={48} />
                           <div className="flex-1">
                             <h4 className="font-bold text-sm text-white">
                               {pl.name}

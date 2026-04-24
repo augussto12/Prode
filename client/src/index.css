@@ -13,6 +13,58 @@
   --color-accent: var(--accent-color, #f59e0b);
   --color-bg-start: var(--bg-start-color, #0f172a);
   --color-bg-end: var(--bg-end-color, #1e1b4b);
+
+  /* Full scale overrides to make hardcoded colors dynamic */
+  /* INDIGO -> PRIMARY */
+  --color-indigo-50: color-mix(in srgb, var(--color-primary) 10%, white);
+  --color-indigo-100: color-mix(in srgb, var(--color-primary) 20%, white);
+  --color-indigo-200: color-mix(in srgb, var(--color-primary) 40%, white);
+  --color-indigo-300: color-mix(in srgb, var(--color-primary) 60%, white);
+  --color-indigo-400: color-mix(in srgb, var(--color-primary) 80%, white);
+  --color-indigo-500: var(--color-primary);
+  --color-indigo-600: color-mix(in srgb, var(--color-primary) 80%, black);
+  --color-indigo-700: color-mix(in srgb, var(--color-primary) 60%, black);
+  --color-indigo-800: color-mix(in srgb, var(--color-primary) 40%, black);
+  --color-indigo-900: color-mix(in srgb, var(--color-primary) 20%, black);
+  --color-indigo-950: color-mix(in srgb, var(--color-primary) 10%, black);
+
+  /* PURPLE/VIOLET -> SECONDARY */
+  --color-purple-50: color-mix(in srgb, var(--color-secondary) 10%, white);
+  --color-purple-100: color-mix(in srgb, var(--color-secondary) 20%, white);
+  --color-purple-200: color-mix(in srgb, var(--color-secondary) 40%, white);
+  --color-purple-300: color-mix(in srgb, var(--color-secondary) 60%, white);
+  --color-purple-400: color-mix(in srgb, var(--color-secondary) 80%, white);
+  --color-purple-500: var(--color-secondary);
+  --color-purple-600: color-mix(in srgb, var(--color-secondary) 80%, black);
+  --color-purple-700: color-mix(in srgb, var(--color-secondary) 60%, black);
+  --color-purple-800: color-mix(in srgb, var(--color-secondary) 40%, black);
+  --color-purple-900: color-mix(in srgb, var(--color-secondary) 20%, black);
+  --color-purple-950: color-mix(in srgb, var(--color-secondary) 10%, black);
+
+  --color-violet-50: var(--color-purple-50);
+  --color-violet-100: var(--color-purple-100);
+  --color-violet-200: var(--color-purple-200);
+  --color-violet-300: var(--color-purple-300);
+  --color-violet-400: var(--color-purple-400);
+  --color-violet-500: var(--color-purple-500);
+  --color-violet-600: var(--color-purple-600);
+  --color-violet-700: var(--color-purple-700);
+  --color-violet-800: var(--color-purple-800);
+  --color-violet-900: var(--color-purple-900);
+  --color-violet-950: var(--color-purple-950);
+
+  /* AMBER -> ACCENT */
+  --color-amber-50: color-mix(in srgb, var(--color-accent) 10%, white);
+  --color-amber-100: color-mix(in srgb, var(--color-accent) 20%, white);
+  --color-amber-200: color-mix(in srgb, var(--color-accent) 40%, white);
+  --color-amber-300: color-mix(in srgb, var(--color-accent) 60%, white);
+  --color-amber-400: color-mix(in srgb, var(--color-accent) 80%, white);
+  --color-amber-500: var(--color-accent);
+  --color-amber-600: color-mix(in srgb, var(--color-accent) 80%, black);
+  --color-amber-700: color-mix(in srgb, var(--color-accent) 60%, black);
+  --color-amber-800: color-mix(in srgb, var(--color-accent) 40%, black);
+  --color-amber-900: color-mix(in srgb, var(--color-accent) 20%, black);
+  --color-amber-950: color-mix(in srgb, var(--color-accent) 10%, black);
 }
 
 * {
@@ -57,11 +109,12 @@ body::before {
   position: sticky;
   left: 0;
   z-index: 10;
-  box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
 }
+
 /* Ensure the table header sticky column sits above the table body sticky column */
 th.sticky-col {
   z-index: 20;
@@ -77,25 +130,33 @@ th.sticky-col {
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);
   border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
 }
 
 /* Animations */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -115,9 +176,15 @@ select option {
 
 /* Bracket connector draw animation */
 @keyframes drawLine {
-  from { stroke-dashoffset: 1000; }
-  to   { stroke-dashoffset: 0; }
+  from {
+    stroke-dashoffset: 1000;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
 }
+
 .bracket-line-animated {
   animation: drawLine 0.8s ease-out forwards;
 }
@@ -127,20 +194,23 @@ select option {
   overflow-x: auto;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.1) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
+
 .bracket-scroll::-webkit-scrollbar {
   height: 6px;
   width: 6px;
 }
+
 .bracket-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .bracket-scroll::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
 }
+
 .bracket-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
-

@@ -20,7 +20,7 @@ export async function getTeamsBySeason(seasonId) {
  */
 export async function getTeamById(teamId) {
   return sportmonksGet(`/teams/${teamId}`, {
-    include: 'statistics.details;trophies;country;venue;coaches.coach;players.player;latest.participants;latest.scores;upcoming.participants;seasons;activeSeasons;sidelined.player;sidelinedHistory.player',
+    include: 'statistics.details;statistics.season.league;trophies.league;trophies.season;country;venue;coaches.coach;players.player;latest.participants;latest.scores;upcoming.participants;seasons.league;activeSeasons;sidelined.player',
   });
 }
 

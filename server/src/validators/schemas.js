@@ -20,7 +20,7 @@ const hexColorRegex = /^#[0-9a-fA-F]{6}$/;
 export const profileUpdateSchema = z.object({
   displayName: z.string().min(1).max(30).optional(),
   avatar: z.string().url().max(500).optional().nullable(),
-  themeId: z.enum(['default', 'emerald', 'rose', 'amber', 'sky', 'slate', 'cyberpunk', 'sunset', 'galaxy', 'forest', 'ocean', 'midnight', 'neon', 'fire', 'tropical']).optional(),
+  themeId: z.enum(['default', 'emerald', 'rose', 'amber', 'sky', 'slate', 'cyberpunk', 'sunset', 'galaxy', 'forest', 'ocean', 'midnight', 'neon', 'fire', 'tropical', 'royal', 'aurora', 'lava', 'gold']).optional(),
 }).strict(); // STRICT: rechaza campos extra (previene mass assignment de role, email, password)
 
 // --- FAVORITES ---

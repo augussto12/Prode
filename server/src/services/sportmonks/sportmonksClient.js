@@ -55,7 +55,7 @@ export async function sportmonksGet(endpoint, params = {}) {
         headers: {
           'Accept': 'application/json',
         },
-        signal: AbortSignal.timeout(15000), // 15s timeout
+        signal: AbortSignal.timeout(45000), // 45s timeout for heavy relational payloads
       });
 
       // Handle rate limit
@@ -80,7 +80,7 @@ export async function sportmonksGet(endpoint, params = {}) {
 
       // Log rate limit restante
       const remaining = data?.rate_limit?.remaining;
-      
+
       if (data?.rate_limit) {
         sportmonksRateLimit = {
           remaining: data.rate_limit.remaining,

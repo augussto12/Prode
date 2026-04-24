@@ -42,8 +42,29 @@ export async function getSquadByTeam(teamId) {
  * @param {number|string} playerId
  */
 export async function getPlayerById(playerId) {
+  // Heavy initial payload focused only on core details and season/team relational statistics
   return sportmonksGet(`/players/${playerId}`, {
-    include: 'statistics.details;position;nationality;transfers',
+    include: 'country;city;nationality;teams;statistics.details;statistics.season.league;statistics.team;position;detailedPosition;lineups;latest;metadata',
+  });
+}
+
+/**
+ * Datos de trofeos de un jugador específico.
+ * @param {number|string} playerId
+ */
+export async function getPlayerTrophies(playerId) {
+  return sportmonksGet(`/players/${playerId}`, {
+    include: 'trophies.trophy;trophies.league;trophies.season'
+  });
+}
+
+/**
+ * Datos de transferencias de un jugador específico.
+ * @param {number|string} playerId
+ */
+export async function getPlayerTransfers(playerId) {
+  return sportmonksGet(`/players/${playerId}`, {
+    include: 'transfers.fromTeam;transfers.toTeam'
   });
 }
 
