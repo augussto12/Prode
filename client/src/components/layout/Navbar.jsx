@@ -64,7 +64,7 @@ export default function Navbar() {
     location.pathname === path || location.pathname.startsWith(path + "/");
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-white/10 shadow-lg bg-[#0f172a]">
+    <nav className="sticky top-0 z-50 border-b border-white/10 shadow-lg" style={{ background: 'var(--bg-start-color, #0f172a)' }}>
       <div className="relative z-50 max-w-[1600px] mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
@@ -102,6 +102,7 @@ export default function Navbar() {
                       background: link.gold
                         ? "linear-gradient(135deg, #b8860b, #daa520)"
                         : "var(--color-primary)",
+                      borderBottom: link.gold ? undefined : "2px solid var(--color-secondary)",
                     }
                     : {}
                 }
@@ -187,7 +188,7 @@ export default function Navbar() {
             className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="md:hidden absolute top-full left-0 right-0 z-50 bg-[#0f0c29]/95 backdrop-blur-md border-b border-white/10 px-4 pb-4 pt-2 shadow-2xl">
+          <div className="md:hidden absolute top-full left-0 right-0 z-50 backdrop-blur-md border-b border-white/10 px-4 pb-4 pt-2 shadow-2xl" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #0f0c29) 95%, transparent)' }}>
             {links.map((link) => (
               <Link
                 key={link.to}

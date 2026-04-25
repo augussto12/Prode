@@ -154,3 +154,13 @@
 .fantasy-btn.secondary:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+/* Themed focus for Fantasy module inputs */
+.fantasy-input:focus {
+  border-color: var(--color-primary, #6366f1) !important;
+  outline: none;
+}
+
+.fantasy-hover:hover {
+  border-color: var(--color-primary, #6366f1) !important;
+}

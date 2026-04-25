@@ -170,7 +170,9 @@ function FantasyLeague() {
 
       {/* ADMIN PANEL */}
       {isOwner && adminTab && (
-        <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-8 border-indigo-500/20 animate-fade-in bg-gradient-to-br from-indigo-900/30 to-purple-900/10">
+        <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-8 animate-fade-in"
+          style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 15%, transparent), color-mix(in srgb, var(--color-secondary) 5%, transparent))', borderColor: 'color-mix(in srgb, var(--color-primary) 20%, transparent)' }}
+        >
           <h2 className="text-base sm:text-xl font-bold text-indigo-400 mb-4 sm:mb-6 flex items-center gap-2">
             <ShieldCheck size={18} /> Admin
           </h2>
@@ -218,7 +220,8 @@ function FantasyLeague() {
                     setSavingLeague(false);
                   }
                 }}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 disabled:opacity-50 transition border-none cursor-pointer"
+                className="hover:opacity-90 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 disabled:opacity-50 transition border-none cursor-pointer"
+                style={{ background: 'var(--color-primary)' }}
               >
                 {savingLeague ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Guardar
               </button>
@@ -337,13 +340,19 @@ function FantasyLeague() {
 
       {/* TABS */}
       <div className="flex gap-1.5 sm:gap-2 mb-4 sm:mb-6 border-b border-white/10 pb-3 overflow-x-auto scrollbar-hide">
-        <button onClick={() => setActiveTab('standings')} className={`px-3 sm:px-4 py-2 font-bold rounded-xl transition-colors cursor-pointer text-xs sm:text-sm whitespace-nowrap ${activeTab === 'standings' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'text-white/50 hover:text-white hover:bg-white/5 border border-transparent'}`}>
+        <button onClick={() => setActiveTab('standings')} className={`px-3 sm:px-4 py-2 font-bold rounded-xl transition-colors cursor-pointer text-xs sm:text-sm whitespace-nowrap border ${activeTab === 'standings' ? 'text-white' : 'text-white/50 hover:text-white hover:bg-white/5 border-transparent'}`}
+          style={activeTab === 'standings' ? { background: 'color-mix(in srgb, var(--color-primary) 20%, transparent)', color: 'var(--color-accent)', borderColor: 'color-mix(in srgb, var(--color-accent) 30%, transparent)', borderBottom: '2px solid var(--color-secondary)' } : {}}
+        >
           Posiciones
         </button>
-        <button onClick={() => setActiveTab('calendar')} className={`px-3 sm:px-4 py-2 font-bold rounded-xl transition-colors cursor-pointer text-xs sm:text-sm whitespace-nowrap ${activeTab === 'calendar' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-white/50 hover:text-white hover:bg-white/5 border border-transparent'}`}>
+        <button onClick={() => setActiveTab('calendar')} className={`px-3 sm:px-4 py-2 font-bold rounded-xl transition-colors cursor-pointer text-xs sm:text-sm whitespace-nowrap border ${activeTab === 'calendar' ? 'text-white' : 'text-white/50 hover:text-white hover:bg-white/5 border-transparent'}`}
+          style={activeTab === 'calendar' ? { background: 'color-mix(in srgb, var(--color-primary) 20%, transparent)', color: 'var(--color-primary)', borderColor: 'color-mix(in srgb, var(--color-primary) 30%, transparent)', borderBottom: '2px solid var(--color-secondary)' } : {}}
+        >
           Fechas y Partidos
         </button>
-        <button onClick={() => setActiveTab('idealteam')} className={`px-3 sm:px-4 py-2 font-bold rounded-xl transition-colors cursor-pointer text-xs sm:text-sm whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'idealteam' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-white/50 hover:text-white hover:bg-white/5 border border-transparent'}`}>
+        <button onClick={() => setActiveTab('idealteam')} className={`px-3 sm:px-4 py-2 font-bold rounded-xl transition-colors cursor-pointer text-xs sm:text-sm whitespace-nowrap flex items-center gap-1.5 border ${activeTab === 'idealteam' ? 'text-white' : 'text-white/50 hover:text-white hover:bg-white/5 border-transparent'}`}
+          style={activeTab === 'idealteam' ? { background: 'color-mix(in srgb, var(--color-secondary) 20%, transparent)', color: 'var(--color-secondary)', borderColor: 'color-mix(in srgb, var(--color-secondary) 30%, transparent)', borderBottom: '2px solid var(--color-secondary)' } : {}}
+        >
           <Star size={14} /> Equipo de la Fecha
         </button>
       </div>

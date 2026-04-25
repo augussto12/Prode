@@ -455,7 +455,7 @@ function FantasyTeam() {
       </button>
 
       {/* HUD */}
-      <div className="glass-card bg-black/20 p-3 sm:p-4 mb-3 sm:mb-4 rounded-xl sm:rounded-2xl">
+      <div className="glass-card p-3 sm:p-4 mb-3 sm:mb-4 rounded-xl sm:rounded-2xl">
         <div className="flex flex-wrap justify-between items-center gap-2 sm:gap-4">
           {activeGw && (
             <div className="flex flex-col items-center sm:items-start w-full sm:w-auto order-2 sm:order-1">
@@ -481,7 +481,8 @@ function FantasyTeam() {
                   maxLength={30}
                   autoFocus
                   onKeyDown={e => { if (e.key === 'Enter') handleRename(); if (e.key === 'Escape') setIsEditingName(false); }}
-                  className="bg-black/40 border border-indigo-500/50 rounded-lg px-2 py-1 text-white text-sm sm:text-base font-bold text-center focus:outline-none w-[160px] sm:w-[200px]"
+                  className="border border-indigo-500/50 rounded-lg px-2 py-1 text-white text-sm sm:text-base font-bold text-center focus:outline-none w-[160px] sm:w-[200px]"
+                  style={{ background: 'color-mix(in srgb, var(--bg-start-color, #000) 60%, transparent)' }}
                 />
                 <button
                   onClick={handleRename}
@@ -544,7 +545,7 @@ function FantasyTeam() {
         {showFixturesDrawer && (
           <div className="lg:hidden fixed inset-0 bg-black/80 z-50 flex" onClick={() => setShowFixturesDrawer(false)}>
             <div
-              className="w-[80vw] max-w-[300px] h-full glass-card bg-black/60 shadow-2xl animate-fade-in p-3 flex flex-col"
+              className="w-[80vw] max-w-[300px] h-full glass-card shadow-2xl animate-fade-in p-3 flex flex-col"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex justify-between items-center mb-3 border-b border-white/10 pb-2">
@@ -582,8 +583,8 @@ function FantasyTeam() {
         )}
 
         {/* COLUMNA 1: FIXTURES (Desktop Solo) */}
-        <div className="hidden lg:flex w-full lg:w-[380px] flex-shrink-0 glass-card bg-black/20 rounded-2xl flex-col h-[800px] overflow-hidden sticky top-4">
-          <div className="p-4 border-b border-white/5 bg-black/20 h-[72px] flex items-center justify-center sm:justify-start">
+        <div className="hidden lg:flex w-full lg:w-[380px] flex-shrink-0 glass-card rounded-2xl flex-col h-[800px] overflow-hidden sticky top-4">
+          <div className="p-4 border-b border-white/5 h-[72px] flex items-center justify-center sm:justify-start" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #000) 40%, transparent)' }}>
             <h3 className="font-bold text-white text-sm m-0">Fixture Fecha {activeGw?.gameweekNumber}</h3>
           </div>
           <div className="flex flex-col gap-3 overflow-y-auto custom-scrollbar flex-1 p-4">
@@ -612,9 +613,9 @@ function FantasyTeam() {
 
         {/* COLUMNA 2: PITCH */}
         <div className="w-full lg:w-[480px] flex-shrink-0 flex flex-col gap-3 sm:gap-4">
-          <div className="glass-card bg-black/20 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl relative flex flex-col pitch-wrapper">
+          <div className="glass-card rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl relative flex flex-col pitch-wrapper">
             {/* Save Header / View Mode Controls */}
-            <div className="flex items-center justify-between gap-2 p-2.5 sm:p-4 border-b border-white/5 bg-black/20">
+            <div className="flex items-center justify-between gap-2 p-2.5 sm:p-4 border-b border-white/5" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #000) 40%, transparent)' }}>
               {viewMode === 'current' ? (
                 <>
                   <div className="flex items-center gap-2 sm:gap-3">
@@ -656,7 +657,8 @@ function FantasyTeam() {
                       <button
                         disabled={isSaving || draftPicks.length !== 11}
                         onClick={handleSaveDraft}
-                        className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-sm font-bold shadow-lg disabled:opacity-50 flex items-center gap-1.5 transition border-none cursor-pointer"
+                        className="text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-sm font-bold shadow-lg disabled:opacity-50 flex items-center gap-1.5 transition border-none cursor-pointer hover:opacity-90"
+                        style={{ background: 'var(--color-primary)' }}
                       >
                         {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                         <span className="hidden sm:inline">{isSaving ? 'Guardando...' : 'Guardar'}</span>
@@ -738,7 +740,7 @@ function FantasyTeam() {
           onClick={() => showMarketDrawer && setShowMarketDrawer(false)}
         >
           <div
-            className={`glass-card rounded-xl sm:rounded-2xl flex flex-col overflow-hidden ${showMarketDrawer ? 'w-full max-w-[380px] h-[85vh] relative bg-black/80' : 'h-[800px] bg-black/20'}`}
+            className={`glass-card rounded-xl sm:rounded-2xl flex flex-col overflow-hidden ${showMarketDrawer ? 'w-full max-w-[380px] h-[85vh] relative' : 'h-[800px]'}`}
             onClick={e => e.stopPropagation()}
           >
             {viewMode === 'current' && activeGw?.status !== 'IN_PROGRESS' ? (
@@ -748,7 +750,7 @@ function FantasyTeam() {
                     <X size={18} />
                   </button>
                 )}
-                <div className="p-3 sm:p-4 border-b border-white/5 bg-black/20 flex items-center">
+                <div className="p-3 sm:p-4 border-b border-white/5 flex items-center" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #000) 40%, transparent)' }}>
                   <h3 className="font-bold text-white text-xs sm:text-sm m-0 flex items-center gap-2">
                     🛒 Director Deportivo
                   </h3>
@@ -763,7 +765,8 @@ function FantasyTeam() {
                         placeholder="Buscar..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full bg-black/30 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 sm:py-2 text-white text-xs sm:text-sm focus:outline-none focus:border-indigo-500"
+                        className="w-full border border-white/10 rounded-lg pl-8 pr-3 py-1.5 sm:py-2 text-white text-xs sm:text-sm focus:outline-none focus:border-indigo-500"
+                        style={{ background: 'color-mix(in srgb, var(--bg-end-color, #000) 30%, transparent)' }}
                       />
                     </div>
                     <select
@@ -777,12 +780,13 @@ function FantasyTeam() {
                       ))}
                     </select>
                   </div>
-                  <div className="flex justify-between gap-0.5 bg-black/40 p-0.5 rounded-lg">
+                  <div className="flex justify-between gap-0.5 p-0.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #000) 40%, transparent)' }}>
                     {['', 'GK', 'DEF', 'MID', 'FWD'].map(pos => (
                       <button
                         key={pos}
                         onClick={() => handlePositionClick(pos)}
-                        className={`flex-1 text-[10px] sm:text-xs font-bold py-1 sm:py-1.5 rounded-md transition border-none cursor-pointer ${positionFilter === pos ? 'bg-indigo-500 text-white shadow-md' : 'text-white/50 hover:bg-white/5 hover:text-white bg-transparent'}`}
+                        className={`flex-1 text-[10px] sm:text-xs font-bold py-1 sm:py-1.5 rounded-md transition border-none cursor-pointer ${positionFilter === pos ? 'text-white shadow-md' : 'text-white/50 hover:bg-white/5 hover:text-white bg-transparent'}`}
+                        style={positionFilter === pos ? { background: 'var(--color-primary)' } : {}}
                       >
                         {pos === '' ? 'Todos' : translateFilterLabel(pos)}
                       </button>
@@ -839,8 +843,9 @@ function FantasyTeam() {
                               <button onClick={() => {
                                 handleSignPlayer(p);
                                 if (window.innerWidth < 1024) setShowMarketDrawer(false);
-                              }} disabled={isComplete} className="h-7 w-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center hover:bg-indigo-500 hover:text-white disabled:opacity-30 transition group border-none cursor-pointer shrink-0 ml-2">
-                                <UserPlus size={13} className="group-hover:scale-110" />
+                              }} disabled={isComplete} className="h-7 w-7 rounded-lg flex items-center justify-center hover:opacity-80 disabled:opacity-30 transition group border-none cursor-pointer shrink-0 ml-2"
+                                style={{ background: 'color-mix(in srgb, var(--color-primary) 20%, transparent)', color: 'var(--color-primary)' }}
+                              >  <UserPlus size={13} className="group-hover:scale-110" />
                               </button>
                             )}
                           </div>

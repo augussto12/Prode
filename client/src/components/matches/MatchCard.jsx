@@ -227,7 +227,7 @@ export default memo(function MatchCard({
       layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`glass-card rounded-xl sm:rounded-2xl overflow-hidden transition-all ${isFavorite ? "ring-1 ring-amber-400/30" : ""}`}
+      className={`glass-card rounded-xl sm:rounded-2xl overflow-hidden transition-all hover:shadow-[0_0_20px_color-mix(in_srgb,var(--color-secondary)_20%,transparent)] ${isFavorite ? "ring-1 ring-amber-400/30" : ""}`}
     >
       {/* Header */}
       <div className="p-3 sm:p-4">
@@ -419,7 +419,8 @@ export default memo(function MatchCard({
       {user && (isPast ? hasExtraMarkets : hasAnyExtras) && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="w-full flex items-center justify-center gap-1 py-2 text-xs text-white/60 hover:text-white/60 bg-white/[0.02] border-t border-white/5 cursor-pointer border-x-0 border-b-0 bg-transparent transition-all"
+          className="w-full flex items-center justify-center gap-1 py-2 text-xs text-white/60 hover:text-white/60 bg-white/[0.02] cursor-pointer border-x-0 border-b-0 bg-transparent transition-all"
+          style={{ borderTop: "1px solid color-mix(in srgb, var(--color-secondary) 20%, transparent)" }}
         >
           {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           {isPast
@@ -803,7 +804,7 @@ export default memo(function MatchCard({
             style={{
               background: saving
                 ? "#6366f1"
-                : "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+                : "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
             }}
           >
             {saving

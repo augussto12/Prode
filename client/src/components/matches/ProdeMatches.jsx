@@ -252,7 +252,7 @@ export default function ProdeMatches({
           {/* Filters Header */}
           <div className="flex flex-col gap-3 sm:gap-4 mb-2">
             {/* Time Segmented Control */}
-            <div className="flex bg-black/20 p-1 rounded-xl border border-white/5 w-full overflow-x-auto scrollbar-hide">
+            <div className="flex p-1 rounded-xl border border-white/5 w-full overflow-x-auto scrollbar-hide" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #000) 20%, transparent)' }}>
               {[
                 { id: "upcoming", label: "Próximos" },
                 { id: "past", label: "Terminados" },

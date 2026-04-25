@@ -17,11 +17,11 @@ export default function GuruChat() {
   const [loading, setLoading] = useState(false);
   const endRef = useRef(null);
 
-  if (!user) return null; // Ocultar el Guru a visitantes no autenticados (Guest Mode)
-
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
+
+  if (!user) return null; // Ocultar el Guru a visitantes no autenticados (Guest Mode)
 
   const handleSend = async (e) => {
     e.preventDefault();

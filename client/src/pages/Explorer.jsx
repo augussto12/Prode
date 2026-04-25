@@ -303,7 +303,8 @@ export default function Explorer() {
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 5 }}
-                  className="absolute top-full mt-2 left-0 w-full md:w-80 bg-[#1e1b4b] border border-white/10 shadow-2xl rounded-xl overflow-hidden max-h-80 overflow-y-auto z-50"
+                  className="absolute top-full mt-2 left-0 w-full md:w-80 border border-white/10 shadow-2xl rounded-xl overflow-hidden max-h-80 overflow-y-auto z-50"
+                  style={{ background: 'color-mix(in srgb, var(--bg-start-color, #1e1b4b) 95%, white)' }}
                 >
                   {filteredAllLeagues.length > 0 && (
                     <div className="p-2">
@@ -446,9 +447,10 @@ export default function Explorer() {
               <Link
                 key={group.id}
                 to={`/groups/${group.id}`}
-                className="flex-shrink-0 w-[280px] md:w-[320px] rounded-2xl p-5 border border-white/10 no-underline transition-all hover:-translate-y-1 hover:shadow-xl relative overflow-hidden group"
+                className="flex-shrink-0 w-[280px] md:w-[320px] rounded-2xl p-5 no-underline transition-all hover:-translate-y-1 relative overflow-hidden group"
                 style={{
                   background: `linear-gradient(135deg, var(--color-bg-start), var(--color-bg-end))`,
+                  border: "1px solid color-mix(in srgb, var(--color-secondary) 25%, transparent)",
                 }}
               >
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -508,7 +510,7 @@ export default function Explorer() {
               <Link
                 key={l.league.id}
                 to={`/liga/${l.league.id}`}
-                className="bg-white/[0.03] rounded-xl p-4 flex flex-col items-center gap-3 no-underline border border-white/10 hover:border-white/20 hover:bg-white/[0.08] transition-all group shadow-[0_4px_24px_-12px_rgba(0,0,0,0.5)] hover:shadow-xl relative overflow-hidden"
+                className="glass-card rounded-xl p-4 flex flex-col items-center gap-3 no-underline border-white/10 hover:border-white/30 hover:bg-white/[0.08] transition-all group shadow-md hover:shadow-xl relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 {l.league.logo ? (
@@ -1043,7 +1045,7 @@ const SmTodayMatchesRow = ({ fixtures }) => {
     <m.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass-card rounded-2xl p-4 border border-indigo-500/20 bg-indigo-500/[0.03]"
+      className="glass-card rounded-2xl p-4"
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">

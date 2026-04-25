@@ -822,17 +822,21 @@ export async function getLeagueCalendar(req, res) {
 
     const now = new Date();
 
-    // Attach fixtures to each gameweek
-    const calendar = await Promise.all(gameweeks.map(async (gw) => {
-      const fixtures = await prisma.fixture.findMany({
-        where: {
-          source: 'sportmonks',
-          leagueId: league.leagueId,
-          seasonId: league.seasonId,
-          startTime: { gte: gw.startDate, lte: gw.endDate }
-        },
-        orderBy: { startTime: 'asc' }
-      });
+    // Fetch all fixtures for the league in a single query
+    const allFixtures = await prisma.fixture.findMany({
+      where: {
+        source: 'sportmonks',
+        leagueId: league.leagueId,
+        seasonId: league.seasonId,
+      },
+      orderBy: { startTime: 'asc' }
+    });
+
+    // Attach fixtures to each gameweek in memory
+    const calendar = gameweeks.map((gw) => {
+      const gwFixtures = allFixtures.filter(f => 
+        f.startTime >= gw.startDate && f.startTime <= gw.endDate
+      );
 
       // Dynamically resolve status specifically for the calendar display
       let status = 'SCHEDULED';
@@ -842,9 +846,9 @@ export async function getLeagueCalendar(req, res) {
       return {
         ...gw,
         status,
-        fixtures
+        fixtures: gwFixtures
       };
-    }));
+    });
 
     // Obtener info de los equipos involucrados para mostrar en UI
     const teamIdsSet = new Set();

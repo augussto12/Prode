@@ -134,7 +134,7 @@ export default function GroupList() {
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium cursor-pointer border-none text-white transition-all hover:opacity-90"
             style={{
               background:
-                "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+                "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
             }}
           >
             <Plus size={16} /> Crear Grupo
@@ -323,7 +323,7 @@ export default function GroupList() {
               className="px-6 py-2.5 rounded-xl text-white font-medium text-sm cursor-pointer border-none hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
               style={{
                 background:
-                  "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+                  "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
               }}
             >
               {isCreating && <Loader2 size={16} className="animate-spin" />}
@@ -357,7 +357,7 @@ export default function GroupList() {
               className="px-6 py-2.5 rounded-xl text-white font-medium text-sm cursor-pointer border-none hover:opacity-90"
               style={{
                 background:
-                  "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+                  "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
               }}
             >
               Unirme
@@ -378,12 +378,15 @@ export default function GroupList() {
             <Link
               to={`/groups/${group.id}`}
               className="block glass-card rounded-2xl p-5 hover:bg-white/[0.08] transition-all no-underline group"
+              style={{
+                borderColor: "color-mix(in srgb, var(--color-secondary) 20%, transparent)",
+              }}
             >
               <div className="flex items-start justify-between mb-3">
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center text-white"
                   style={{
-                    background: `linear-gradient(135deg, var(--color-primary), var(--color-secondary))`,
+                    background: `linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)`,
                   }}
                 >
                   <Users size={20} />

@@ -127,26 +127,31 @@ export default function GroupPredictionsModal({
                 let badgeColor = "text-white/50";
 
                 if (prediction) {
-                  const isExact = pH === mH && pA === mA;
-                  const predResult =
-                    pH > pA ? "HOME" : pH < pA ? "AWAY" : "DRAW";
-                  const actualResult =
-                    mH > mA ? "HOME" : mH < mA ? "AWAY" : "DRAW";
-                  const isWinnerCorrect =
-                    !isExact && predResult === actualResult;
-
-                  if (isExact) {
-                    badge = "EXACTO";
-                    badgeColor = "text-emerald-400";
-                  } else if (isWinnerCorrect) {
-                    badge = "GANADOR";
-                    badgeColor = "text-blue-400";
-                  } else if (prediction.pointsEarned > 0) {
-                    badge = "BONUS";
-                    badgeColor = "text-violet-400";
+                  if (!prediction.isCalculated) {
+                    badge = "⏳ PENDIENTE";
+                    badgeColor = "text-amber-400/70";
                   } else {
-                    badge = "FALLÓ";
-                    badgeColor = "text-red-400";
+                    const isExact = pH === mH && pA === mA;
+                    const predResult =
+                      pH > pA ? "HOME" : pH < pA ? "AWAY" : "DRAW";
+                    const actualResult =
+                      mH > mA ? "HOME" : mH < mA ? "AWAY" : "DRAW";
+                    const isWinnerCorrect =
+                      !isExact && predResult === actualResult;
+
+                    if (isExact) {
+                      badge = "EXACTO";
+                      badgeColor = "text-emerald-400";
+                    } else if (isWinnerCorrect) {
+                      badge = "GANADOR";
+                      badgeColor = "text-blue-400";
+                    } else if (prediction.pointsEarned > 0) {
+                      badge = "BONUS";
+                      badgeColor = "text-violet-400";
+                    } else {
+                      badge = "FALLÓ";
+                      badgeColor = "text-red-400";
+                    }
                   }
                 } else {
                   badge = "SIN PRONÓSTICO";

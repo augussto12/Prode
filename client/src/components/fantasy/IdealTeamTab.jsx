@@ -235,7 +235,7 @@ export default function IdealTeamTab({ leagueId }) {
         <div className="space-y-4 animate-fade-in">
             {/* Header con selector de fecha y total */}
             <div className="glass-card rounded-xl sm:rounded-2xl border border-white/10 overflow-hidden">
-                <div className="flex items-center justify-between p-3 sm:p-4 bg-black/40 border-b border-white/5">
+                <div className="flex items-center justify-between p-3 sm:p-4 border-b border-white/5" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #000) 40%, transparent)' }}>
                     <button
                         onClick={() => navigateGw(-1)}
                         disabled={!canGoBack || loading}
@@ -290,7 +290,7 @@ export default function IdealTeamTab({ leagueId }) {
                             {/* Pasto alternado */}
                             <div className="absolute inset-0 opacity-20 pointer-events-none flex flex-col">
                                 {[...Array(10)].map((_, i) => (
-                                    <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-black/20' : 'bg-transparent'}`} />
+                                    <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-white/[0.03]' : 'bg-transparent'}`} />
                                 ))}
                             </div>
 
@@ -333,7 +333,9 @@ export default function IdealTeamTab({ leagueId }) {
                                             </div>
 
                                             {/* Nombre + Puntos */}
-                                            <div className="mt-0.5 sm:mt-1 bg-[#0f172a]/90 backdrop-blur-sm border border-white/10 rounded-md px-1 sm:px-1.5 py-0.5 text-center shadow-lg max-w-[65px] sm:max-w-[90px]">
+                                            <div className="mt-0.5 sm:mt-1 backdrop-blur-sm border border-white/10 rounded-md px-1 sm:px-1.5 py-0.5 text-center shadow-lg max-w-[65px] sm:max-w-[90px]"
+                                                style={{ background: 'color-mix(in srgb, var(--color-bg-start) 90%, transparent)' }}
+                                            >
                                                 <div className="text-[8px] sm:text-[10px] text-white font-bold truncate leading-tight">
                                                     {(player.displayName || player.playerName || '').split(' ').pop()}
                                                 </div>
@@ -353,7 +355,7 @@ export default function IdealTeamTab({ leagueId }) {
             {/* Lista de jugadores detallada */}
             {!loading && players.length > 0 && (
                 <div className="glass-card rounded-xl sm:rounded-2xl border border-white/10 overflow-hidden">
-                    <div className="p-3 sm:p-4 bg-black/40 border-b border-white/5">
+                    <div className="p-3 sm:p-4 border-b border-white/5" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #000) 40%, transparent)' }}>
                         <h3 className="font-bold text-white text-sm flex items-center gap-2">
                             <Trophy size={16} className="text-amber-400" />
                             Detalle — Fecha {gameweek?.number}
@@ -364,7 +366,7 @@ export default function IdealTeamTab({ leagueId }) {
                     <div className="hidden sm:block overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-black/20 text-white/50 text-[10px] uppercase tracking-wider">
+                                <tr className="text-white/50 text-[10px] uppercase tracking-wider" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #000) 20%, transparent)' }}>
                                     <th className="p-2.5 font-semibold w-8">#</th>
                                     <th className="p-2.5 font-semibold">Jugador</th>
                                     <th className="p-2.5 font-semibold">Equipo</th>
@@ -406,7 +408,7 @@ export default function IdealTeamTab({ leagueId }) {
                                 ))}
                             </tbody>
                             <tfoot>
-                                <tr className="bg-black/30 border-t border-white/10">
+                                <tr className="border-t border-white/10" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #000) 30%, transparent)' }}>
                                     <td colSpan={6} className="p-2.5 text-xs font-bold text-white/60 text-right uppercase tracking-wider">Total</td>
                                     <td className="p-2.5 text-right">
                                         <span className="text-base font-black text-amber-400">{totalPoints}</span>
@@ -446,7 +448,7 @@ export default function IdealTeamTab({ leagueId }) {
                             </div>
                         ))}
                         {/* Total mobile */}
-                        <div className="flex items-center justify-between p-3 bg-black/30">
+                        <div className="flex items-center justify-between p-3" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #000) 30%, transparent)' }}>
                             <span className="text-xs font-bold text-white/50 uppercase">Total</span>
                             <span className="text-base font-black text-amber-400">{totalPoints} pts</span>
                         </div>

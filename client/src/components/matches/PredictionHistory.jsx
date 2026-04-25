@@ -34,9 +34,11 @@ export default function PredictionHistory({
     .filter((p) => p.match);
 
   // Helper to determine if prediction is a main hit (exact or winner correct)
+  // Only considers calculated predictions to avoid false positives
   const isMainHit = (p) => {
     const matchObj = p.match;
     if (matchObj.status !== "FINISHED") return false;
+    if (!p.isCalculated) return false; // Don't count uncalculated as hits
     const pH = Number(p.homeGoals),
       pA = Number(p.awayGoals);
     const mH = Number(matchObj.homeGoals),
@@ -50,21 +52,21 @@ export default function PredictionHistory({
 
   const correctPreds = predsWithMatch.filter((p) => isMainHit(p));
   const wrongPreds = predsWithMatch.filter(
-    (p) => p.match.status === "FINISHED" && !isMainHit(p),
+    (p) => p.match.status === "FINISHED" && p.isCalculated && !isMainHit(p),
   );
   const pendingPreds = predsWithMatch.filter(
-    (p) => p.match.status !== "FINISHED",
+    (p) => p.match.status !== "FINISHED" || (p.match.status === "FINISHED" && !p.isCalculated),
   );
   const totalPoints = predsWithMatch.reduce(
     (s, p) => s + (p.pointsEarned || 0),
     0,
   );
-  const finishedCount = predsWithMatch.filter(
-    (p) => p.match.status === "FINISHED",
+  const calculatedCount = predsWithMatch.filter(
+    (p) => p.match.status === "FINISHED" && p.isCalculated,
   ).length;
   const accuracy =
-    finishedCount > 0
-      ? Math.round((correctPreds.length / finishedCount) * 100)
+    calculatedCount > 0
+      ? Math.round((correctPreds.length / calculatedCount) * 100)
       : 0;
 
   const filteredPreds = (
@@ -188,21 +190,23 @@ export default function PredictionHistory({
               pred.moreOffsides ||
               pred.moreSaves;
 
-            // Determine result label by comparing actual scores, NOT points
+            // Determine result label — only show definitive labels when calculated
             const pH = Number(pred.homeGoals),
               pA = Number(pred.awayGoals);
             const mH = Number(matchObj.homeGoals),
               mA = Number(matchObj.awayGoals);
-            const isExact = isFinished && pH === mH && pA === mA;
+            const calculated = !!pred.isCalculated;
+            const isExact = isFinished && calculated && pH === mH && pA === mA;
 
-            // Check if predicted the correct winner/draw
+            // Check if predicted the correct winner/draw (only when calculated)
             const predResult = pH > pA ? "HOME" : pH < pA ? "AWAY" : "DRAW";
             const actualResult = mH > mA ? "HOME" : mH < mA ? "AWAY" : "DRAW";
             const isWinnerCorrect =
-              isFinished && !isExact && predResult === actualResult;
+              isFinished && calculated && !isExact && predResult === actualResult;
 
-            // For border: green if exact or winner correct, red if missed main prediction
+            // For border: pending (amber) if finished but not calculated
             const mainHit = isExact || isWinnerCorrect;
+            const isPendingCalc = isFinished && !calculated;
 
             return (
               <m.div
@@ -211,11 +215,13 @@ export default function PredictionHistory({
                 animate={{ opacity: 1, y: 0 }}
                 className={`glass-card rounded-xl p-3 sm:p-4 border-l-[3px] ${!isFinished
                     ? "border-l-amber-500/50"
-                    : mainHit
-                      ? "border-l-emerald-500"
-                      : pred.pointsEarned > 0
-                        ? "border-l-blue-500/50"
-                        : "border-l-red-500/50"
+                    : isPendingCalc
+                      ? "border-l-amber-500/30"
+                      : mainHit
+                        ? "border-l-emerald-500"
+                        : pred.pointsEarned > 0
+                          ? "border-l-blue-500/50"
+                          : "border-l-red-500/50"
                   }`}
               >
                 {/* Top row: Match info + Score Prediction + Result */}
@@ -296,27 +302,33 @@ export default function PredictionHistory({
                           <div className="text-xs sm:text-sm font-bold text-white mb-1">
                             {matchObj.homeGoals} - {matchObj.awayGoals}
                           </div>
-                          <div
-                            className={`text-[9px] sm:text-[10px] font-bold ${isExact
-                                ? "text-emerald-400"
+                          {isPendingCalc ? (
+                            <div className="text-[9px] sm:text-[10px] font-bold text-amber-400/70">
+                              ⏳ PENDIENTE
+                            </div>
+                          ) : (
+                            <div
+                              className={`text-[9px] sm:text-[10px] font-bold ${isExact
+                                  ? "text-emerald-400"
+                                  : isWinnerCorrect
+                                    ? "text-blue-400"
+                                    : pred.pointsEarned > 0
+                                      ? "text-violet-400"
+                                      : "text-red-400"
+                                }`}
+                            >
+                              {isExact
+                                ? "EXACTO"
                                 : isWinnerCorrect
-                                  ? "text-blue-400"
+                                  ? "GANADOR"
                                   : pred.pointsEarned > 0
-                                    ? "text-violet-400"
-                                    : "text-red-400"
-                              }`}
-                          >
-                            {isExact
-                              ? "EXACTO"
-                              : isWinnerCorrect
-                                ? "GANADOR"
-                                : pred.pointsEarned > 0
-                                  ? "BONUS"
-                                  : "FALLÓ"}
-                            <span className="ml-1 opacity-70">
-                              +{pred.pointsEarned}pts
-                            </span>
-                          </div>
+                                    ? "BONUS"
+                                    : "FALLÓ"}
+                              <span className="ml-1 opacity-70">
+                                +{pred.pointsEarned}pts
+                              </span>
+                            </div>
+                          )}
                         </>
                       ) : (
                         <div className="text-[10px] sm:text-xs text-white/50 italic">

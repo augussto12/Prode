@@ -85,7 +85,7 @@ export default function Pitch({ formation, players, onRemove }) {
               />
             </div>
 
-            <div className="absolute -bottom-2 -left-4 -right-4 bg-[#0f172a]/90 backdrop-blur-sm border border-white/10 rounded-md text-[9px] md:text-[10px] text-white font-bold tracking-tight text-center truncate px-1 shadow-lg">
+            <div className="absolute -bottom-2 -left-4 -right-4 backdrop-blur-sm border border-white/10 rounded-md text-[9px] md:text-[10px] text-white font-bold tracking-tight text-center truncate px-1 shadow-lg" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #0f172a) 90%, transparent)' }}>
               {pInfo.name.split(" ").pop()}
             </div>
             {/* Remove button overlay on hover managed by outside click/hover */}

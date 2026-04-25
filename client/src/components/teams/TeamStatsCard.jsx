@@ -82,7 +82,8 @@ export default function TeamStatsCard({ team }) {
           kpis.map((kpi, idx) => (
             <div
               key={kpi.id}
-              className="bg-[#0b101e] p-5 text-center flex flex-col items-center justify-center"
+              className="p-5 text-center flex flex-col items-center justify-center"
+              style={{ background: 'color-mix(in srgb, var(--bg-start-color, #0b101e) 90%, white)' }}
             >
               <span className="text-3xl font-black bg-gradient-to-br from-white to-white/50 text-transparent bg-clip-text mb-1">
                 {kpi.value}
@@ -93,7 +94,7 @@ export default function TeamStatsCard({ team }) {
             </div>
           ))
         ) : (
-          <div className="col-span-full bg-[#0b101e] p-8 text-center text-white/60 text-sm">
+          <div className="col-span-full p-8 text-center text-white/60 text-sm" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #0b101e) 90%, white)' }}>
             Métricas no procesadas aún.
           </div>
         )}

@@ -67,6 +67,13 @@
   --color-amber-950: color-mix(in srgb, var(--color-accent) 10%, black);
 }
 
+/* Fantasy module CSS variable aliases */
+:root {
+  --theme-primary: var(--primary-color, #6366f1);
+  --theme-secondary: var(--secondary-color, #8b5cf6);
+  --theme-accent: var(--accent-color, #f59e0b);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -97,20 +104,25 @@ body::before {
   background: linear-gradient(135deg, var(--color-bg-start) 0%, var(--color-bg-end) 100%);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   GLASS CARD — Global theme tint
+   Every card in the app gets a subtle tint of the primary color.
+   This is the single most impactful change for theming.
+   ═══════════════════════════════════════════════════════════════ */
 .glass-card {
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--primary-color, #6366f1) 8%, rgba(255, 255, 255, 0.05));
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid color-mix(in srgb, var(--primary-color, #6366f1) 15%, rgba(255, 255, 255, 0.08));
 }
 
-/* Sticky Column for Mobile Tables */
+/* Sticky Column for Mobile Tables — themed */
 .sticky-col {
   position: sticky;
   left: 0;
   z-index: 10;
   box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
-  background: rgba(0, 0, 0, 0.4);
+  background: color-mix(in srgb, var(--primary-color, #6366f1) 4%, rgba(0, 0, 0, 0.4));
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
 }
@@ -118,7 +130,7 @@ body::before {
 /* Ensure the table header sticky column sits above the table body sticky column */
 th.sticky-col {
   z-index: 20;
-  background: rgba(0, 0, 0, 0.5);
+  background: color-mix(in srgb, var(--primary-color, #6366f1) 5%, rgba(0, 0, 0, 0.5));
 }
 
 /* Safe areas para Mobile/iOS */
@@ -126,7 +138,7 @@ th.sticky-col {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar — themed */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -136,12 +148,12 @@ th.sticky-col {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: color-mix(in srgb, var(--primary-color, #6366f1) 25%, rgba(255, 255, 255, 0.1));
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: color-mix(in srgb, var(--primary-color, #6366f1) 40%, rgba(255, 255, 255, 0.15));
 }
 
 /* Animations */
@@ -161,9 +173,9 @@ th.sticky-col {
   animation: shimmer 1.5s infinite;
 }
 
-/* Select styling for dark backgrounds */
+/* Select styling for dark backgrounds — themed */
 select option {
-  background: #1e1b4b;
+  background: color-mix(in srgb, var(--primary-color, #6366f1) 8%, #111827);
   color: white;
 }
 
@@ -194,7 +206,7 @@ select option {
   overflow-x: auto;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-color: color-mix(in srgb, var(--primary-color, #6366f1) 20%, rgba(255,255,255,0.08)) transparent;
 }
 
 .bracket-scroll::-webkit-scrollbar {
@@ -207,10 +219,10 @@ select option {
 }
 
 .bracket-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: color-mix(in srgb, var(--primary-color, #6366f1) 20%, rgba(255,255,255,0.08));
   border-radius: 3px;
 }
 
 .bracket-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
+  background: color-mix(in srgb, var(--primary-color, #6366f1) 35%, rgba(255,255,255,0.15));
+}

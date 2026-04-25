@@ -219,7 +219,7 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
       {/* CHAT WINDOW (Mobile modal via Portal) */}
       {isOpen &&
         createPortal(
-          <div className="fixed inset-0 z-[100] bg-[#0a0f1c] flex flex-col sm:hidden">
+          <div className="fixed inset-0 z-[100] flex flex-col sm:hidden" style={{ background: 'var(--bg-start-color, #0a0f1c)' }}>
             {/* Header */}
             <div className="px-4 py-3 border-b border-indigo-500/20 bg-black/40 flex items-center justify-between shrink-0 shadow-md">
               <div className="flex items-center gap-2">

@@ -25,7 +25,7 @@ export default function Competition({ hideHeader }) {
             className="w-10 h-10 rounded-xl flex items-center justify-center"
             style={{
               background:
-                "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+                "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
             }}
           >
             <Zap size={22} className="text-white" />

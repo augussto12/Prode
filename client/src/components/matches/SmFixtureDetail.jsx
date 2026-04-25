@@ -1028,7 +1028,7 @@ function PlayerStatsModal({ player, onClose }) {
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         className="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto"
       >
-        <div className="bg-[#0f1520] border-t border-white/10 rounded-t-3xl p-6 space-y-4 shadow-2xl">
+        <div className="border-t border-white/10 rounded-t-3xl p-6 space-y-4 shadow-2xl" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #0f1520) 95%, white)' }}>
           {/* Handle */}
           <div className="w-10 h-1 bg-white/20 rounded-full mx-auto -mt-1" />
 

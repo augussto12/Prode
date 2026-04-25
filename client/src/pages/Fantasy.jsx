@@ -184,7 +184,9 @@ function Fantasy() {
                   <Trophy size={28} className="text-amber-400 mb-3 sm:mb-4" />
                   <h2 className="text-base sm:text-xl font-bold text-white mb-1 sm:mb-2">Crear Torneo Privado</h2>
                   <p className="text-xs sm:text-sm text-white/60 mb-4 sm:mb-6">Elegí una liga real, ponele reglas y compartí el código con tus amigos (máx 3).</p>
-                  <button onClick={startWizard} className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-2.5 sm:py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm border-none cursor-pointer">
+                  <button onClick={startWizard} className="w-full hover:opacity-90 text-white font-bold py-2.5 sm:py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm border-none cursor-pointer"
+                     style={{ background: 'linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)' }}
+                  >
                      <Plus size={18} /> Crear Liga
                   </button>
                </div>
@@ -213,7 +215,7 @@ function Fantasy() {
          {/* WIZARD MODAL DE CREACIÓN */}
          {isCreateModalOpen && (
             <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-               <div className="bg-[#111827] border border-white/10 rounded-t-2xl sm:rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[90vh]">
+               <div className="border border-white/10 rounded-t-2xl sm:rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[90vh]" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #111827) 95%, white)' }}>
                   {/* HEADER */}
                   <div className="flex justify-between items-center p-4 sm:p-5 border-b border-white/5 bg-white/5">
                      <h3 className="text-sm sm:text-lg font-bold text-white flex items-center gap-2"><Trophy className="text-amber-400" size={18} /> Nuevo Torneo</h3>

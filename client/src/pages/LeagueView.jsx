@@ -64,6 +64,7 @@ export default function LeagueView() {
   const isAdmin =
     currentUser?.role === "ADMIN" || currentUser?.role === "SUPERADMIN";
   const competitions = useCompetitionStore((state) => state.competitions);
+  const setActiveCompetition = useCompetitionStore((state) => state.setActiveCompetition);
   const fetchCompetitions = useCompetitionStore(
     (state) => state.fetchCompetitions,
   );
@@ -270,7 +271,7 @@ export default function LeagueView() {
           style={{
             background: isWorldCup
               ? "linear-gradient(135deg, #b8860b, #daa520, #ffd700)"
-              : "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+              : "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
           }}
         />
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-5 w-full">
@@ -346,7 +347,7 @@ export default function LeagueView() {
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border-none text-white cursor-pointer transition-all hover:scale-105 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed"
                 style={{
                   background:
-                    "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+                    "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
                 }}
               >
                 {syncing ? (
@@ -399,7 +400,15 @@ export default function LeagueView() {
             Explorador Mundial
           </button>
           <button
-            onClick={() => setViewMode("prode")}
+            onClick={() => {
+              setViewMode("prode");
+              const currentComp = competitions.find(
+                (c) => c.externalId === Number(id) && c.season === season
+              );
+              if (currentComp) {
+                setActiveCompetition(currentComp);
+              }
+            }}
             className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-bold transition-all border-none flex items-center justify-center gap-2 cursor-pointer outline-none ${viewMode === "prode"
               ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
               : "bg-transparent text-white/50 hover:text-white/70"

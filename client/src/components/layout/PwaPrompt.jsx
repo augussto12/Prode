@@ -41,7 +41,7 @@ export default function PwaPrompt() {
           exit={{ y: 200, opacity: 0 }}
           className="fixed bottom-6 left-0 w-full px-4 z-[9999] flex justify-center"
         >
-          <div className="bg-[#1e1b4b]/90 backdrop-blur-xl border border-indigo-500/30 p-5 rounded-2xl shadow-2xl shadow-indigo-900/50 max-w-sm w-full relative">
+          <div className="backdrop-blur-xl border border-indigo-500/30 p-5 rounded-2xl shadow-2xl shadow-indigo-900/50 max-w-sm w-full relative" style={{ background: 'color-mix(in srgb, var(--bg-end-color, #1e1b4b) 90%, transparent)' }}>
             <button
               onClick={dismiss}
               className="absolute top-3 right-3 text-white/50 hover:text-white p-1"
@@ -73,7 +73,7 @@ export default function PwaPrompt() {
             </ol>
 
             {/* The little arrow pointing down for iOS */}
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#1e1b4b]/90 border-b border-r border-indigo-500/30 rotate-45"></div>
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 border-b border-r border-indigo-500/30 rotate-45" style={{ background: 'color-mix(in srgb, var(--bg-end-color, #1e1b4b) 90%, transparent)' }}></div>
           </div>
         </m.div>
       )}

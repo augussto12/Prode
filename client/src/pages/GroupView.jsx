@@ -290,7 +290,7 @@ export default function GroupView() {
         <div
           className="absolute inset-0 opacity-20 pointer-events-none"
           style={{
-            background: `linear-gradient(135deg, var(--color-primary), var(--color-secondary))`,
+            background: `linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)`,
           }}
         />
 
@@ -340,7 +340,10 @@ export default function GroupView() {
           </div>
 
           {/* Invite Code Bar */}
-          <div className="flex items-center gap-2 bg-black/30 rounded-xl p-2.5 sm:p-3 border border-white/5">
+          <div
+            className="flex items-center gap-2 bg-black/30 rounded-xl p-2.5 sm:p-3"
+            style={{ borderWidth: 1, borderStyle: "solid", borderColor: "color-mix(in srgb, var(--color-secondary) 25%, transparent)" }}
+          >
             <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wider font-semibold shrink-0">
               Código
             </span>
@@ -414,9 +417,14 @@ export default function GroupView() {
               onClick={() => setActiveTab("leaderboard")}
               className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === "leaderboard"
-                  ? "bg-white/10 text-white"
+                  ? "bg-white/10 text-white shadow-sm"
                   : "bg-transparent text-white/60 hover:text-white/60"
               }`}
+              style={
+                activeTab === "leaderboard"
+                  ? { borderBottom: "2px solid var(--color-secondary)" }
+                  : {}
+              }
             >
               <Trophy size={14} /> Posiciones
             </button>
@@ -424,9 +432,14 @@ export default function GroupView() {
               onClick={() => setActiveTab("predictions")}
               className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === "predictions"
-                  ? "bg-indigo-500/20 text-indigo-300"
+                  ? "bg-indigo-500/20 text-indigo-300 shadow-sm"
                   : "bg-transparent text-white/60 hover:text-white/60"
               }`}
+              style={
+                activeTab === "predictions"
+                  ? { borderBottom: "2px solid var(--color-secondary)" }
+                  : {}
+              }
             >
               <Calendar size={14} /> Predicciones
             </button>
@@ -476,8 +489,13 @@ export default function GroupView() {
                               ? "text-slate-300"
                               : entry.rank === 3
                                 ? "text-amber-700"
-                                : "text-white/50"
+                                : ""
                         }`}
+                        style={
+                          entry.rank > 3
+                            ? { color: "var(--color-secondary)" }
+                            : {}
+                        }
                       >
                         #{entry.rank}
                       </div>

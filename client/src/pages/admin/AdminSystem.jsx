@@ -327,7 +327,7 @@ function ScoringConfigEditor({ config, onUpdate }) {
         className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-bold text-sm cursor-pointer border-none hover:opacity-90 disabled:opacity-50 shadow-lg"
         style={{
           background:
-            "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+            "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
         }}
       >
         {saving ? (
@@ -585,7 +585,7 @@ function SyncPanel({ onSyncComplete }) {
                   className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium cursor-pointer border-none text-white hover:opacity-90 disabled:opacity-40"
                   style={{
                     background:
-                      "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+                      "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
                   }}
                 >
                   {loading[action.id] ? (
@@ -621,7 +621,7 @@ function SyncPanel({ onSyncComplete }) {
                 className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium cursor-pointer border-none text-white hover:opacity-90 disabled:opacity-40"
                 style={{
                   background:
-                    "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+                    "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
                 }}
               >
                 {loading.squads ? (
@@ -976,7 +976,7 @@ function SportmonksPanel() {
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-medium cursor-pointer border-none text-white hover:opacity-90 disabled:opacity-40"
               style={{
                 background:
-                  "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+                  "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
               }}
             >
               {loading.fixtures ? (
@@ -1007,7 +1007,7 @@ function SportmonksPanel() {
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-medium cursor-pointer border-none text-white hover:opacity-90 disabled:opacity-40"
               style={{
                 background:
-                  "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+                  "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
               }}
             >
               {loading.static ? (
@@ -1038,7 +1038,7 @@ function SportmonksPanel() {
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-medium cursor-pointer border-none text-white hover:opacity-90 disabled:opacity-40"
               style={{
                 background:
-                  "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+                  "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
               }}
             >
               {loading.rounds ? (

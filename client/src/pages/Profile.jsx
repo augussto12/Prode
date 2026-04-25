@@ -139,7 +139,7 @@ export default function Profile() {
                   className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 rounded-2xl flex items-center justify-center text-white"
                   style={{
                     background:
-                      "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+                      "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
                   }}
                 >
                   <User className="w-6 h-6 sm:w-8 sm:h-8" />
@@ -244,7 +244,7 @@ export default function Profile() {
                         <div
                           className="mt-2 h-1.5 rounded-full"
                           style={{
-                            background: `linear-gradient(90deg, ${theme.primaryColor}, ${theme.secondaryColor})`,
+                            background: `linear-gradient(90deg, ${theme.primaryColor} 30%, ${theme.secondaryColor} 100%)`,
                           }}
                         />
                       </button>
@@ -322,7 +322,8 @@ export default function Profile() {
                     onChange={(e) =>
                       setOutrights({ ...outrights, topScorerId: e.target.value })
                     }
-                    className="w-full bg-[#1e1b4b] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-amber-500/50 focus:outline-none transition-colors"
+                    className="w-full border border-white/10 rounded-xl px-4 py-3 text-white focus:border-amber-500/50 focus:outline-none transition-colors"
+                    style={{ background: 'var(--bg-end-color, #1e1b4b)' }}
                   >
                     <option value="">Seleccionar Jugador...</option>
                     {players.map((p) => (
@@ -341,7 +342,8 @@ export default function Profile() {
                     onChange={(e) =>
                       setOutrights({ ...outrights, bestPlayerId: e.target.value })
                     }
-                    className="w-full bg-[#1e1b4b] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-amber-500/50 focus:outline-none transition-colors"
+                    className="w-full border border-white/10 rounded-xl px-4 py-3 text-white focus:border-amber-500/50 focus:outline-none transition-colors"
+                    style={{ background: 'var(--bg-end-color, #1e1b4b)' }}
                   >
                     <option value="">Seleccionar Jugador...</option>
                     {players.map((p) => (

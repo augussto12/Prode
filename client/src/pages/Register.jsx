@@ -158,7 +158,7 @@ export default function Register() {
               className="w-full py-3 rounded-xl text-white font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50 cursor-pointer border-none shadow-lg mt-2"
               style={{
                 background:
-                  "linear-gradient(135deg, var(--color-primary), var(--color-secondary))",
+                  "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
               }}
             >
               {loading ? (

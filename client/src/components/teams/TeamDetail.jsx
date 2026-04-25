@@ -81,7 +81,7 @@ export default function TeamDetail() {
   return (
     <div className="max-w-4xl mx-auto pb-12">
       {/* HEADER DINÁMICO */}
-      <div className="relative rounded-b-3xl md:rounded-3xl overflow-hidden mb-6 bg-[#0b101e] border-b md:border border-white/10 shadow-2xl">
+      <div className="relative rounded-b-3xl md:rounded-3xl overflow-hidden mb-6 border-b md:border border-white/10 shadow-2xl" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #0b101e) 90%, white)' }}>
         {/* Background Blur */}
         <div
           className="absolute inset-0 opacity-20 blur-3xl scale-125"

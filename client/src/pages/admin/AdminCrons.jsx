@@ -50,7 +50,7 @@ export default function AdminCrons() {
   };
 
   return (
-    <div className="bg-[#1a1c23] border border-white/5 rounded-2xl p-4 sm:p-6 overflow-hidden flex flex-col min-h-[500px]">
+    <div className="border border-white/5 rounded-2xl p-4 sm:p-6 overflow-hidden flex flex-col min-h-[500px]" style={{ background: 'color-mix(in srgb, var(--primary-color, #6366f1) 3%, rgba(0,0,0,0.3))' }}>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
