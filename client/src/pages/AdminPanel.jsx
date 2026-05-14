@@ -24,10 +24,11 @@ import api from "../services/api";
 import useToastStore from "../store/toastStore";
 import useAuthStore from "../store/authStore";
 import useCompetitionStore from "../store/competitionStore";
-import AdminFantasy from "./admin/AdminFantasy";
+// [OCULTADO] AdminFantasy y AdminCrons - No se usa GranDT/Sportmonks por ahora
+// import AdminFantasy from "./admin/AdminFantasy";
 import AdminUsers from "./admin/AdminUsers";
 import AdminSystem from "./admin/AdminSystem";
-import AdminCrons from "./admin/AdminCrons";
+// import AdminCrons from "./admin/AdminCrons";
 
 export default function AdminPanel() {
   const [tab, setTab] = useState("users");
@@ -156,10 +157,11 @@ export default function AdminPanel() {
   const tabs = [
     { id: "users", label: "Usuarios", icon: Users },
     { id: "scoring", label: "Puntuación", icon: Calculator },
-    { id: "fantasy", label: "GranDT", icon: Trophy },
+    // [OCULTADO] GranDT, Sportmonks y Crons — No se usan por ahora
+    // { id: "fantasy", label: "GranDT", icon: Trophy },
     { id: "sync", label: "Config. BD", icon: Database },
-    { id: "sportmonks", label: "Sportmonks", icon: Globe },
-    { id: "crons", label: "Crons / Logs", icon: Clock },
+    // { id: "sportmonks", label: "Sportmonks", icon: Globe },
+    // { id: "crons", label: "Crons / Logs", icon: Clock },
   ];
 
   if (loading) {
@@ -229,10 +231,12 @@ export default function AdminPanel() {
           )}
           {recalculating ? "Recalculando..." : "Recalcular Leaderboards"}
         </button>
+        {/* [OCULTADO] Mensaje de cron automático — Crons desactivados por ahora
         <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-white/60">
           <Clock size={12} />
           <span>Cron automático: 01:00, 17:00, 19:00 y 22:00 hs</span>
         </div>
+        */}
       </div>
 
       {/* Users Tab */}
@@ -240,10 +244,10 @@ export default function AdminPanel() {
         <AdminUsers users={users} setUsers={setUsers} currentUser={currentUser} />
       )}
 
-      {/* Fantasy Admin Tab */}
+      {/* [OCULTADO] Fantasy Admin Tab y Crons — No se usan por ahora
       {tab === "fantasy" && <AdminFantasy />}
-
       {tab === "crons" && <AdminCrons />}
+      */}
 
       {/* Admin System (Scoring, Sync, Sportmonks tabs content routing happens inside) */}
       <AdminSystem

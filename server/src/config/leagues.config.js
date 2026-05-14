@@ -4,7 +4,7 @@
  */
 
 // ─── TOP (aparecen primero en el grid) ───
-export const TOP_LEAGUE_IDS = [1, 2, 3, 13, 11, 128, 39, 140, 135, 78, 61];
+export const TOP_LEAGUE_IDS = [1, 2, 3, 13, 11, 128, 39, 140, 135, 78, 61, 71, 253, 94, 88];
 
 // ─── TODAS LAS LIGAS PERMITIDAS (por categoría) ───
 export const CURATED_LEAGUES = {
@@ -43,6 +43,11 @@ export const CURATED_LEAGUES = {
     72,   // Brasileirão Série B
     73,   // Copa do Brasil
     75,   // Brasileirão Série C
+  ],
+
+  // ═══ URUGUAY ═══
+  'Uruguay': [
+    268,  // Primera División Uruguay
   ],
 
   // ═══ INGLATERRA ═══
@@ -86,38 +91,21 @@ export const CURATED_LEAGUES = {
     526,  // Trophée des Champions
   ],
 
-  // ═══ OTRAS LIGAS INTERESANTES ═══
-  'Turquía': [
-    203,  // Süper Lig
-    206,  // Turkish Cup
-  ],
-
+  // ═══ PORTUGAL ═══
   'Portugal': [
     94,   // Primeira Liga
     96,   // Taça de Portugal
   ],
 
+  // ═══ PAÍSES BAJOS ═══
   'Países Bajos': [
     88,   // Eredivisie
     90,   // KNVB Beker
   ],
 
-  'Japón': [
-    98,   // J1 League
-    101,  // Emperor's Cup
-  ],
-
-  'México': [
-    262,  // Liga MX
-    264,  // Copa MX
-  ],
-
+  // ═══ ESTADOS UNIDOS ═══
   'Estados Unidos': [
     253,  // MLS
-  ],
-
-  'Arabia Saudita': [
-    307,  // Saudi Pro League
   ],
 };
 

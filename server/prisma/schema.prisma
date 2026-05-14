@@ -32,6 +32,7 @@ model User {
   predictions   Prediction[]
   groupUsers        GroupUser[]
   favorites         Favorite[]
+  leagueFavorites   LeagueFavorite[]
   messages          Message[]
   dreamTeams        DreamTeam[]
   outrightPredictions OutrightPrediction[]
@@ -53,6 +54,17 @@ model Favorite {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, teamName])
+}
+
+// Para ligas favoritas
+model LeagueFavorite {
+  id       Int    @id @default(autoincrement())
+  userId   Int
+  leagueId Int    // API-Football league ID
+  
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, leagueId])
 }
 
 model Competition {

@@ -14,4 +14,9 @@ router.put('/me', authenticate, validate(profileUpdateSchema), ctrl.updateMe);
 router.put('/me/favorites', authenticate, validate(favoritesSchema), ctrl.setFavorites);
 router.get('/me/favorites', authenticate, ctrl.getFavorites);
 
+// League favorites
+router.get('/me/league-favorites', authenticate, ctrl.getLeagueFavorites);
+router.post('/me/league-favorites', authenticate, ctrl.addLeagueFavorite);
+router.delete('/me/league-favorites/:leagueId', authenticate, ctrl.removeLeagueFavorite);
+
 export default router;

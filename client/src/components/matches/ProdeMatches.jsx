@@ -10,6 +10,7 @@ export default function ProdeMatches({
   groupId,
   groupSettings,
   initialTab = "matches",
+  simpleMode = false,
 }) {
   const [matches, setMatches] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -42,10 +43,11 @@ export default function ProdeMatches({
       const season = compRes.data.season;
 
       // 2. Fetch fixtures, favorites, and predictions in parallel
+      // Las llamadas autenticadas fallan silenciosamente si no hay sesión
       const [fixturesRes, favRes, predRes] = await Promise.all([
         api.get(`/explorer/leagues/${leagueId}/fixtures?season=${season}`),
-        api.get("/auth/me/favorites"),
-        api.get(`/predictions/my${compParam}`),
+        api.get("/auth/me/favorites").catch(() => ({ data: [] })),
+        api.get(`/predictions/my${compParam}`).catch(() => ({ data: [] })),
       ]);
 
       const fixtures = fixturesRes.data || [];
@@ -398,6 +400,7 @@ export default function ProdeMatches({
                           onPredictionSaved={loadData}
                           hideStage={true}
                           groupSettings={groupSettings}
+                          simpleMode={simpleMode}
                         />
                       ))}
                     </div>

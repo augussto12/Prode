@@ -4,6 +4,7 @@ import useAuthStore from "../store/authStore";
 import useThemeStore from "../store/themeStore";
 import { THEMES } from "../constants/themes";
 import api from "../services/api";
+import { tCountry } from "../utils/translations";
 
 export default function Profile() {
   const user = useAuthStore((state) => state.user);
@@ -328,7 +329,7 @@ export default function Profile() {
                     <option value="">Seleccionar Jugador...</option>
                     {players.map((p) => (
                       <option key={`ts-${p.id}`} value={p.id}>
-                        {p.name} ({p.country})
+                        {p.name} ({tCountry(p.country)})
                       </option>
                     ))}
                   </select>
@@ -348,7 +349,7 @@ export default function Profile() {
                     <option value="">Seleccionar Jugador...</option>
                     {players.map((p) => (
                       <option key={`bp-${p.id}`} value={p.id}>
-                        {p.name} ({p.country})
+                        {p.name} ({tCountry(p.country)})
                       </option>
                     ))}
                   </select>

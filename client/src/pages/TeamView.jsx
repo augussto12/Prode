@@ -4,6 +4,7 @@ import { m } from "framer-motion";
 import { ArrowLeft, User, Calendar, MapPin } from "lucide-react";
 import api from "../services/api";
 import PlayerAvatar from "../components/shared/PlayerAvatar";
+import { tCountry } from "../utils/translations";
 
 export default function TeamView() {
   const { id } = useParams();
@@ -83,6 +84,12 @@ export default function TeamView() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (team?.national && activeTab === "transfers") {
+      setActiveTab("squad");
+    }
+  }, [team?.national, activeTab]);
 
   useEffect(() => {
     if (!id || !team) return;
@@ -250,7 +257,7 @@ export default function TeamView() {
           </h1>
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-white/60 mt-1">
             <span className="flex items-center gap-1.5">
-              <MapPin size={14} /> {team.country}
+              <MapPin size={14} /> {tCountry(team.country)}
             </span>
             {team.founded && (
               <span className="flex items-center gap-1.5">
@@ -288,7 +295,7 @@ export default function TeamView() {
       </m.div>
 
       {/* TABS */}
-      <div className="grid grid-cols-2 sm:flex gap-1.5 bg-white/5 p-1.5 rounded-xl w-full sm:w-fit">
+      <div className={`grid grid-cols-2 sm:flex gap-1.5 bg-white/5 p-1.5 rounded-xl w-full sm:w-fit ${team?.national ? "max-w-[320px]" : ""}`}>
         <button
           onClick={() => setActiveTab("squad")}
           className={`px-2 sm:px-5 py-2.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all border text-center ${activeTab === "squad" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md" : "bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5"}`}
@@ -307,12 +314,14 @@ export default function TeamView() {
         >
           Estadísticas
         </button>
-        <button
-          onClick={() => setActiveTab("transfers")}
-          className={`px-2 sm:px-5 py-2.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all border text-center ${activeTab === "transfers" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md" : "bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5"}`}
-        >
-          Fichajes
-        </button>
+        {!team?.national && (
+          <button
+            onClick={() => setActiveTab("transfers")}
+            className={`px-2 sm:px-5 py-2.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all border text-center ${activeTab === "transfers" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md" : "bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5"}`}
+          >
+            Fichajes
+          </button>
+        )}
       </div>
 
       {/* SQUAD AREA */}

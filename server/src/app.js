@@ -14,17 +14,19 @@ import adminRoutes from './routes/admin.routes.js';
 import dreamteamRoutes from './routes/dreamteam.routes.js';
 import outrightsRoutes from './routes/outrights.routes.js';
 import guruRoutes from './routes/guru.routes.js';
+// [OCULTADO] Sportmonks, Fantasy y Cron Jobs — No se usan por ahora
 import syncRoutes from './routes/sync.routes.js';
 import competitionRoutes from './routes/competition.routes.js';
 import explorerRoutes from './routes/explorer.routes.js';
-import sportmonksRoutes from './routes/sportmonks.routes.js';
-import fantasyRoutes from './routes/fantasy.routes.js';
-import { setupCronJobs } from './cron/scheduledTasks.js';
+// import sportmonksRoutes from './routes/sportmonks.routes.js';
+// import fantasyRoutes from './routes/fantasy.routes.js';
+// import { setupCronJobs } from './cron/scheduledTasks.js';
 
 const app = express();
 
+// [OCULTADO] Cron Jobs desactivados — No se usan por ahora
 // --- INICIAR CRON JOBS ---
-setupCronJobs();
+// setupCronJobs();
 const isProduction = process.env.NODE_ENV === 'production';
 
 // --- CAPA 1: MIDDLEWARE DE BLINDAJE ---
@@ -127,11 +129,12 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/dreamteam', dreamteamRoutes);
 app.use('/api/outrights', outrightsRoutes);
 app.use('/api/guru', guruLimiter, guruRoutes);
+// [OCULTADO] Rutas no usadas por ahora: sportmonks, fantasy
+// app.use('/api/sportmonks', sportmonksRoutes);
+// app.use('/api/fantasy', fantasyRoutes);
 app.use('/api/admin/sync', syncRoutes);
 app.use('/api/competitions', competitionRoutes);
 app.use('/api/explorer', explorerRoutes);
-app.use('/api/sportmonks', sportmonksRoutes);
-app.use('/api/fantasy', fantasyRoutes);
 
 // Error handler centralizado
 app.use(errorHandler);

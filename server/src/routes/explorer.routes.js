@@ -85,7 +85,7 @@ function trimTeamFixture(m) {
 router.get('/leagues', async (req, res, next) => {
   try {
     const { country, season, type, search } = req.query;
-    const cacheKey = `leagues:${country || 'all'}:${season || ''}:${type || ''}:${search || ''}`;
+    const cacheKey = `leagues:v2:${country || 'all'}:${season || ''}:${type || ''}:${search || ''}`;
 
     const data = await cachedApiCall(cacheKey, 86400, async () => {
       const params = {};
@@ -314,7 +314,7 @@ router.get('/today', async (req, res, next) => {
     const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: tz });
     const cacheKey = `today-matches:${todayStr}:${tz}`;
 
-    const data = await cachedApiCall(cacheKey, 600, async () => {
+    const data = await cachedApiCall(cacheKey, 60, async () => {
       const result = await footballApi.fetchFixturesByDate(todayStr, null, tz);
 
       // Intentar fetchear pre-match odds (Bookmaker 8=Bet365, Bet 1=Match Winner)
@@ -372,14 +372,19 @@ router.get('/fixtures/date/:date', async (req, res, next) => {
   try {
     const date = req.params.date; // YYYY-MM-DD
     const leagueId = req.query.league ? Number(req.query.league) : null;
-    const cacheKey = `fixtures-date:${date}:${leagueId || 'all'}`;
+    const tz = req.query.timezone || 'America/Argentina/Buenos_Aires';
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+    const isToday = date === todayStr;
+    const cacheKey = `fixtures-date:${date}:${leagueId || 'all'}:${tz}`;
+    // Si es hoy, cache muy corto (60s) para reflejar cambios de estado rápido
+    const cacheTTL = isToday ? 60 : 3600;
 
-    const data = await cachedApiCall(cacheKey, 3600, async () => {
-      const result = await footballApi.fetchFixturesByDate(date, leagueId);
+    const data = await cachedApiCall(cacheKey, cacheTTL, async () => {
+      const result = await footballApi.fetchFixturesByDate(date, leagueId, tz);
 
       try {
         // Fetch real pre-match odds
-        const oddsResult = await footballApi.fetchOdds({ date, bookmaker: 8, bet: 1 });
+        const oddsResult = await footballApi.fetchOdds({ date, timezone: tz, bookmaker: 8, bet: 1 });
         const oddsMap = {};
         (oddsResult.response || []).forEach(o => {
           const betWinner = o.bookmakers?.[0]?.bets?.[0];

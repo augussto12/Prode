@@ -15,6 +15,15 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: false,
       devOptions: { enabled: true },
+      workbox: {
+        navigateFallbackDenylist: [/^\/api/],
+        runtimeCaching: [
+          {
+            urlPattern: /^https?:\/\/.*\/api\/.*/,
+            handler: 'NetworkOnly',
+          },
+        ],
+      },
       manifest: {
         name: 'Prode Mundial 2026',
         short_name: 'Prode26',

@@ -23,25 +23,21 @@ const LiveMatch = lazy(() => import("./pages/LiveMatch"));
 const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
 const TeamView = lazy(() => import("./pages/TeamView"));
 const Profile = lazy(() => import("./pages/Profile"));
-const SmFixtureDetail = lazy(
-  () => import("./components/matches/SmFixtureDetail"),
-);
-const TeamDetail = lazy(() => import("./components/teams/TeamDetail"));
-const Fantasy = lazy(() => import("./pages/Fantasy"));
-const FantasyLeague = lazy(() => import("./pages/FantasyLeague"));
-const FantasyTeam = lazy(() => import("./pages/FantasyTeam"));
+// [OCULTADO] Sportmonks detail views - Ya no se usa Sportmonks
+// const SmFixtureDetail = lazy(
+//   () => import("./components/matches/SmFixtureDetail"),
+// );
+// const TeamDetail = lazy(() => import("./components/teams/TeamDetail"));
+
+// [OCULTADO] GranDT / Fantasy - No es parte del Prode Mundial
+// const Fantasy = lazy(() => import("./pages/Fantasy"));
+// const FantasyLeague = lazy(() => import("./pages/FantasyLeague"));
+// const FantasyTeam = lazy(() => import("./pages/FantasyTeam"));
 
 function PrivateRoute({ children }) {
   const user = useAuthStore((state) => state.user);
 
   if (!user) {
-    // Invocar directo al store fuera del ciclo de render — evita toast spam en re-renders
-    useToastStore
-      .getState()
-      .addToast({
-        type: "warning",
-        message: "Iniciá sesión para realizar esta acción",
-      });
     return <Navigate to="/login" replace />;
   }
   return children;
@@ -110,10 +106,13 @@ export default function App() {
             <Route path="/partido/:id" element={<LiveMatch />} />
             <Route path="/jugador/:id" element={<PlayerProfile />} />
             <Route path="/equipo/:id" element={<TeamView />} />
+            {/* [OCULTADO] Rutas Sportmonks - Ya no se usa Sportmonks
             <Route path="/sm-partido/:id" element={<SmFixtureDetail />} />
             <Route path="/sm-equipo/:id" element={<TeamDetail />} />
+            */}
 
             {/* Protected content (Auth required) */}
+            {/* [OCULTADO] Rutas GranDT / Fantasy - No es parte del Prode Mundial
             <Route
               path="/fantasy"
               element={
@@ -138,6 +137,7 @@ export default function App() {
                 </PrivateRoute>
               }
             />
+            */}
             <Route
               path="/groups"
               element={
@@ -154,14 +154,7 @@ export default function App() {
                 </PrivateRoute>
               }
             />
-            <Route
-              path="/torneo"
-              element={
-                <PrivateRoute>
-                  <Competition />
-                </PrivateRoute>
-              }
-            />
+            <Route path="/torneo" element={<Competition />} />
             <Route
               path="/profile"
               element={

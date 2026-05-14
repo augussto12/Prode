@@ -19,15 +19,6 @@ export default function GroupList() {
     name: "",
     description: "",
     isPublic: false,
-    competitionId: "",
-
-    allowMoreShots: true,
-    allowMoreCorners: true,
-    allowMorePossession: true,
-    allowMoreFouls: true,
-    allowMoreCards: true,
-    allowMoreOffsides: true,
-    allowMoreSaves: true,
   });
   const navigate = useNavigate();
   const activeCompetition = useCompetitionStore(
@@ -58,16 +49,8 @@ export default function GroupList() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    const compId = createForm.competitionId || activeCompetition?.id;
-    if (!compId) {
-      useToastStore
-        .getState()
-        .addToast({
-          type: "error",
-          message: "Seleccioná un torneo para el prode",
-        });
-      return;
-    }
+    // Siempre usar el torneo activo (Mundial 2026) o default a 1
+    const compId = activeCompetition?.id || 1;
     try {
       setIsCreating(true);
       const { data } = await api.post("/groups", {
@@ -160,67 +143,6 @@ export default function GroupList() {
         >
           <h3 className="text-lg font-semibold text-white mb-4">Nuevo Grupo</h3>
           <form onSubmit={handleCreate} className="space-y-4">
-            {/* Tournament Selector */}
-            <div>
-              <label className="block text-white/60 text-sm mb-2">
-                Torneo del Prode *
-              </label>
-              {competitions.length === 0 ? (
-                <div className="text-sm text-amber-400/80 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
-                  ⚠️ No hay torneos sincronizados. Pedile al admin que
-                  sincronice desde el Admin Panel.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                  {competitions.map((comp) => (
-                    <button
-                      key={comp.id}
-                      type="button"
-                      onClick={() =>
-                        setCreateForm({ ...createForm, competitionId: comp.id })
-                      }
-                      className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer text-left ${
-                        createForm.competitionId === comp.id
-                          ? "bg-indigo-500/15 border-indigo-500/40 shadow-[0_0_12px_rgba(99,102,241,0.15)]"
-                          : "bg-white/[0.03] border-white/10 hover:border-white/25 hover:bg-white/[0.06]"
-                      }`}
-                    >
-                      {comp.logo && (
-                        <img
-                          src={comp.logo}
-                          alt=""
-                          width={32}
-                          height={32}
-                          className="w-8 h-8 object-contain shrink-0"
-                          loading="lazy"
-                          decoding="async"
-                          
-  onError={(e) => {
-                            e.target.src = "/placeholder-team.svg";
-                          }}
-                        />
-                      )}
-                      <div className="min-w-0">
-                        <div
-                          className={`text-sm font-semibold truncate ${createForm.competitionId === comp.id ? "text-indigo-300" : "text-white/80"}`}
-                        >
-                          {comp.name}
-                        </div>
-                        <div className="text-[10px] text-white/60">
-                          Temporada {comp.season}
-                        </div>
-                      </div>
-                      {createForm.competitionId === comp.id && (
-                        <div className="ml-auto shrink-0 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
-                          <Check size={12} className="text-white" />
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-white/60 text-sm mb-1">
@@ -255,49 +177,6 @@ export default function GroupList() {
                 />
               </div>
             </div>
-
-            <div>
-              <label className="block text-white/60 text-sm mb-2">
-                Módulos de Juego (Extras)
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {[
-                  { key: "allowMoreCorners", label: "⛳ Más Córners" },
-                  { key: "allowMoreFouls", label: "🦵 Más Faltas" },
-                  { key: "allowMoreShots", label: "🎯 Más Remates" },
-                  { key: "allowMoreCards", label: "🟨 Más Tarjetas" },
-                  { key: "allowMorePossession", label: "⚽ Más Posesión" },
-                  { key: "allowMoreOffsides", label: "🏁 Más Offsides" },
-                  { key: "allowMoreSaves", label: "🧤 Más Atajadas" },
-                ].map((m) => (
-                  <div
-                    key={m.key}
-                    className="flex items-center justify-between p-2.5 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition-colors"
-                    onClick={() =>
-                      setCreateForm((prev) => ({
-                        ...prev,
-                        [m.key]: !prev[m.key],
-                      }))
-                    }
-                  >
-                    <span className="text-xs text-white/80 font-medium">
-                      {m.label}
-                    </span>
-                    <div
-                      className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${createForm[m.key] ? "bg-indigo-500" : "bg-black/60 shadow-inner"}`}
-                    >
-                      <div
-                        className={`w-4 h-4 bg-white rounded-full absolute top-[2px] shadow-sm transition-all ${createForm[m.key] ? "left-[18px]" : "left-[2px]"}`}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[10px] text-white/60 mt-1.5 ml-1">
-                * El resultado de goles y ganador siempre estarán activos.
-              </p>
-            </div>
-
 
             <div className="flex items-center gap-2">
               <input

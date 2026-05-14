@@ -87,3 +87,21 @@ export async function setFavorites(userId, teamNames) {
 export async function getFavorites(userId) {
   return prisma.favorite.findMany({ where: { userId } });
 }
+
+export async function getLeagueFavorites(userId) {
+  return prisma.leagueFavorite.findMany({ where: { userId } });
+}
+
+export async function addLeagueFavorite(userId, leagueId) {
+  return prisma.leagueFavorite.upsert({
+    where: { userId_leagueId: { userId, leagueId } },
+    update: {},
+    create: { userId, leagueId },
+  });
+}
+
+export async function removeLeagueFavorite(userId, leagueId) {
+  return prisma.leagueFavorite.deleteMany({
+    where: { userId, leagueId },
+  });
+}

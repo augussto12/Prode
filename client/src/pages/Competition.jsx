@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Calendar, Star, Zap, BarChart3 } from "lucide-react";
+import { Calendar, Star, Zap, BarChart3, Lock } from "lucide-react";
 import useCompetitionStore from "../store/competitionStore";
+import useAuthStore from "../store/authStore";
 import ProdeMatches from "../components/matches/ProdeMatches";
 import DreamTeam from "./DreamTeam";
 
@@ -15,6 +16,7 @@ export default function Competition({ hideHeader }) {
   const activeCompetition = useCompetitionStore(
     (state) => state.activeCompetition,
   );
+  const user = useAuthStore((state) => state.user);
 
   return (
     <div className="space-y-6">
@@ -39,9 +41,17 @@ export default function Competition({ hideHeader }) {
         </div>
       )}
 
+      {/* Banner de login requerido para guardar */}
+      {!user && (
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm">
+          <Lock size={16} className="shrink-0" />
+          <span>Iniciá sesión para guardar tus predicciones y participar del prode.</span>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex gap-1 p-1 bg-white/5 rounded-xl w-fit">
-        {TABS.map((t) => (
+        {TABS.filter((t) => user || t.id === "matches").map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
@@ -62,6 +72,7 @@ export default function Competition({ hideHeader }) {
         <ProdeMatches
           competitionId={activeCompetition?.id}
           initialTab={tab === "predictions" ? "history" : "matches"}
+          simpleMode={activeCompetition?.externalId === 1} // Solo resultado para Mundial
         />
       )}
 

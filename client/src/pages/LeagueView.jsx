@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { m } from "framer-motion";
 import {
@@ -27,12 +27,14 @@ import Competition from "./Competition";
 
 const WORLD_CUP_ID = 1;
 
-const TABS = [
+const ALL_TABS = [
   { id: "standings", label: "Posiciones", icon: Table },
   { id: "fixtures", label: "Partidos", icon: Calendar },
   { id: "scorers", label: "Goleadores", icon: Target },
   { id: "teams", label: "Equipos", icon: ShieldCheck },
 ];
+
+const TABS = ALL_TABS; // legacy alias
 
 export default function LeagueView() {
   const { id } = useParams();
@@ -53,6 +55,16 @@ export default function LeagueView() {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [standingsView, setStandingsView] = useState("table"); // 'table' | 'bracket'
   const [syncing, setSyncing] = useState(false);
+
+  // Ocultar goleadores en Mundial 2026 si todavía no empezó
+  const visibleTabs = useMemo(() => {
+    const isWorldCup = Number(id) === WORLD_CUP_ID;
+    const isFutureWorldCup = isWorldCup && season >= 2026 && new Date() < new Date("2026-06-11");
+    if (isFutureWorldCup) {
+      return ALL_TABS.filter((t) => t.id !== "scorers");
+    }
+    return ALL_TABS;
+  }, [id, season]);
 
   // Bracket data (loaded when switching to bracket view in standings)
   const { bracket: bracketData, loading: bracketLoading } = useBracket(
@@ -84,6 +96,13 @@ export default function LeagueView() {
   useEffect(() => {
     loadLeague();
   }, [id]);
+
+  // Si scorers deja de estar disponible (ej: Mundial futuro), volver a standings
+  useEffect(() => {
+    if (tab === "scorers" && !visibleTabs.some((t) => t.id === "scorers")) {
+      setTab("standings");
+    }
+  }, [visibleTabs, tab]);
 
   // Reload all data when season changes
   useEffect(() => {
@@ -425,7 +444,7 @@ export default function LeagueView() {
         <>
           {/* Tabs */}
           <div className="flex gap-1 bg-white/5 p-1 rounded-xl w-full sm:w-fit overflow-x-auto hide-scrollbar">
-            {TABS.map((t) => (
+            {visibleTabs.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}

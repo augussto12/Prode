@@ -11,9 +11,11 @@ import {
   User,
   Compass,
   Zap,
-  Star,
+  // [OCULTADO] Star icon solo se usaba para GranDT
+  // Star,
 } from "lucide-react";
 import useAuthStore from "../../store/authStore";
+import useToastStore from "../../store/toastStore";
 import api from "../../services/api";
 
 export default function Navbar() {
@@ -53,7 +55,8 @@ export default function Navbar() {
       badge: liveCount > 0 ? liveCount : null,
     },
     { to: "/liga/1", label: "Mundial 2026", icon: Trophy, gold: true },
-    { to: "/fantasy", label: "GranDT", icon: Star },
+    // [OCULTADO] GranDT - No es parte del Prode Mundial
+    // { to: "/fantasy", label: "GranDT", icon: Star },
     { to: "/groups", label: "Grupos", icon: Users },
     ...(user?.role === "ADMIN" || user?.role === "SUPERADMIN"
       ? [{ to: "/admin", label: "Admin", icon: Shield }]
@@ -86,36 +89,49 @@ export default function Navbar() {
 
           {/* Desktop Links */}
           <div className="hidden md:flex items-center gap-0.5">
-            {links.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all no-underline ${isActive(link.to)
-                  ? "text-white"
-                  : link.gold
-                    ? "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
-                    : "text-white/50 hover:text-white hover:bg-white/5"
-                  }`}
-                style={
-                  isActive(link.to)
-                    ? {
-                      background: link.gold
-                        ? "linear-gradient(135deg, #b8860b, #daa520)"
-                        : "var(--color-primary)",
-                      borderBottom: link.gold ? undefined : "2px solid var(--color-secondary)",
-                    }
-                    : {}
+            {links.map((link) => {
+              const isGroupsLink = link.to === "/groups";
+              const handleClick = (e) => {
+                if (isGroupsLink && !user) {
+                  e.preventDefault();
+                  useToastStore.getState().addToast({
+                    type: "warning",
+                    message: "Tenés que estar registrado para poder crear o unirse a un grupo de prode",
+                  });
                 }
-              >
-                <link.icon size={14} />
-                {link.label}
-                {link.badge && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-[9px] font-bold flex items-center justify-center text-white animate-pulse">
-                    {link.badge}
-                  </span>
-                )}
-              </Link>
-            ))}
+              };
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={handleClick}
+                  className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all no-underline ${isActive(link.to)
+                    ? "text-white"
+                    : link.gold
+                      ? "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
+                      : "text-white/50 hover:text-white hover:bg-white/5"
+                    }`}
+                  style={
+                    isActive(link.to)
+                      ? {
+                        background: link.gold
+                          ? "linear-gradient(135deg, #b8860b, #daa520)"
+                          : "var(--color-primary)",
+                        borderBottom: link.gold ? undefined : "2px solid var(--color-secondary)",
+                      }
+                      : {}
+                  }
+                >
+                  <link.icon size={14} />
+                  {link.label}
+                  {link.badge && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-[9px] font-bold flex items-center justify-center text-white animate-pulse">
+                      {link.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
           {/* User Status / Menu */}
@@ -189,20 +205,33 @@ export default function Navbar() {
             onClick={() => setMobileOpen(false)}
           />
           <div className="md:hidden absolute top-full left-0 right-0 z-50 backdrop-blur-md border-b border-white/10 px-4 pb-4 pt-2 shadow-2xl" style={{ background: 'color-mix(in srgb, var(--bg-start-color, #0f0c29) 95%, transparent)' }}>
-            {links.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setMobileOpen(false)}
-                className={`relative flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium no-underline ${isActive(link.to)
-                  ? "text-white bg-white/10"
-                  : "text-white/60 hover:text-white"
-                  }`}
-              >
-                <link.icon size={18} />
-                {link.label}
-              </Link>
-            ))}
+            {links.map((link) => {
+              const isGroupsLink = link.to === "/groups";
+              const handleMobileClick = (e) => {
+                setMobileOpen(false);
+                if (isGroupsLink && !user) {
+                  e.preventDefault();
+                  useToastStore.getState().addToast({
+                    type: "warning",
+                    message: "Tenés que estar registrado para poder crear o unirse a un grupo de prode",
+                  });
+                }
+              };
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={handleMobileClick}
+                  className={`relative flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium no-underline ${isActive(link.to)
+                    ? "text-white bg-white/10"
+                    : "text-white/60 hover:text-white"
+                    }`}
+                >
+                  <link.icon size={18} />
+                  {link.label}
+                </Link>
+              );
+            })}
             {user ? (
               <>
                 <Link

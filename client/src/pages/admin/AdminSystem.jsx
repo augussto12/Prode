@@ -14,7 +14,9 @@ export default function AdminSystem({ tab, scoringConfig, onConfigUpdate, fetchC
       {tab === "sync" && (
         <SyncPanel onSyncComplete={() => { onConfigUpdate(); fetchCompetitions(); }} />
       )}
+      {/* [OCULTADO] Sportmonks Panel — No se usa por ahora
       {tab === "sportmonks" && <SportmonksPanel />}
+      */}
     </>
   );
 }

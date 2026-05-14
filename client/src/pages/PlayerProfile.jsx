@@ -157,7 +157,7 @@ export default function PlayerProfile() {
                   year: "numeric",
                 })}
                 {player.birth.place &&
-                  ` en ${player.birth.place}, ${player.birth.country}`}
+                  ` en ${player.birth.place}, ${tCountry(player.birth.country)}`}
               </div>
             )}
           </div>
@@ -308,7 +308,7 @@ export default function PlayerProfile() {
                       {t.league}
                     </div>
                     <div className="text-xs text-white/60">
-                      {t.country} — {t.season}
+                      {tCountry(t.country)} — {t.season}
                     </div>
                   </div>
                   <span

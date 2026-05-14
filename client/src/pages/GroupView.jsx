@@ -23,6 +23,7 @@ import api from "../services/api";
 import useToastStore from "../store/toastStore";
 import GroupChat from "../components/chat/GroupChat";
 import ProdeMatches from "../components/matches/ProdeMatches";
+import GroupMatches from "../components/matches/GroupMatches";
 
 export default function GroupView() {
   const { id } = useParams();
@@ -429,19 +430,19 @@ export default function GroupView() {
               <Trophy size={14} /> Posiciones
             </button>
             <button
-              onClick={() => setActiveTab("predictions")}
+              onClick={() => setActiveTab("matches")}
               className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
-                activeTab === "predictions"
+                activeTab === "matches"
                   ? "bg-indigo-500/20 text-indigo-300 shadow-sm"
                   : "bg-transparent text-white/60 hover:text-white/60"
               }`}
               style={
-                activeTab === "predictions"
+                activeTab === "matches"
                   ? { borderBottom: "2px solid var(--color-secondary)" }
                   : {}
               }
             >
-              <Calendar size={14} /> Predicciones
+              <Calendar size={14} /> Partidos
             </button>
             {group.isAdmin && (
               <button
@@ -630,9 +631,9 @@ export default function GroupView() {
               </m.div>
             )}
 
-            {activeTab === "predictions" && (
+            {activeTab === "matches" && (
               <m.div
-                key="predictions"
+                key="matches"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
@@ -671,10 +672,9 @@ export default function GroupView() {
                   </div>
                 )}
 
-                <ProdeMatches
-                  competitionId={group.competitionId}
+                <GroupMatches
                   groupId={group.id}
-                  groupSettings={group}
+                  competitionId={group.competitionId}
                 />
               </m.div>
             )}

@@ -60,3 +60,25 @@ export async function getFavorites(req, res, next) {
     res.json(favorites);
   } catch (err) { next(err); }
 }
+
+export async function getLeagueFavorites(req, res, next) {
+  try {
+    const favorites = await authService.getLeagueFavorites(req.user.id);
+    res.json(favorites.map(f => f.leagueId));
+  } catch (err) { next(err); }
+}
+
+export async function addLeagueFavorite(req, res, next) {
+  try {
+    const { leagueId } = req.body;
+    const favorite = await authService.addLeagueFavorite(req.user.id, Number(leagueId));
+    res.status(201).json(favorite);
+  } catch (err) { next(err); }
+}
+
+export async function removeLeagueFavorite(req, res, next) {
+  try {
+    await authService.removeLeagueFavorite(req.user.id, Number(req.params.leagueId));
+    res.json({ message: 'Eliminado de favoritos' });
+  } catch (err) { next(err); }
+}

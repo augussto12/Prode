@@ -10,13 +10,16 @@ import {
   MapPin,
   Loader2,
   Users,
+  Calendar,
+  Star,
 } from "lucide-react";
 import api from "../services/api";
-import { 
-  SPORTMONKS_LEAGUE_IDS,
-  AF_LEAGUES_COVERED_BY_SM 
-} from '../constants/sportmonks.constants.js';
-import useSportmonksStore from "../store/useSportmonksStore";
+// [OCULTADO] Sportmonks - Ya no se usa
+// import { 
+//   SPORTMONKS_LEAGUE_IDS,
+//   AF_LEAGUES_COVERED_BY_SM 
+// } from '../constants/sportmonks.constants.js';
+// import useSportmonksStore from "../store/useSportmonksStore";
 import useAuthStore from "../store/authStore";
 import { tCountry } from "../utils/translations";
 
@@ -32,8 +35,14 @@ function useDebounce(value, delay) {
 
 const COUNTRIES_PER_PAGE = 25;
 
-// Sportmonks league IDs (7 ligas compradas)
-const SPORTMONKS_LEAGUES_SET = new Set(SPORTMONKS_LEAGUE_IDS);
+// Helper: fecha de hoy en formato YYYY-MM-DD
+const getTodayDate = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+// [OCULTADO] Sportmonks league IDs - Ya no se usa Sportmonks
+// const SPORTMONKS_LEAGUES_SET = new Set(SPORTMONKS_LEAGUE_IDS);
 
 export default function Explorer() {
   const [data, setData] = useState({ topLeagues: [], byCountry: [] });
@@ -41,39 +50,31 @@ export default function Explorer() {
   const [myGroups, setMyGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const liveIntervalRef = useRef(null);
-  const todayIntervalRef = useRef(null);
+  // [OCULTADO] todayIntervalRef ya no se usa (era para Sportmonks)
+  // const todayIntervalRef = useRef(null);
 
   const user = useAuthStore((state) => state.user);
   const [search, setSearch] = useState("");
   const [expandedCountry, setExpandedCountry] = useState(null);
   const [visibleCountries, setVisibleCountries] = useState(COUNTRIES_PER_PAGE);
+  const [selectedDate, setSelectedDate] = useState(getTodayDate());
+  const [leagueFavorites, setLeagueFavorites] = useState(new Set());
 
   const debouncedSearch = useDebounce(search, 250);
 
-  // Sportmonks store — endpoint unificado
-  const smFixtures = useSportmonksStore((s) => s.smFixtures);
-  const smReady = useSportmonksStore((s) => s.ready);
-  const smLastFetchAt = useSportmonksStore((s) => s.lastFetchAt);
-  const fetchSmToday = useSportmonksStore((s) => s.fetchToday);
-
-  // Helper: fecha de hoy en formato YYYY-MM-DD
-  const getTodayDate = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  };
+  // [OCULTADO] Sportmonks store — endpoint unificado
+  // const smFixtures = useSportmonksStore((s) => s.smFixtures);
+  // const smReady = useSportmonksStore((s) => s.ready);
+  // const smLastFetchAt = useSportmonksStore((s) => s.lastFetchAt);
+  // const fetchSmToday = useSportmonksStore((s) => s.fetchToday);
 
   useEffect(() => {
     const initLoad = async () => {
-      const todayDate = getTodayDate();
-
-      // Si los datos de SM tienen menos de 30s, no re-fetchear
-      const smFresh = Date.now() - smLastFetchAt < 30000;
-
       await Promise.all([
         loadData(),
-        loadTodayAndLive(),       // api-football: fetch today+live, merge, set once
-        smFresh ? Promise.resolve() : fetchSmToday(todayDate),
-        user ? loadMyGroups() : Promise.resolve()
+        loadMatchesByDate(selectedDate), // api-football: fetch date+live, merge, set once
+        user ? loadMyGroups() : Promise.resolve(),
+        user ? loadLeagueFavorites() : Promise.resolve()
       ]);
 
       setLoading(false);
@@ -81,17 +82,32 @@ export default function Explorer() {
 
     initLoad();
 
-    // Polling: refrescar cada 30s
-    liveIntervalRef.current = setInterval(() => {
-      refreshLiveApiFootball();
-      fetchSmToday(getTodayDate());
+    // Polling 1: refrescar live cada 30s (goles, minutos) solo si es hoy
+    const liveInterval = setInterval(() => {
+      if (selectedDate === getTodayDate()) {
+        refreshLiveApiFootball();
+      }
     }, 30000);
 
+    // Polling 2: refrescar datos completos cada 60s para capturar partidos que terminaron
+    const fullInterval = setInterval(() => {
+      if (selectedDate === getTodayDate()) {
+        loadMatchesByDate(selectedDate);
+      }
+    }, 60000);
+
     return () => {
-      if (liveIntervalRef.current) clearInterval(liveIntervalRef.current);
-      if (todayIntervalRef.current) clearInterval(todayIntervalRef.current);
+      clearInterval(liveInterval);
+      clearInterval(fullInterval);
     };
   }, [user?.id]);
+
+  // Reload matches when selectedDate changes
+  useEffect(() => {
+    if (!loading) {
+      loadMatchesByDate(selectedDate);
+    }
+  }, [selectedDate]);
 
   // Reset visible countries when search changes
   useEffect(() => {
@@ -100,7 +116,7 @@ export default function Explorer() {
 
   const loadData = async () => {
     try {
-      const { data: result } = await api.get("/explorer/leagues");
+      const { data: result } = await api.get(`/explorer/leagues?_=${Date.now()}`);
       setData(result);
     } catch (err) {
       console.error(err);
@@ -108,26 +124,60 @@ export default function Explorer() {
   };
 
   /**
-   * api-football: Fetch today + live en PARALELO, mergear (live gana),
-   * y setear todayMatches UNA SOLA VEZ ya mergeados.
+   * api-football: Fetch matches by date + live (si es hoy), mergear (live gana).
    */
-  const loadTodayAndLive = async () => {
+  const loadMatchesByDate = async (date) => {
     try {
-      const [todayRes, liveRes] = await Promise.all([
-        api.get("/explorer/today").catch(() => ({ data: { total: 0, grouped: [] } })),
-        api.get("/explorer/live").catch(() => ({ data: { total: 0, grouped: [] } })),
-      ]);
+      const isToday = date === getTodayDate();
+      const requests = [
+        api.get(`/explorer/fixtures/date/${date}?timezone=America/Argentina/Buenos_Aires`).catch(() => ({ data: [] })),
+      ];
 
-      const today = todayRes.data || { total: 0, grouped: [] };
-      const live = liveRes.data || { total: 0, grouped: [] };
+      // Si es hoy, también traer live
+      if (isToday) {
+        requests.push(api.get("/explorer/live").catch(() => ({ data: { total: 0, grouped: [] } })));
+      }
 
-      // Merge: live gana para IDs que coincidan
-      const merged = mergeApiFootballData(today, live);
-      setTodayMatches(merged);
+      const [dateRes, liveRes] = await Promise.all(requests);
+
+      // Convertir array plano a formato grouped (igual que today/live)
+      const dateFixtures = dateRes.data || [];
+      const grouped = groupFixturesByLeague(dateFixtures);
+
+      const dateData = { total: dateFixtures.length, grouped };
+
+      if (isToday && liveRes) {
+        const live = liveRes.data || { total: 0, grouped: [] };
+        const merged = mergeApiFootballData(dateData, live);
+        setTodayMatches(merged);
+      } else {
+        setTodayMatches(dateData);
+      }
     } catch (err) {
       /* silent */
     }
   };
+
+  /**
+   * Agrupa fixtures planos por liga (mismo formato que today/live).
+   */
+  function groupFixturesByLeague(fixtures) {
+    const byLeague = {};
+    fixtures.forEach((m) => {
+      const key = m.league?.id;
+      if (!key) return;
+      if (!byLeague[key]) {
+        byLeague[key] = {
+          league: m.league,
+          matches: [],
+        };
+      }
+      byLeague[key].matches.push(m);
+    });
+    return Object.values(byLeague).sort((a, b) => {
+      return a.league.name.localeCompare(b.league.name);
+    });
+  }
 
   /**
    * Polling: solo refresca live y mergea con todayMatches existente.
@@ -184,6 +234,35 @@ export default function Explorer() {
       setMyGroups(groups || []);
     } catch (err) {
       console.error("Failed to load my groups", err);
+    }
+  };
+
+  const loadLeagueFavorites = async () => {
+    try {
+      const { data } = await api.get("/auth/me/league-favorites");
+      setLeagueFavorites(new Set(data || []));
+    } catch (err) {
+      console.error("Failed to load league favorites", err);
+    }
+  };
+
+  const toggleLeagueFavorite = async (leagueId) => {
+    if (!user) return;
+    const isFav = leagueFavorites.has(leagueId);
+    try {
+      if (isFav) {
+        await api.delete(`/auth/me/league-favorites/${leagueId}`);
+        setLeagueFavorites((prev) => {
+          const next = new Set(prev);
+          next.delete(leagueId);
+          return next;
+        });
+      } else {
+        await api.post("/auth/me/league-favorites", { leagueId });
+        setLeagueFavorites((prev) => new Set(prev).add(leagueId));
+      }
+    } catch (err) {
+      console.error("Failed to toggle league favorite", err);
     }
   };
 
@@ -488,15 +567,48 @@ export default function Explorer() {
         </div>
       )}
 
-      {/* ══════ Sportmonks Live / Today ══════ */}
-      {smReady && smFixtures.length > 0 && (
-        <SmTodayMatchesRow fixtures={smFixtures} />
-      )}
-
-      {/* Today Matches (api-football, ya mergeados con live) */}
-      {todayMatches?.total > 0 ? (
-        <TodayMatchesRow data={todayMatches} />
-      ) : null}
+      {/* Selector de Fecha + Partidos */}
+      <div className="glass-card rounded-2xl p-4 border border-white/5">
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+            <span className="text-sm font-bold text-white/50 uppercase tracking-wider">
+              Partidos
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Calendar size={14} className="text-white/50" />
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-indigo-500 transition-all"
+            />
+            <button
+              onClick={() => setSelectedDate(getTodayDate())}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border cursor-pointer ${
+                selectedDate === getTodayDate()
+                  ? "bg-indigo-500/20 text-indigo-400 border-indigo-500/30"
+                  : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
+              }`}
+            >
+              Hoy
+            </button>
+          </div>
+        </div>
+        {todayMatches?.total > 0 ? (
+          <TodayMatchesRow
+            data={todayMatches}
+            leagueFavorites={leagueFavorites}
+            onToggleFavorite={toggleLeagueFavorite}
+            user={user}
+          />
+        ) : (
+          <div className="text-center py-8 text-white/40 text-sm">
+            No hay partidos programados para esta fecha
+          </div>
+        )}
+      </div>
 
       {/* Top Leagues */}
       <div>
@@ -601,22 +713,32 @@ export default function Explorer() {
 }
 
 // ─── Today Matches grouped by league ───
-const TodayMatchesRow = ({ data }) => {
-  // Ligas que ya muestra la sección Sportmonks — no duplicar
-  // AF_LEAGUES_COVERED_BY_SM is already imported as a Set
-
-
+const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
   const [collapsedLeagues, setCollapsedLeagues] = useState({});
   const [liveOnly, setLiveOnly] = useState(false);
 
   const LIVE_STATUSES = ["1H", "2H", "HT", "ET", "BT", "P"];
+  const WORLD_CUP_ID = 1;
 
-  // Filtrar grupos de ligas que ya cubre Sportmonks
-  const filteredGrouped = (data.grouped || []).filter(
-    (g) => !AF_LEAGUES_COVERED_BY_SM.has(g.league.id)
-  );
+  const filteredGrouped = data.grouped || [];
 
-  // Count total live matches (solo ligas no-SM)
+  // Ordenar: Mundial primero, luego favoritos, luego el resto
+  const sortedGroups = [...filteredGrouped].sort((a, b) => {
+    const aId = a.league.id;
+    const bId = b.league.id;
+    const aIsWC = aId === WORLD_CUP_ID;
+    const bIsWC = bId === WORLD_CUP_ID;
+    const aIsFav = leagueFavorites?.has(aId);
+    const bIsFav = leagueFavorites?.has(bId);
+
+    if (aIsWC && !bIsWC) return -1;
+    if (!aIsWC && bIsWC) return 1;
+    if (aIsFav && !bIsFav) return -1;
+    if (!aIsFav && bIsFav) return 1;
+    return 0;
+  });
+
+  // Count total live matches
   const liveCount = filteredGrouped.reduce(
     (acc, g) =>
       acc +
@@ -625,9 +747,9 @@ const TodayMatchesRow = ({ data }) => {
     0,
   );
 
-  // Filter groups when liveOnly is active (siempre sobre filteredGrouped, nunca data.grouped)
+  // Filter groups when liveOnly is active
   const displayGroups = liveOnly
-    ? filteredGrouped
+    ? sortedGroups
         .map((g) => ({
           ...g,
           matches: g.matches.filter((m) =>
@@ -635,23 +757,18 @@ const TodayMatchesRow = ({ data }) => {
           ),
         }))
         .filter((g) => g.matches.length > 0)
-    : filteredGrouped;
+    : sortedGroups;
 
   const totalCount = filteredGrouped.reduce((acc, g) => acc + g.matches.length, 0);
 
   if (totalCount === 0) return null;
 
   return (
-    <m.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-card rounded-2xl p-4 border border-white/5"
-    >
-      <div className="flex items-center justify-between mb-3">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
           <span className="text-sm font-bold text-white/50 uppercase tracking-wider">
-            Partidos de Hoy — {totalCount} encuentros
+            {totalCount} encuentros
           </span>
         </div>
         {liveCount > 0 && (
@@ -670,11 +787,23 @@ const TodayMatchesRow = ({ data }) => {
           </button>
         )}
       </div>
-      <div className="space-y-3">
-        {displayGroups.map((group, index) => {
+      <div className="space-y-4">
+        {displayGroups.map((group) => {
           const isCollapsed = collapsedLeagues[group.league.id];
+          const isWorldCup = group.league.id === WORLD_CUP_ID;
+          const isFav = leagueFavorites?.has(group.league.id);
           return (
-            <div key={group.league.id} className="pt-2">
+            <div
+              key={group.league.id}
+              className={`rounded-xl overflow-hidden border ${
+                isWorldCup
+                  ? "border-amber-500/30 bg-amber-500/[0.03]"
+                  : isFav
+                    ? "border-indigo-500/20 bg-indigo-500/[0.02]"
+                    : "border-white/5 bg-white/[0.02]"
+              }`}
+            >
+              {/* Header de liga - Mejorado */}
               <button
                 onClick={() =>
                   setCollapsedLeagues((prev) => ({
@@ -682,27 +811,41 @@ const TodayMatchesRow = ({ data }) => {
                     [group.league.id]: !isCollapsed,
                   }))
                 }
-                className="w-full flex items-center justify-between mb-2 pl-1 border-l-[3px] border-amber-500/50 bg-transparent border-t-0 border-r-0 border-b-0 cursor-pointer group px-0"
+                className={`w-full flex items-center justify-between px-3 py-2.5 cursor-pointer group transition-colors ${
+                  isWorldCup
+                    ? "bg-amber-900/30 hover:bg-amber-800/40"
+                    : "bg-indigo-950/30 hover:bg-indigo-900/40"
+                }`}
               >
                 <div className="flex items-center gap-2.5">
                   {group.league.logo && (
                     <img
                       src={group.league.logo}
                       alt=""
-                      loading={index < 2 ? "eager" : "lazy"} fetchPriority={index < 2 ? "high" : "auto"}
+                      loading="lazy"
                       decoding="async"
                       width={24}
                       height={24}
-                      className="w-6 h-6 object-contain ml-2"
-                      
-  onError={(e) => {
+                      className="w-6 h-6 object-contain"
+                      onError={(e) => {
                         e.target.src = "/placeholder-team.svg";
                       }}
                     />
                   )}
-                  <span className="text-sm text-white/90 font-bold uppercase tracking-wider group-hover:text-amber-400 transition-colors">
+                  <span
+                    className={`text-sm font-bold uppercase tracking-wider transition-colors ${
+                      isWorldCup
+                        ? "text-amber-400"
+                        : "text-white/90 group-hover:text-indigo-300"
+                    }`}
+                  >
                     {group.league.name}
                   </span>
+                  {isWorldCup && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">
+                      MUNDIAL
+                    </span>
+                  )}
                   {group.league.flag && (
                     <img
                       src={group.league.flag}
@@ -712,17 +855,37 @@ const TodayMatchesRow = ({ data }) => {
                       decoding="async"
                       width={20}
                       height={16}
-                      
-  onError={(e) => {
+                      onError={(e) => {
                         e.target.src = "/placeholder-team.svg";
                       }}
                     />
                   )}
                 </div>
-                <ChevronDown
-                  size={16}
-                  className={`text-white/50 mr-2 transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""}`}
-                />
+                <div className="flex items-center gap-2">
+                  {user && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleFavorite(group.league.id);
+                      }}
+                      className={`p-1 rounded-lg transition-all cursor-pointer border-none bg-transparent ${
+                        isFav
+                          ? "text-amber-400 hover:text-amber-300"
+                          : "text-white/30 hover:text-white/60"
+                      }`}
+                      title={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
+                    >
+                      <Star size={14} className={isFav ? "fill-amber-400" : ""} />
+                    </button>
+                  )}
+                  <span className="text-xs text-white/40 font-medium">
+                    {group.matches.length} partido{group.matches.length !== 1 ? "s" : ""}
+                  </span>
+                  <ChevronDown
+                    size={16}
+                    className={`text-white/50 transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""}`}
+                  />
+                </div>
               </button>
 
               <AnimatePresence initial={false}>
@@ -791,42 +954,40 @@ const TodayMatchesRow = ({ data }) => {
                               {/* Teams and Score */}
                               <div className="flex items-center justify-between gap-2.5">
                                 <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                                  {m.teams?.home?.logo && (
-                                    <img
-                                      src={m.teams.home.logo}
-                                      alt=""
-                                      loading={index < 2 ? "eager" : "lazy"} fetchPriority={index < 2 ? "high" : "auto"}
-                                      decoding="async"
-                                      width={20}
-                                      height={20}
-                                      className="w-5 h-5 object-contain"
-                                      
-  onError={(e) => {
-                                        e.target.src = "/placeholder-team.svg";
-                                      }}
-                                    />
-                                  )}
-                                  <span className="text-xs sm:text-[13px] text-white font-semibold truncate">
-                                    {m.teams?.home?.name}
-                                  </span>
-                                </div>
-                                <div className="text-sm font-bold text-white px-1 text-center w-6">
-                                  {!isPending ? (m.goals?.home ?? 0) : "-"}
-                                </div>
-                              </div>
-                              <div className="flex items-center justify-between gap-2.5">
-                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                              {m.teams?.home?.logo && (
+                                <img
+                                  src={m.teams.home.logo}
+                                  alt=""
+                                  loading={mIndex < 2 ? "eager" : "lazy"} fetchPriority={mIndex < 2 ? "high" : "auto"}
+                                  decoding="async"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5 object-contain"
+                                  onError={(e) => {
+                                    e.target.src = "/placeholder-team.svg";
+                                  }}
+                                />
+                              )}
+                              <span className="text-xs sm:text-[13px] text-white font-semibold truncate">
+                                {m.teams?.home?.name}
+                              </span>
+                            </div>
+                            <div className="text-sm font-bold text-white px-1 text-center w-6">
+                              {!isPending ? (m.goals?.home ?? 0) : "-"}
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between gap-2.5">
+                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
                                   {m.teams?.away?.logo && (
                                     <img
                                       src={m.teams.away.logo}
                                       alt=""
-                                      loading={index < 2 ? "eager" : "lazy"} fetchPriority={index < 2 ? "high" : "auto"}
+                                      loading={mIndex < 2 ? "eager" : "lazy"} fetchPriority={mIndex < 2 ? "high" : "auto"}
                                       decoding="async"
                                       width={20}
                                       height={20}
                                       className="w-5 h-5 object-contain"
-                                      
-  onError={(e) => {
+                                      onError={(e) => {
                                         e.target.src = "/placeholder-team.svg";
                                       }}
                                     />
@@ -840,76 +1001,7 @@ const TodayMatchesRow = ({ data }) => {
                                 </div>
                               </div>
 
-                              {/* Real Odds / 1X2 View */}
-                              <div className="flex items-center justify-between gap-1 mt-2 pt-2 border-t border-white/5 relative">
-                                <div
-                                  className={`flex items-center justify-between w-full flex-1 gap-1 ${["FT", "AET", "PEN"].includes(m.fixture.status.short) ? "opacity-90" : ""}`}
-                                >
-                                  {(() => {
-                                    let h = "-",
-                                      d = "-",
-                                      a = "-";
-                                    if (m.odds && m.odds.length > 0) {
-                                      h =
-                                        m.odds.find((o) => o.value === "Home")
-                                          ?.odd || "-";
-                                      d =
-                                        m.odds.find((o) => o.value === "Draw")
-                                          ?.odd || "-";
-                                      a =
-                                        m.odds.find((o) => o.value === "Away")
-                                          ?.odd || "-";
-                                    }
-
-                                    const isFinished = [
-                                      "FT",
-                                      "AET",
-                                      "PEN",
-                                    ].includes(m.fixture.status.short);
-                                    const homeGoals = m.goals?.home ?? 0;
-                                    const awayGoals = m.goals?.away ?? 0;
-
-                                    const homeWon =
-                                      isFinished && homeGoals > awayGoals;
-                                    const isDraw =
-                                      isFinished && homeGoals === awayGoals;
-                                    const awayWon =
-                                      isFinished && homeGoals < awayGoals;
-
-                                    return (
-                                      <>
-                                        <div
-                                          className={`flex-1 text-center rounded py-1 text-[11px] font-medium border border-white/5 transition-all ${
-                                            homeWon
-                                              ? "bg-emerald-500/30 text-emerald-300 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)]"
-                                              : "bg-black/20 text-white/50 hover:bg-white/10"
-                                          }`}
-                                        >
-                                          1: {h}
-                                        </div>
-                                        <div
-                                          className={`flex-1 text-center rounded py-1 text-[11px] font-medium border border-white/5 transition-all ${
-                                            isDraw
-                                              ? "bg-amber-500/30 text-amber-300 border-amber-500/50 shadow-[0_0_8px_rgba(245,158,11,0.3)]"
-                                              : "bg-black/20 text-white/50 hover:bg-white/10"
-                                          }`}
-                                        >
-                                          X: {d}
-                                        </div>
-                                        <div
-                                          className={`flex-1 text-center rounded py-1 text-[11px] font-medium border border-white/5 transition-all ${
-                                            awayWon
-                                              ? "bg-emerald-500/30 text-emerald-300 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)]"
-                                              : "bg-black/20 text-white/50 hover:bg-white/10"
-                                          }`}
-                                        >
-                                          2: {a}
-                                        </div>
-                                      </>
-                                    );
-                                  })()}
-                                </div>
-                              </div>
+                              {/* Cuotas ocultadas a petición del usuario */}
                             </div>
                           </Link>
                         );
@@ -922,7 +1014,7 @@ const TodayMatchesRow = ({ data }) => {
           );
         })}
       </div>
-    </m.div>
+    </div>
   );
 };
 

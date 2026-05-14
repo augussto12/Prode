@@ -25,27 +25,32 @@ export default memo(function MatchCard({
   hideStage = false,
   groupSettings = null,
   priority = false, // added for LCP images
+  simpleMode = false, // Solo goles, sin mercados extras (para Mundial)
 }) {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const addToast = useToastStore((state) => state.addToast);
   const [expanded, setExpanded] = useState(false);
-  const [prediction, setPrediction] = useState({
-    homeGoals: "",
-    awayGoals: "",
-    winner: "",
-    doubleChance: "",
-    btts: null,
-    overUnder25: "",
-    moreShots: "",
-    moreCorners: "",
-    morePossession: "",
-    moreFouls: "",
-    moreCards: "",
-    moreOffsides: "",
-    moreSaves: "",
-    isJoker: false,
-  });
+  const [prediction, setPrediction] = useState(
+    simpleMode
+      ? { homeGoals: "", awayGoals: "" }
+      : {
+          homeGoals: "",
+          awayGoals: "",
+          winner: "",
+          doubleChance: "",
+          btts: null,
+          overUnder25: "",
+          moreShots: "",
+          moreCorners: "",
+          morePossession: "",
+          moreFouls: "",
+          moreCards: "",
+          moreOffsides: "",
+          moreSaves: "",
+          isJoker: false,
+        }
+  );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [existingPrediction, setExistingPrediction] = useState(
@@ -63,28 +68,47 @@ export default memo(function MatchCard({
   useEffect(() => {
     if (existingProp) {
       setExistingPrediction(existingProp);
-      setPrediction({
-        homeGoals: existingProp.homeGoals ?? "",
-        awayGoals: existingProp.awayGoals ?? "",
-        winner: existingProp.winner || "",
-        doubleChance: existingProp.doubleChance || "",
-        btts: existingProp.btts,
-        overUnder25: existingProp.overUnder25 || "",
-        moreShots: existingProp.moreShots || "",
-        moreCorners: existingProp.moreCorners || "",
-        morePossession: existingProp.morePossession || "",
-        moreFouls: existingProp.moreFouls || "",
-        moreCards: existingProp.moreCards || "",
-        moreOffsides: existingProp.moreOffsides || "",
-        moreSaves: existingProp.moreSaves || "",
-        isJoker: existingProp.isJoker || false,
-      });
+      if (simpleMode) {
+        setPrediction({
+          homeGoals: existingProp.homeGoals ?? "",
+          awayGoals: existingProp.awayGoals ?? "",
+        });
+      } else {
+        setPrediction({
+          homeGoals: existingProp.homeGoals ?? "",
+          awayGoals: existingProp.awayGoals ?? "",
+          winner: existingProp.winner || "",
+          doubleChance: existingProp.doubleChance || "",
+          btts: existingProp.btts,
+          overUnder25: existingProp.overUnder25 || "",
+          moreShots: existingProp.moreShots || "",
+          moreCorners: existingProp.moreCorners || "",
+          morePossession: existingProp.morePossession || "",
+          moreFouls: existingProp.moreFouls || "",
+          moreCards: existingProp.moreCards || "",
+          moreOffsides: existingProp.moreOffsides || "",
+          moreSaves: existingProp.moreSaves || "",
+          isJoker: existingProp.isJoker || false,
+        });
+      }
     }
-  }, [existingProp]);
+  }, [existingProp, simpleMode]);
 
   // Detect if the user has changed anything from the saved/initial state
   const hasChanges = useMemo(() => {
-    // If no existing prediction (never saved), any data entered counts as a change
+    // Simple mode: solo goles
+    if (simpleMode) {
+      if (!existingPrediction) {
+        return prediction.homeGoals !== "" || prediction.awayGoals !== "";
+      }
+      const ep = existingPrediction;
+      return (
+        String(prediction.homeGoals) !== String(ep.homeGoals ?? "") ||
+        String(prediction.awayGoals) !== String(ep.awayGoals ?? "")
+      );
+    }
+
+    // Full mode: todos los mercados
     if (!existingPrediction) {
       return (
         prediction.homeGoals !== "" ||
@@ -99,7 +123,6 @@ export default memo(function MatchCard({
         prediction.isJoker
       );
     }
-    // If there's an existing prediction, compare each field
     const ep = existingPrediction;
     return (
       String(prediction.homeGoals) !== String(ep.homeGoals ?? "") ||
@@ -113,7 +136,7 @@ export default memo(function MatchCard({
       (prediction.moreSaves || "") !== (ep.moreSaves || "") ||
       (prediction.isJoker || false) !== (ep.isJoker || false)
     );
-  }, [prediction, existingPrediction]);
+  }, [prediction, existingPrediction, simpleMode]);
 
   const handleSave = async () => {
     if (isSavingRef.current) return;
@@ -122,20 +145,27 @@ export default memo(function MatchCard({
     setErrorMsg(null);
     try {
       // Clean up values for API
-      const payload = {
-        homeGoals:
-          prediction.homeGoals !== "" ? Number(prediction.homeGoals) : null,
-        awayGoals:
-          prediction.awayGoals !== "" ? Number(prediction.awayGoals) : null,
-        moreShots: prediction.moreShots || null,
-        moreCorners: prediction.moreCorners || null,
-        morePossession: prediction.morePossession || null,
-        moreFouls: prediction.moreFouls || null,
-        moreCards: prediction.moreCards || null,
-        moreOffsides: prediction.moreOffsides || null,
-        moreSaves: prediction.moreSaves || null,
-        isJoker: prediction.isJoker || false,
-      };
+      const payload = simpleMode
+        ? {
+            homeGoals:
+              prediction.homeGoals !== "" ? Number(prediction.homeGoals) : null,
+            awayGoals:
+              prediction.awayGoals !== "" ? Number(prediction.awayGoals) : null,
+          }
+        : {
+            homeGoals:
+              prediction.homeGoals !== "" ? Number(prediction.homeGoals) : null,
+            awayGoals:
+              prediction.awayGoals !== "" ? Number(prediction.awayGoals) : null,
+            moreShots: prediction.moreShots || null,
+            moreCorners: prediction.moreCorners || null,
+            morePossession: prediction.morePossession || null,
+            moreFouls: prediction.moreFouls || null,
+            moreCards: prediction.moreCards || null,
+            moreOffsides: prediction.moreOffsides || null,
+            moreSaves: prediction.moreSaves || null,
+            isJoker: prediction.isJoker || false,
+          };
 
       await api.post("/predictions", {
         externalFixtureId: match.externalId,
@@ -150,9 +180,11 @@ export default memo(function MatchCard({
     } catch (err) {
       const msg =
         err.response?.data?.error ||
-        "Error al guardar. Tal vez ya usaste tu comodín x2 hoy.";
+        (simpleMode
+          ? "Error al guardar la predicción."
+          : "Error al guardar. Tal vez ya usaste tu comodín x2 hoy.");
       addToast({ type: "error", message: msg });
-      if (msg.toLowerCase().includes("comodín")) {
+      if (!simpleMode && msg.toLowerCase().includes("comodín")) {
         setPrediction((prev) => ({ ...prev, isJoker: false }));
       }
     } finally {
@@ -252,7 +284,7 @@ export default memo(function MatchCard({
             )}
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {user && (
+            {!simpleMode && user && (
               <button
                 onClick={() =>
                   !isPast &&
@@ -416,7 +448,7 @@ export default memo(function MatchCard({
       </div>
 
       {/* Expand Toggle — show only if at least one extra module is enabled */}
-      {user && (isPast ? hasExtraMarkets : hasAnyExtras) && (
+      {!simpleMode && user && (isPast ? hasExtraMarkets : hasAnyExtras) && (
         <button
           onClick={() => setExpanded(!expanded)}
           className="w-full flex items-center justify-center gap-1 py-2 text-xs text-white/60 hover:text-white/60 bg-white/[0.02] cursor-pointer border-x-0 border-b-0 bg-transparent transition-all"
@@ -434,7 +466,7 @@ export default memo(function MatchCard({
       )}
 
       {/* Expanded Markets — EDITABLE (future matches) */}
-      {expanded && !isPast && (
+      {!simpleMode && expanded && !isPast && (
         <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -691,7 +723,7 @@ export default memo(function MatchCard({
 
 
       {/* Expanded Markets — READ-ONLY (past/live matches with existing predictions) */}
-      {expanded && isPast && hasExtraMarkets && (
+      {!simpleMode && expanded && isPast && hasExtraMarkets && (
         <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
