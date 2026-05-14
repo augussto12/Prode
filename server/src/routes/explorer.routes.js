@@ -155,114 +155,98 @@ router.get('/countries', async (req, res, next) => {
 // LEAGUE DETAIL
 // ═══════════════════════════════════════
 
-/** GET /api/explorer/leagues/:id — Info detallada de una liga */
+/** GET /api/explorer/leagues/:id — Info detallada de una liga (sin cache) */
 router.get('/leagues/:id', async (req, res, next) => {
   try {
     const leagueId = Number(req.params.id);
     const season = Number(req.query.season) || getCurrentSeason();
-    const cacheKey = `league-detail:${leagueId}:${season}`;
 
-    const data = await cachedApiCall(cacheKey, 7200, async () => {
-      const result = await footballApi.fetchLeagues({ id: leagueId });
-      return result.response?.[0] || null;
-    });
-
-    res.set('Cache-Control', 'public, max-age=7200');
-    res.json({ ...data, currentSeason: season });
+    const result = await footballApi.fetchLeagues({ id: leagueId });
+    res.json({ ...(result.response?.[0] || null), currentSeason: season });
   } catch (err) { next(err); }
 });
 
-/** GET /api/explorer/leagues/:id/standings — Tabla de posiciones */
+/** GET /api/explorer/leagues/:id/standings — Tabla de posiciones (sin cache) */
 router.get('/leagues/:id/standings', async (req, res, next) => {
   try {
     const leagueId = Number(req.params.id);
     const season = Number(req.query.season) || getCurrentSeason();
-    const cacheKey = `standings:${leagueId}:${season}`;
 
-    const data = await cachedApiCall(cacheKey, 7200, async () => {
-      const result = await footballApi.fetchStandings(leagueId, season);
-      return result.response?.[0] || null;
-    });
-
-    res.set('Cache-Control', 'public, max-age=3600');
-    res.json(data);
+    const result = await footballApi.fetchStandings(leagueId, season);
+    res.json(result.response?.[0] || null);
   } catch (err) { next(err); }
 });
 
-/** GET /api/explorer/leagues/:id/fixtures — Fixtures de la liga */
+/** GET /api/explorer/leagues/:id/fixtures — Fixtures de la liga (sin cache, siempre fresco) */
 router.get('/leagues/:id/fixtures', async (req, res, next) => {
   try {
     const leagueId = Number(req.params.id);
     const season = Number(req.query.season) || getCurrentSeason();
     const round = req.query.round || null;
-    const cacheKey = `fixtures:${leagueId}:${season}:${round || 'all'}`;
 
-    const data = await cachedApiCall(cacheKey, 3600, async () => {
-      if (round) {
-        const result = await footballApi.fetchFixturesByRound(leagueId, season, round);
-        return result.response;
-      }
-      const result = await footballApi.fetchFixtures(leagueId, season);
-      return result.response;
+    let result;
+    if (round) {
+      result = await footballApi.fetchFixturesByRound(leagueId, season, round);
+    } else {
+      result = await footballApi.fetchFixtures(leagueId, season);
+    }
+
+    res.json((result.response || []).map(trimMatch));
+  } catch (err) { next(err); }
+});
+
+    // Si NO hay partidos hoy/en vivo, extender cache a 1 hora
+    const hasLiveOrToday = (data || []).some(m => {
+      const status = m.fixture?.status?.short;
+      const matchDate = m.fixture?.date?.split('T')[0];
+      const isLive = ['1H', '2H', 'HT', 'ET', 'P', 'BT'].includes(status);
+      return isLive || matchDate === todayStr;
     });
+
+    if (!hasLiveOrToday && data?.length > 0) {
+      invalidateCache(cacheKey);
+      await cachedApiCall(cacheKey, 3600, async () => data);
+    }
 
     res.json((data || []).map(trimMatch));
   } catch (err) { next(err); }
 });
 
-/** GET /api/explorer/leagues/:id/rounds — Rondas disponibles */
+/** GET /api/explorer/leagues/:id/rounds — Rondas disponibles (sin cache) */
 router.get('/leagues/:id/rounds', async (req, res, next) => {
   try {
     const leagueId = Number(req.params.id);
     const season = Number(req.query.season) || getCurrentSeason();
-    const cacheKey = `rounds:${leagueId}:${season}`;
 
-    const data = await cachedApiCall(cacheKey, 3600, async () => {
-      const result = await footballApi.fetchRounds(leagueId, season);
-      return result.response;
+    const result = await footballApi.fetchRounds(leagueId, season);
+    const currentResult = await footballApi.fetchRounds(leagueId, season, { current: true });
+
+    res.json({
+      rounds: result.response,
+      currentRound: currentResult.response?.[0] || null,
     });
-
-    // Also fetch current round
-    const currentRound = await cachedApiCall(`current-round:${leagueId}:${season}`, 3600, async () => {
-      const result = await footballApi.fetchRounds(leagueId, season, { current: true });
-      return result.response?.[0] || null;
-    });
-
-    res.json({ rounds: data, currentRound });
   } catch (err) { next(err); }
 });
 
-/** GET /api/explorer/leagues/:id/scorers — Top goleadores */
+/** GET /api/explorer/leagues/:id/scorers — Top goleadores (sin cache) */
 router.get('/leagues/:id/scorers', async (req, res, next) => {
   try {
     const leagueId = Number(req.params.id);
     const season = Number(req.query.season) || getCurrentSeason();
-    const cacheKey = `scorers:${leagueId}:${season}`;
 
-    const data = await cachedApiCall(cacheKey, 21600, async () => {
-      const result = await footballApi.fetchTopScorers(leagueId, season);
-      return result.response;
-    });
-
-    res.set('Cache-Control', 'public, max-age=21600');
-    res.json(data);
+    const result = await footballApi.fetchTopScorers(leagueId, season);
+    res.json(result.response || []);
   } catch (err) { next(err); }
 });
 
-/** GET /api/explorer/leagues/:id/assists — Top asistentes */
+/** GET /api/explorer/leagues/:id/assists — Top asistentes (sin cache) */
 router.get('/leagues/:id/assists', async (req, res, next) => {
   try {
     const leagueId = Number(req.params.id);
     const season = Number(req.query.season) || getCurrentSeason();
-    const cacheKey = `assists:${leagueId}:${season}`;
 
-    const data = await cachedApiCall(cacheKey, 21600, async () => {
-      const result = await footballApi.fetchTopAssists(leagueId, season);
-      return result.response;
-    });
-
-    res.set('Cache-Control', 'public, max-age=21600');
-    res.json(data);
+    const result = await footballApi.fetchTopAssists(leagueId, season);
+    res.json(result.response || []);
   } catch (err) { next(err); }
 });
 
@@ -270,10 +254,13 @@ router.get('/leagues/:id/assists', async (req, res, next) => {
 // LIVE & FIXTURES
 // ═══════════════════════════════════════
 
-/** GET /api/explorer/live — Partidos en vivo (SIN CACHE), solo ligas curadas, agrupados por liga */
+/** GET /api/explorer/live — Partidos en vivo, cache de 30s para proteger la API del polling */
 router.get('/live', async (req, res, next) => {
   try {
-    const result = await footballApi.fetchLiveFixtures(LIVE_LEAGUE_IDS_STRING);
+    const cacheKey = 'explorer:live:current';
+    const result = await cachedApiCall(cacheKey, 30, async () => {
+      return footballApi.fetchLiveFixtures(LIVE_LEAGUE_IDS_STRING);
+    });
     const matches = result.response || [];
 
     // Filtrar solo ligas curadas (doble check)
@@ -696,37 +683,33 @@ router.get('/teams/:id/coach', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/** GET /api/explorer/teams/:id/fixtures — Partidos del equipo */
+/** GET /api/explorer/teams/:id/fixtures — Partidos del equipo (sin cache) */
 router.get('/teams/:id/fixtures', async (req, res, next) => {
   try {
     const teamId = Number(req.params.id);
     const currentYear = getCurrentSeason();
     const prevYear = currentYear - 1;
-    const cacheKey = `team:fixtures:${teamId}:${prevYear}-${currentYear}`;
 
-    // Cache for 1 hour (3600s) — fixtures change frequently during active seasons
-    const data = await cachedApiCall(cacheKey, 3600, async () => {
-      const baseUrl = `${process.env.FOOTBALL_API_BASE || 'https://v3.football.api-sports.io'}/fixtures`;
-      const headers = { 'x-apisports-key': process.env.FOOTBALL_API_KEY };
+    const baseUrl = `${process.env.FOOTBALL_API_BASE || 'https://v3.football.api-sports.io'}/fixtures`;
+    const headers = { 'x-apisports-key': process.env.FOOTBALL_API_KEY };
 
-      // Fetch both seasons in parallel — European leagues use prev year (e.g., 2025 for 2025-2026)
-      const [currentRes, prevRes] = await Promise.all([
-        fetch(`${baseUrl}?team=${teamId}&season=${currentYear}`, { headers }).then(r => r.json()).catch(() => ({ response: [] })),
-        fetch(`${baseUrl}?team=${teamId}&season=${prevYear}`, { headers }).then(r => r.json()).catch(() => ({ response: [] })),
-      ]);
+    // Fetch both seasons in parallel
+    const [currentRes, prevRes] = await Promise.all([
+      fetch(`${baseUrl}?team=${teamId}&season=${currentYear}`, { headers }).then(r => r.json()).catch(() => ({ response: [] })),
+      fetch(`${baseUrl}?team=${teamId}&season=${prevYear}`, { headers }).then(r => r.json()).catch(() => ({ response: [] })),
+    ]);
 
-      // Merge and deduplicate by fixture ID
-      const all = [...(currentRes.response || []), ...(prevRes.response || [])];
-      const seen = new Set();
-      return all.filter(f => {
-        const fId = f.fixture?.id;
-        if (seen.has(fId)) return false;
-        seen.add(fId);
-        return true;
-      });
+    // Merge and deduplicate by fixture ID
+    const all = [...(currentRes.response || []), ...(prevRes.response || [])];
+    const seen = new Set();
+    const data = all.filter(f => {
+      const fId = f.fixture?.id;
+      if (seen.has(fId)) return false;
+      seen.add(fId);
+      return true;
     });
 
-    res.json((data || []).map(trimTeamFixture));
+    res.json(data.map(trimTeamFixture));
   } catch (err) { next(err); }
 });
 

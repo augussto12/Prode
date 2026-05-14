@@ -1,6 +1,15 @@
 import { create } from "zustand";
 import api from "../services/api.js";
 
+// Version check: si cambia el build, limpiar localStorage para evitar datos viejos
+const APP_VERSION = "1.1"; // Bump this when making breaking changes
+const storedVersion = localStorage.getItem("prode_app_version");
+if (storedVersion !== APP_VERSION) {
+  localStorage.removeItem("prode_active_competition");
+  localStorage.removeItem("prode_app_version");
+  localStorage.setItem("prode_app_version", APP_VERSION);
+}
+
 const useCompetitionStore = create((set, get) => ({
   competitions: [],
   activeCompetition: JSON.parse(
@@ -14,14 +23,13 @@ const useCompetitionStore = create((set, get) => ({
       const { data } = await api.get("/competitions");
       set({ competitions: data, loading: false });
 
-      // Si no hay competencia activa pero hay datos, seleccionar la primera
       const current = get().activeCompetition;
-      if (!current && data.length > 0) {
-        get().setActive(data[0]);
-      }
-      // Si la activa ya no existe en la lista, resetear
-      if (current && !data.find((c) => c.id === current.id)) {
-        if (data.length > 0) {
+      // Si no hay activa o la activa no está en la lista nueva, buscar Mundial
+      const worldCup = data.find((c) => c.externalId === 1);
+      if (!current || !data.find((c) => c.id === current.id)) {
+        if (worldCup) {
+          get().setActive(worldCup);
+        } else if (data.length > 0) {
           get().setActive(data[0]);
         } else {
           set({ activeCompetition: null });

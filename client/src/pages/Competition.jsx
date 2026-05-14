@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, Star, Zap, BarChart3, Lock } from "lucide-react";
 import useCompetitionStore from "../store/competitionStore";
 import useAuthStore from "../store/authStore";
@@ -16,7 +16,28 @@ export default function Competition({ hideHeader }) {
   const activeCompetition = useCompetitionStore(
     (state) => state.activeCompetition,
   );
+  const competitions = useCompetitionStore((state) => state.competitions);
+  const setActive = useCompetitionStore((state) => state.setActive);
   const user = useAuthStore((state) => state.user);
+
+  // Fallback: si no hay competencia activa, buscar Mundial
+  useEffect(() => {
+    if (!activeCompetition && competitions.length > 0) {
+      const worldCup = competitions.find((c) => c.externalId === 1);
+      if (worldCup) {
+        setActive(worldCup);
+      } else {
+        // Hardcode fallback si la API no devuelve nada
+        setActive({
+          id: 1,
+          name: "Copa del Mundo 2026",
+          externalId: 1,
+          season: 2026,
+          logo: "https://media.api-sports.io/football/leagues/1.png",
+        });
+      }
+    }
+  }, [activeCompetition, competitions, setActive]);
 
   return (
     <div className="space-y-6">

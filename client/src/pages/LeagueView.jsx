@@ -76,7 +76,7 @@ export default function LeagueView() {
   const isAdmin =
     currentUser?.role === "ADMIN" || currentUser?.role === "SUPERADMIN";
   const competitions = useCompetitionStore((state) => state.competitions);
-  const setActiveCompetition = useCompetitionStore((state) => state.setActiveCompetition);
+  const setActiveCompetition = useCompetitionStore((state) => state.setActive);
   const fetchCompetitions = useCompetitionStore(
     (state) => state.fetchCompetitions,
   );
