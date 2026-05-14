@@ -13,7 +13,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: false,
+      injectRegister: 'auto',
       devOptions: { enabled: true },
       workbox: {
         navigateFallbackDenylist: [/^\/api/],
@@ -32,11 +32,20 @@ export default defineConfig({
         background_color: '#0f172a',
         display: 'standalone',
         orientation: 'portrait',
+        start_url: '/',
+        scope: '/',
         icons: [
           {
-            src: 'https://cdn-icons-png.flaticon.com/512/3112/3112946.png', // Temporary generic trophy or user could add local
+            src: 'https://cdn-icons-png.flaticon.com/512/3112/3112946.png',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: 'https://cdn-icons-png.flaticon.com/192/3112/3112946.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       }

@@ -85,9 +85,12 @@ function trimTeamFixture(m) {
 router.get('/leagues', async (req, res, next) => {
   try {
     const { country, season, type, search } = req.query;
-    const cacheKey = `leagues:v2:${country || 'all'}:${season || ''}:${type || ''}:${search || ''}`;
+    // La cache key incluye la cantidad de ligas permitidas para invalidar automaticamente
+    // cuando cambia la configuracion de ligas
+    const allowedCount = ALLOWED_LEAGUE_IDS.size;
+    const cacheKey = `leagues:v3:${allowedCount}:${country || 'all'}:${season || ''}:${type || ''}:${search || ''}`;
 
-    const data = await cachedApiCall(cacheKey, 86400, async () => {
+    const data = await cachedApiCall(cacheKey, 300, async () => {
       const params = {};
       if (country) params.country = country;
       if (season) params.season = Number(season);
@@ -276,25 +279,57 @@ router.get('/live', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/** GET /api/explorer/today — Partidos del día de hoy, agrupados por liga */
+/** GET /api/explorer/today — Partidos del día de hoy, agrupados por liga (sin cache) */
 router.get('/today', async (req, res, next) => {
   try {
     const tz = req.query.timezone || 'America/Argentina/Buenos_Aires';
-    // Format date in the requested timezone (en-CA naturally outputs YYYY-MM-DD)
     const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: tz });
-    const cacheKey = `today-matches:${todayStr}:${tz}`;
 
-    const data = await cachedApiCall(cacheKey, 60, async () => {
-      const result = await footballApi.fetchFixturesByDate(todayStr, null, tz);
+    const result = await footballApi.fetchFixturesByDate(todayStr, null, tz);
 
-      // Intentar fetchear pre-match odds (Bookmaker 8=Bet365, Bet 1=Match Winner)
-      try {
-        const oddsResult = await footballApi.fetchOdds({ date: todayStr, timezone: tz, bookmaker: 8, bet: 1 });
-        const oddsMap = {};
-        (oddsResult.response || []).forEach(o => {
-          const betWinner = o.bookmakers?.[0]?.bets?.[0];
-          if (betWinner) oddsMap[o.fixture.id] = betWinner.values;
-        });
+    try {
+      const oddsResult = await footballApi.fetchOdds({ date: todayStr, timezone: tz, bookmaker: 8, bet: 1 });
+      const oddsMap = {};
+      (oddsResult.response || []).forEach(o => {
+        const betWinner = o.bookmakers?.[0]?.bets?.[0];
+        if (betWinner) oddsMap[o.fixture.id] = betWinner.values;
+      });
+      (result.response || []).forEach(m => {
+        if (oddsMap[m.fixture.id]) {
+          m.odds = oddsMap[m.fixture.id];
+        }
+      });
+    } catch (e) {
+      // Odds not available — non-critical
+    }
+
+    const data = result.response || [];
+    const filtered = data.filter(m => ALLOWED_LEAGUE_IDS.has(m.league?.id));
+
+    const byLeague = {};
+    filtered.forEach(m => {
+      const key = m.league?.id;
+      if (!byLeague[key]) {
+        byLeague[key] = {
+          league: m.league,
+          matches: [],
+        };
+      }
+      byLeague[key].matches.push(trimMatch(m));
+    });
+
+    const grouped = Object.values(byLeague).sort((a, b) => {
+      const aTop = TOP_LEAGUE_IDS.indexOf(a.league.id);
+      const bTop = TOP_LEAGUE_IDS.indexOf(b.league.id);
+      if (aTop !== -1 && bTop !== -1) return aTop - bTop;
+      if (aTop !== -1) return -1;
+      if (bTop !== -1) return 1;
+      return a.league.name.localeCompare(b.league.name);
+    });
+
+    res.json({ total: filtered.length, grouped });
+  } catch (err) { next(err); }
+});
 
         // Attach
         (result.response || []).forEach(m => {
@@ -337,43 +372,32 @@ router.get('/today', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/** GET /api/explorer/fixtures/date/:date — Partidos por fecha */
+/** GET /api/explorer/fixtures/date/:date — Partidos por fecha (sin cache) */
 router.get('/fixtures/date/:date', async (req, res, next) => {
   try {
     const date = req.params.date; // YYYY-MM-DD
     const leagueId = req.query.league ? Number(req.query.league) : null;
     const tz = req.query.timezone || 'America/Argentina/Buenos_Aires';
-    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: tz });
-    const isToday = date === todayStr;
-    const cacheKey = `fixtures-date:${date}:${leagueId || 'all'}:${tz}`;
-    // Si es hoy, cache muy corto (60s) para reflejar cambios de estado rápido
-    const cacheTTL = isToday ? 60 : 3600;
 
-    const data = await cachedApiCall(cacheKey, cacheTTL, async () => {
-      const result = await footballApi.fetchFixturesByDate(date, leagueId, tz);
+    const result = await footballApi.fetchFixturesByDate(date, leagueId, tz);
 
-      try {
-        // Fetch real pre-match odds
-        const oddsResult = await footballApi.fetchOdds({ date, timezone: tz, bookmaker: 8, bet: 1 });
-        const oddsMap = {};
-        (oddsResult.response || []).forEach(o => {
-          const betWinner = o.bookmakers?.[0]?.bets?.[0];
-          if (betWinner) oddsMap[o.fixture.id] = betWinner.values;
-        });
+    try {
+      const oddsResult = await footballApi.fetchOdds({ date, timezone: tz, bookmaker: 8, bet: 1 });
+      const oddsMap = {};
+      (oddsResult.response || []).forEach(o => {
+        const betWinner = o.bookmakers?.[0]?.bets?.[0];
+        if (betWinner) oddsMap[o.fixture.id] = betWinner.values;
+      });
+      (result.response || []).forEach(m => {
+        if (oddsMap[m.fixture.id]) {
+          m.odds = oddsMap[m.fixture.id];
+        }
+      });
+    } catch (e) {
+      // Odds not available — non-critical
+    }
 
-        (result.response || []).forEach(m => {
-          if (oddsMap[m.fixture.id]) {
-            m.odds = oddsMap[m.fixture.id];
-          }
-        });
-      } catch (e) {
-        // Odds not available — non-critical
-      }
-
-      return result.response;
-    });
-
-    res.json(data);
+    res.json(result.response || []);
   } catch (err) { next(err); }
 });
 
