@@ -103,7 +103,8 @@ router.get('/leagues', async (req, res, next) => {
     // DEBUG LOGS
     console.log('[EXPLORER LEAGUES] Raw data count:', data?.length || 0);
     if (data && data.length > 0) {
-      console.log('[EXPLORER LEAGUES] First 3 raw IDs/types:', data.slice(0, 3).map(l => ({ id: l.league?.id, type: typeof l.league?.id, name: l.league?.name })));
+      const firstThree = data.slice(0, 3).map(l => ({ id: l.league?.id, type: typeof l.league?.id, name: l.league?.name }));
+      console.log('[EXPLORER LEAGUES] First 3 raw IDs/types:', firstThree);
     }
 
     // Filtrar solo ligas curadas (convertir a Number porque API-Football devuelve strings)
@@ -111,7 +112,8 @@ router.get('/leagues', async (req, res, next) => {
 
     console.log('[EXPLORER LEAGUES] After filter count:', filtered.length);
     console.log('[EXPLORER LEAGUES] Allowed IDs sample:', [...ALLOWED_LEAGUE_IDS].slice(0, 5));
-    console.log('[EXPLORER LEAGUES] Filtered IDs sample:', filtered.slice(0, 5).map(l => ({ id: l.league?.id, name: l.league?.name }));
+    const firstFive = filtered.slice(0, 5).map(l => ({ id: l.league?.id, name: l.league?.name }));
+    console.log('[EXPLORER LEAGUES] Filtered IDs sample:', firstFive);
 
     // Separar en Top y resto, ordenar
     const topLeagues = [];
