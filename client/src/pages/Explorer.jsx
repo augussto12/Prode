@@ -117,6 +117,11 @@ export default function Explorer() {
   const loadData = async () => {
     try {
       const { data: result } = await api.get(`/explorer/leagues?_=${Date.now()}`);
+      console.log('[FRONTEND EXPLORER] /explorer/leagues response:', result);
+      console.log('[FRONTEND EXPLORER] topLeagues count:', result.topLeagues?.length);
+      console.log('[FRONTEND EXPLORER] byCountry count:', result.byCountry?.length);
+      console.log('[FRONTEND EXPLORER] First topLeague IDs:', result.topLeagues?.slice(0, 3).map(l => ({ id: l.league?.id, name: l.league?.name })));
+      console.log('[FRONTEND EXPLORER] First byCountry:', result.byCountry?.slice(0, 2).map(c => ({ country: c.country, leagueCount: c.leagues?.length, firstLeague: c.leagues?.[0]?.league?.name })));
       setData(result);
     } catch (err) {
       console.error(err);
@@ -140,9 +145,15 @@ export default function Explorer() {
 
       const [dateRes, liveRes] = await Promise.all(requests);
 
+      console.log('[FRONTEND EXPLORER] fixtures/date response:', dateRes.data);
+      console.log('[FRONTEND EXPLORER] fixtures/date count:', dateRes.data?.length);
+
       // Convertir array plano a formato grouped (igual que today/live)
       const dateFixtures = dateRes.data || [];
       const grouped = groupFixturesByLeague(dateFixtures);
+
+      console.log('[FRONTEND EXPLORER] grouped leagues count:', grouped.length);
+      console.log('[FRONTEND EXPLORER] grouped league names:', grouped.map(g => g.league?.name));
 
       const dateData = { total: dateFixtures.length, grouped };
 

@@ -88,7 +88,7 @@ router.get('/leagues', async (req, res, next) => {
     // La cache key incluye la cantidad de ligas permitidas para invalidar automaticamente
     // cuando cambia la configuracion de ligas
     const allowedCount = ALLOWED_LEAGUE_IDS.size;
-    const cacheKey = `leagues:v3:${allowedCount}:${country || 'all'}:${season || ''}:${type || ''}:${search || ''}`;
+    const cacheKey = `leagues:v4:${allowedCount}:${country || 'all'}:${season || ''}:${type || ''}:${search || ''}`;
 
     const data = await cachedApiCall(cacheKey, 300, async () => {
       const params = {};
@@ -100,8 +100,18 @@ router.get('/leagues', async (req, res, next) => {
       return result.response;
     });
 
+    // DEBUG LOGS
+    console.log('[EXPLORER LEAGUES] Raw data count:', data?.length || 0);
+    if (data && data.length > 0) {
+      console.log('[EXPLORER LEAGUES] First 3 raw IDs/types:', data.slice(0, 3).map(l => ({ id: l.league?.id, type: typeof l.league?.id, name: l.league?.name })));
+    }
+
     // Filtrar solo ligas curadas (convertir a Number porque API-Football devuelve strings)
     const filtered = data.filter(l => ALLOWED_LEAGUE_IDS.has(Number(l.league?.id)));
+
+    console.log('[EXPLORER LEAGUES] After filter count:', filtered.length);
+    console.log('[EXPLORER LEAGUES] Allowed IDs sample:', [...ALLOWED_LEAGUE_IDS].slice(0, 5));
+    console.log('[EXPLORER LEAGUES] Filtered IDs sample:', filtered.slice(0, 5).map(l => ({ id: l.league?.id, name: l.league?.name }));
 
     // Separar en Top y resto, ordenar
     const topLeagues = [];
@@ -356,7 +366,13 @@ router.get('/fixtures/date/:date', async (req, res, next) => {
       // Odds not available — non-critical
     }
 
-    res.json(result.response || []);
+    const allFixtures = result.response || [];
+    // Filtrar solo ligas permitidas (convertir a Number porque API devuelve strings)
+    const filteredFixtures = allFixtures.filter(m => ALLOWED_LEAGUE_IDS.has(Number(m.league?.id)));
+
+    console.log(`[EXPLORER FIXTURES DATE] Date=${req.params.date} Raw=${allFixtures.length} Filtered=${filteredFixtures.length}`);
+
+    res.json(filteredFixtures);
   } catch (err) { next(err); }
 });
 
