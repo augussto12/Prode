@@ -137,7 +137,7 @@ router.get('/leagues', async (req, res, next) => {
         leagues: leagues.sort((a, b) => a.league.name.localeCompare(b.league.name)),
       }));
 
-    res.set('Cache-Control', 'public, max-age=3600');
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.json({ topLeagues, byCountry: countries });
   } catch (err) { next(err); }
 });
