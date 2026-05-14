@@ -331,47 +331,6 @@ router.get('/today', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-        // Attach
-        (result.response || []).forEach(m => {
-          if (oddsMap[m.fixture.id]) {
-            m.odds = oddsMap[m.fixture.id];
-          }
-        });
-      } catch (e) {
-        // Odds not available — non-critical
-      }
-
-      return result.response;
-    });
-
-    const filtered = (data || []).filter(m => ALLOWED_LEAGUE_IDS.has(m.league?.id));
-
-    const byLeague = {};
-    filtered.forEach(m => {
-      const key = m.league?.id;
-      if (!byLeague[key]) {
-        byLeague[key] = {
-          league: m.league,
-          matches: [],
-        };
-      }
-      byLeague[key].matches.push(trimMatch(m));
-    });
-
-    const grouped = Object.values(byLeague).sort((a, b) => {
-      const aTop = TOP_LEAGUE_IDS.indexOf(a.league.id);
-      const bTop = TOP_LEAGUE_IDS.indexOf(b.league.id);
-      if (aTop !== -1 && bTop !== -1) return aTop - bTop;
-      if (aTop !== -1) return -1;
-      if (bTop !== -1) return 1;
-      return a.league.name.localeCompare(b.league.name);
-    });
-
-    res.set('Cache-Control', 'public, max-age=300');
-    res.json({ total: filtered.length, grouped });
-  } catch (err) { next(err); }
-});
-
 /** GET /api/explorer/fixtures/date/:date — Partidos por fecha (sin cache) */
 router.get('/fixtures/date/:date', async (req, res, next) => {
   try {
