@@ -195,23 +195,6 @@ router.get('/leagues/:id/fixtures', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-    // Si NO hay partidos hoy/en vivo, extender cache a 1 hora
-    const hasLiveOrToday = (data || []).some(m => {
-      const status = m.fixture?.status?.short;
-      const matchDate = m.fixture?.date?.split('T')[0];
-      const isLive = ['1H', '2H', 'HT', 'ET', 'P', 'BT'].includes(status);
-      return isLive || matchDate === todayStr;
-    });
-
-    if (!hasLiveOrToday && data?.length > 0) {
-      invalidateCache(cacheKey);
-      await cachedApiCall(cacheKey, 3600, async () => data);
-    }
-
-    res.json((data || []).map(trimMatch));
-  } catch (err) { next(err); }
-});
-
 /** GET /api/explorer/leagues/:id/rounds — Rondas disponibles (sin cache) */
 router.get('/leagues/:id/rounds', async (req, res, next) => {
   try {
