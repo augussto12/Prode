@@ -100,15 +100,15 @@ router.get('/leagues', async (req, res, next) => {
       return result.response;
     });
 
-    // Filtrar solo ligas curadas
-    const filtered = data.filter(l => ALLOWED_LEAGUE_IDS.has(l.league.id));
+    // Filtrar solo ligas curadas (convertir a Number porque API-Football devuelve strings)
+    const filtered = data.filter(l => ALLOWED_LEAGUE_IDS.has(Number(l.league?.id)));
 
     // Separar en Top y resto, ordenar
     const topLeagues = [];
     const otherLeagues = [];
 
     for (const league of filtered) {
-      if (TOP_LEAGUE_IDS.includes(league.league.id)) {
+      if (TOP_LEAGUE_IDS.includes(Number(league.league?.id))) {
         topLeagues.push(league);
       } else {
         otherLeagues.push(league);
@@ -117,14 +117,14 @@ router.get('/leagues', async (req, res, next) => {
 
     // Ordenar top según el array de IDs
     topLeagues.sort((a, b) =>
-      TOP_LEAGUE_IDS.indexOf(a.league.id) - TOP_LEAGUE_IDS.indexOf(b.league.id)
+      TOP_LEAGUE_IDS.indexOf(Number(a.league?.id)) - TOP_LEAGUE_IDS.indexOf(Number(b.league?.id))
     );
 
     // Agrupar por país (usando la config de categorías) — incluye TODAS las ligas, incluso las top
     const byCategory = {};
     for (const [categoryName, ids] of Object.entries(CURATED_LEAGUES)) {
       if (categoryName === 'Torneos Internacionales') continue; // ya están en top
-      const categoryLeagues = filtered.filter(l => ids.includes(l.league.id));
+      const categoryLeagues = filtered.filter(l => ids.includes(Number(l.league?.id)));
       if (categoryLeagues.length > 0) {
         byCategory[categoryName] = categoryLeagues;
       }
@@ -249,8 +249,8 @@ router.get('/live', async (req, res, next) => {
     });
     const matches = result.response || [];
 
-    // Filtrar solo ligas curadas (doble check)
-    const filtered = matches.filter(m => ALLOWED_LEAGUE_IDS.has(m.league?.id));
+    // Filtrar solo ligas curadas (doble check) — convertir a Number porque API devuelve strings
+    const filtered = matches.filter(m => ALLOWED_LEAGUE_IDS.has(Number(m.league?.id)));
 
     // Agrupar por liga
     const byLeague = {};
@@ -267,8 +267,8 @@ router.get('/live', async (req, res, next) => {
 
     const grouped = Object.values(byLeague).sort((a, b) => {
       // Top leagues first
-      const aTop = TOP_LEAGUE_IDS.indexOf(a.league.id);
-      const bTop = TOP_LEAGUE_IDS.indexOf(b.league.id);
+      const aTop = TOP_LEAGUE_IDS.indexOf(Number(a.league?.id));
+      const bTop = TOP_LEAGUE_IDS.indexOf(Number(b.league?.id));
       if (aTop !== -1 && bTop !== -1) return aTop - bTop;
       if (aTop !== -1) return -1;
       if (bTop !== -1) return 1;
@@ -304,7 +304,7 @@ router.get('/today', async (req, res, next) => {
     }
 
     const data = result.response || [];
-    const filtered = data.filter(m => ALLOWED_LEAGUE_IDS.has(m.league?.id));
+    const filtered = data.filter(m => ALLOWED_LEAGUE_IDS.has(Number(m.league?.id)));
 
     const byLeague = {};
     filtered.forEach(m => {
@@ -319,8 +319,8 @@ router.get('/today', async (req, res, next) => {
     });
 
     const grouped = Object.values(byLeague).sort((a, b) => {
-      const aTop = TOP_LEAGUE_IDS.indexOf(a.league.id);
-      const bTop = TOP_LEAGUE_IDS.indexOf(b.league.id);
+      const aTop = TOP_LEAGUE_IDS.indexOf(Number(a.league?.id));
+      const bTop = TOP_LEAGUE_IDS.indexOf(Number(b.league?.id));
       if (aTop !== -1 && bTop !== -1) return aTop - bTop;
       if (aTop !== -1) return -1;
       if (bTop !== -1) return 1;

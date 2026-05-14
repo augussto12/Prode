@@ -240,7 +240,8 @@ export default function Explorer() {
   const loadLeagueFavorites = async () => {
     try {
       const { data } = await api.get("/auth/me/league-favorites");
-      setLeagueFavorites(new Set(data || []));
+      // API returns array of objects; extract leagueId as numbers
+      setLeagueFavorites(new Set((data || []).map((f) => Number(f.leagueId))));
     } catch (err) {
       console.error("Failed to load league favorites", err);
     }
@@ -473,7 +474,7 @@ export default function Explorer() {
       </div>
 
       {/* World Cup Banner Hero */}
-      {data.topLeagues.find((l) => l.league.id === 1) && (
+      {data.topLeagues.find((l) => Number(l.league?.id) === 1) && (
         <Link to="/liga/1" className="block no-underline">
           <m.div
             initial={{ opacity: 0, y: 10 }}
@@ -617,7 +618,7 @@ export default function Explorer() {
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {filteredTopLeagues
-            .filter((l) => l.league.id !== 1)
+            .filter((l) => Number(l.league?.id) !== 1)
             .map((l) => (
               <Link
                 key={l.league.id}
@@ -724,8 +725,8 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
 
   // Ordenar: Mundial primero, luego favoritos, luego el resto
   const sortedGroups = [...filteredGrouped].sort((a, b) => {
-    const aId = a.league.id;
-    const bId = b.league.id;
+    const aId = Number(a.league?.id);
+    const bId = Number(b.league?.id);
     const aIsWC = aId === WORLD_CUP_ID;
     const bIsWC = bId === WORLD_CUP_ID;
     const aIsFav = leagueFavorites?.has(aId);
@@ -789,12 +790,13 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
       </div>
       <div className="space-y-4">
         {displayGroups.map((group) => {
-          const isCollapsed = collapsedLeagues[group.league.id];
-          const isWorldCup = group.league.id === WORLD_CUP_ID;
-          const isFav = leagueFavorites?.has(group.league.id);
+          const leagueId = Number(group.league?.id);
+          const isCollapsed = collapsedLeagues[leagueId];
+          const isWorldCup = leagueId === WORLD_CUP_ID;
+          const isFav = leagueFavorites?.has(leagueId);
           return (
             <div
-              key={group.league.id}
+              key={leagueId}
               className={`rounded-xl overflow-hidden border ${
                 isWorldCup
                   ? "border-amber-500/30 bg-amber-500/[0.03]"
@@ -808,7 +810,7 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
                 onClick={() =>
                   setCollapsedLeagues((prev) => ({
                     ...prev,
-                    [group.league.id]: !isCollapsed,
+                    [leagueId]: !isCollapsed,
                   }))
                 }
                 className={`w-full flex items-center justify-between px-3 py-2.5 cursor-pointer group transition-colors ${
@@ -866,7 +868,7 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onToggleFavorite(group.league.id);
+                        onToggleFavorite(leagueId);
                       }}
                       className={`p-1 rounded-lg transition-all cursor-pointer border-none bg-transparent ${
                         isFav

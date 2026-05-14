@@ -36,13 +36,13 @@ export default defineConfig({
         scope: '/',
         icons: [
           {
-            src: 'https://cdn-icons-png.flaticon.com/512/3112/3112946.png',
+            src: '/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: 'https://cdn-icons-png.flaticon.com/192/3112/3112946.png',
+            src: '/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable'
