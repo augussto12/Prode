@@ -23,11 +23,23 @@ export async function authenticate(req, res, next) {
     
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
-      select: { id: true, email: true, username: true, displayName: true, role: true, avatar: true }
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        displayName: true,
+        role: true,
+        avatar: true,
+        emailVerifiedAt: true,
+      },
     });
 
     if (!user) {
       throw new UnauthorizedError('Usuario no encontrado');
+    }
+
+    if (!user.emailVerifiedAt) {
+      throw new UnauthorizedError('Tenes que verificar tu email antes de ingresar');
     }
 
     req.user = user;

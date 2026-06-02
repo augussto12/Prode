@@ -192,6 +192,10 @@ export async function syncAllSquads(batchSize = 10, competitionId = null) {
  * Cuesta 2 calls la primera vez, 0 después.
  */
 export async function syncMatchDetail(matchId) {
+  throw new Error(
+    `syncMatchDetail(${matchId}) pertenece al flujo legacy Match/MatchEvent, eliminado del schema. Usar /api/explorer/fixtures/:id.`
+  );
+/*
   const match = await prisma.match.findUnique({
     where: { id: matchId },
     include: { events: true },
@@ -257,6 +261,7 @@ export async function syncMatchDetail(matchId) {
   });
 
   return { cached: false, events: savedEvents, statistics: statsJson };
+*/
 }
 
 /** Obtener status de la cuota de API */

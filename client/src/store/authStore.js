@@ -32,11 +32,63 @@ const useAuthStore = create((set, get) => ({
         password,
         displayName,
       });
+      set({ loading: false });
+      return data;
+    } catch (err) {
+      const msg = err.response?.data?.error || "Registration failed";
+      set({ error: msg, loading: false });
+      throw err;
+    }
+  },
+
+  verifyEmail: async (token) => {
+    set({ loading: true, error: null });
+    try {
+      const { data } = await api.post("/auth/verify-email", { token });
       localStorage.setItem("prode_user", JSON.stringify(data.user));
       set({ user: data.user, loading: false });
       return data;
     } catch (err) {
-      const msg = err.response?.data?.error || "Registration failed";
+      const msg = err.response?.data?.error || "Verification failed";
+      set({ error: msg, loading: false });
+      throw err;
+    }
+  },
+
+  resendVerification: async (email) => {
+    set({ loading: true, error: null });
+    try {
+      const { data } = await api.post("/auth/resend-verification", { email });
+      set({ loading: false });
+      return data;
+    } catch (err) {
+      const msg = err.response?.data?.error || "Resend failed";
+      set({ error: msg, loading: false });
+      throw err;
+    }
+  },
+
+  forgotPassword: async (email) => {
+    set({ loading: true, error: null });
+    try {
+      const { data } = await api.post("/auth/forgot-password", { email });
+      set({ loading: false });
+      return data;
+    } catch (err) {
+      const msg = err.response?.data?.error || "Password reset failed";
+      set({ error: msg, loading: false });
+      throw err;
+    }
+  },
+
+  resetPassword: async (token, password) => {
+    set({ loading: true, error: null });
+    try {
+      const { data } = await api.post("/auth/reset-password", { token, password });
+      set({ loading: false });
+      return data;
+    } catch (err) {
+      const msg = err.response?.data?.error || "Password reset failed";
       set({ error: msg, loading: false });
       throw err;
     }

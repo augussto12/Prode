@@ -145,9 +145,6 @@ export default function GroupPredictionsModal({
                     } else if (isWinnerCorrect) {
                       badge = "GANADOR";
                       badgeColor = "text-blue-400";
-                    } else if (prediction.pointsEarned > 0) {
-                      badge = "BONUS";
-                      badgeColor = "text-violet-400";
                     } else {
                       badge = "FALLÓ";
                       badgeColor = "text-red-400";
@@ -190,6 +187,11 @@ export default function GroupPredictionsModal({
                         <div className="flex flex-col items-end gap-1.5">
                           <div className="px-2 py-1 bg-black/30 rounded-lg text-xs sm:text-sm font-bold text-white border border-white/10 text-center min-w-[50px] shadow-inner inline-block">
                             {pH} - {pA}
+                            {prediction.isJoker && (
+                              <span className="ml-1 text-[9px] text-amber-400">
+                                x2
+                              </span>
+                            )}
                           </div>
                         </div>
                       ) : (

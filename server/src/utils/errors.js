@@ -25,7 +25,13 @@ export class ForbiddenError extends AppError {
 }
 
 export class BadRequestError extends AppError {
-  constructor(message = 'Solicitud inválida') {
+  constructor(message = 'Solicitud invalida') {
     super(message, 400);
+  }
+}
+
+export class ServiceUnavailableError extends AppError {
+  constructor(message = 'Servicio no disponible') {
+    super(message, 503);
   }
 }

@@ -1,7 +1,10 @@
 import prisma from '../config/database.js';
 import { BadRequestError, NotFoundError, ForbiddenError } from '../utils/errors.js';
 import { recalculateAllLeaderboards } from './scoring.service.js';
-import crypto from 'crypto';
+
+function normalizeUsername(username) {
+  return String(username || '').trim().toLowerCase();
+}
 
 export async function createGroup(userId, data) {
   if (!data.competitionId) {
@@ -15,15 +18,16 @@ export async function createGroup(userId, data) {
         name: data.name,
         description: data.description,
         isPublic: data.isPublic || false,
+        joinPolicy: data.joinPolicy || 'OPEN_WITH_CODE',
         createdById: userId,
         competitionId: Number(data.competitionId),
-        allowMoreShots: data.allowMoreShots ?? true,
-        allowMoreCorners: data.allowMoreCorners ?? true,
-        allowMorePossession: data.allowMorePossession ?? true,
-        allowMoreFouls: data.allowMoreFouls ?? true,
-        allowMoreCards: data.allowMoreCards ?? true,
-        allowMoreOffsides: data.allowMoreOffsides ?? true,
-        allowMoreSaves: data.allowMoreSaves ?? true,
+        allowMoreShots: false,
+        allowMoreCorners: false,
+        allowMorePossession: false,
+        allowMoreFouls: false,
+        allowMoreCards: false,
+        allowMoreOffsides: false,
+        allowMoreSaves: false,
       },
     });
 
@@ -100,8 +104,49 @@ export async function joinGroup(userId, inviteCode) {
 
   if (existing) throw new BadRequestError('Ya sos miembro de este grupo');
 
-  await prisma.groupUser.create({
-    data: { userId, groupId: group.id },
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { username: true },
+  });
+  if (!user) throw new NotFoundError('Usuario no encontrado');
+
+  const normalizedUsername = normalizeUsername(user.username);
+  let invite = null;
+
+  if (group.joinPolicy !== 'OPEN_WITH_CODE') {
+    invite = await prisma.groupInvite.findUnique({
+      where: {
+        groupId_normalizedUsername: {
+          groupId: group.id,
+          normalizedUsername,
+        },
+      },
+    });
+
+    if (!invite || invite.status === 'REVOKED') {
+      throw new ForbiddenError('No estas habilitado para entrar a este grupo');
+    }
+
+    if (group.joinPolicy === 'INVITE_ONLY' && invite.status !== 'PENDING') {
+      throw new ForbiddenError('Tu invitacion ya fue usada o no esta activa');
+    }
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.groupUser.create({
+      data: { userId, groupId: group.id },
+    });
+
+    if (invite && invite.status === 'PENDING') {
+      await tx.groupInvite.update({
+        where: { id: invite.id },
+        data: {
+          status: 'ACCEPTED',
+          acceptedById: userId,
+          acceptedAt: new Date(),
+        },
+      });
+    }
   });
 
   return group;
@@ -161,14 +206,7 @@ export async function updateGroupTheme(groupId, userId, themeData) {
   
   if (themeData.name !== undefined) data.name = themeData.name;
   if (themeData.description !== undefined) data.description = themeData.description;
-  if (themeData.allowMoreShots !== undefined) data.allowMoreShots = themeData.allowMoreShots;
-  if (themeData.allowMoreCorners !== undefined) data.allowMoreCorners = themeData.allowMoreCorners;
-  if (themeData.allowMorePossession !== undefined) data.allowMorePossession = themeData.allowMorePossession;
-  if (themeData.allowMoreFouls !== undefined) data.allowMoreFouls = themeData.allowMoreFouls;
-  if (themeData.allowMoreCards !== undefined) data.allowMoreCards = themeData.allowMoreCards;
-  if (themeData.allowMoreOffsides !== undefined) data.allowMoreOffsides = themeData.allowMoreOffsides;
-  if (themeData.allowMoreSaves !== undefined) data.allowMoreSaves = themeData.allowMoreSaves;
-
+  if (themeData.joinPolicy !== undefined) data.joinPolicy = themeData.joinPolicy;
   const updatedGroup = await prisma.group.update({
     where: { id: groupId },
     data,
@@ -185,6 +223,91 @@ export async function getPublicGroups() {
     where: { isPublic: true },
     include: { _count: { select: { groupUsers: { where: { isBanned: false } } } } },
     orderBy: { createdAt: 'desc' },
+  });
+}
+
+function formatGroupInvite(invite) {
+  return {
+    id: invite.id,
+    groupId: invite.groupId,
+    username: invite.username,
+    normalizedUsername: invite.normalizedUsername,
+    status: invite.status,
+    invitedBy: invite.invitedBy || null,
+    acceptedBy: invite.acceptedBy || null,
+    acceptedAt: invite.acceptedAt,
+    createdAt: invite.createdAt,
+    updatedAt: invite.updatedAt,
+  };
+}
+
+export async function getGroupInvites(groupId) {
+  const invites = await prisma.groupInvite.findMany({
+    where: {
+      groupId,
+      status: { not: 'REVOKED' },
+    },
+    include: {
+      invitedBy: { select: { id: true, username: true, displayName: true } },
+      acceptedBy: { select: { id: true, username: true, displayName: true } },
+    },
+    orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+  });
+
+  return invites.map(formatGroupInvite);
+}
+
+export async function addGroupInvite(groupId, username, invitedById) {
+  const normalizedUsername = normalizeUsername(username);
+  if (!normalizedUsername) {
+    throw new BadRequestError('Username requerido');
+  }
+
+  const invite = await prisma.groupInvite.upsert({
+    where: {
+      groupId_normalizedUsername: {
+        groupId,
+        normalizedUsername,
+      },
+    },
+    update: {
+      username,
+      invitedById,
+      status: 'PENDING',
+      acceptedById: null,
+      acceptedAt: null,
+    },
+    create: {
+      groupId,
+      username,
+      normalizedUsername,
+      invitedById,
+    },
+    include: {
+      invitedBy: { select: { id: true, username: true, displayName: true } },
+      acceptedBy: { select: { id: true, username: true, displayName: true } },
+    },
+  });
+
+  return formatGroupInvite(invite);
+}
+
+export async function revokeGroupInvite(groupId, inviteId) {
+  if (!Number.isInteger(inviteId) || inviteId <= 0) {
+    throw new BadRequestError('ID de invitacion invalido');
+  }
+
+  const invite = await prisma.groupInvite.findUnique({
+    where: { id: inviteId },
+  });
+
+  if (!invite || invite.groupId !== groupId) {
+    throw new NotFoundError('Invitacion no encontrada');
+  }
+
+  await prisma.groupInvite.update({
+    where: { id: inviteId },
+    data: { status: 'REVOKED' },
   });
 }
 
@@ -349,3 +472,4 @@ export async function resetGroupScores(groupId, requestingUserId) {
 
   return { predictionsReset: resetResult.count, membersReset: userIds.length };
 }
+

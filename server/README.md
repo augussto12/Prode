@@ -75,8 +75,8 @@ Located in `src/config/socket.js`. Implements namespaced channels.
 
 ## 🔧 Dev Workflow
 ```bash
-# Push schema updates safely
-npx prisma db push --accept-data-loss
+# Validate schema safely
+npx prisma validate
 
 # Seed Players
 node prisma/seed_players.js
@@ -84,3 +84,7 @@ node prisma/seed_players.js
 # Hot-reload Backend Server
 npm run dev
 ```
+
+For the current groups/prode release checklist, use
+`../docs/PRODE_GRUPOS_RUNBOOK.md`. Do not use `db push --accept-data-loss`
+against production data.

@@ -10,7 +10,6 @@ export default function ProdeMatches({
   groupId,
   groupSettings,
   initialTab = "matches",
-  simpleMode = false,
 }) {
   const [matches, setMatches] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -400,7 +399,6 @@ export default function ProdeMatches({
                           onPredictionSaved={loadData}
                           hideStage={true}
                           groupSettings={groupSettings}
-                          simpleMode={simpleMode}
                         />
                       ))}
                     </div>

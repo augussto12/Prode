@@ -5,11 +5,6 @@ export async function register(req, res, next) {
   try {
     const { email, username, password, displayName } = req.body;
     const result = await authService.register({ email, username, password, displayName });
-    
-    // Setear cookie HttpOnly con el JWT
-    setTokenCookie(res, result.token);
-    
-    // Devolver user + token (el token en body es para backward compat, el frontend puede ignorarlo)
     res.status(201).json(result);
   } catch (err) { next(err); }
 }
@@ -22,6 +17,38 @@ export async function login(req, res, next) {
     // Setear cookie HttpOnly con el JWT
     setTokenCookie(res, result.token);
     
+    res.json(result);
+  } catch (err) { next(err); }
+}
+
+export async function verifyEmail(req, res, next) {
+  try {
+    const result = await authService.verifyEmail(req.body.token);
+    setTokenCookie(res, result.token);
+    res.json(result);
+  } catch (err) { next(err); }
+}
+
+export async function resendVerification(req, res, next) {
+  try {
+    const result = await authService.resendVerification({ email: req.body.email });
+    res.json(result);
+  } catch (err) { next(err); }
+}
+
+export async function forgotPassword(req, res, next) {
+  try {
+    const result = await authService.forgotPassword({ email: req.body.email });
+    res.json(result);
+  } catch (err) { next(err); }
+}
+
+export async function resetPassword(req, res, next) {
+  try {
+    const result = await authService.resetPassword({
+      token: req.body.token,
+      password: req.body.password,
+    });
     res.json(result);
   } catch (err) { next(err); }
 }

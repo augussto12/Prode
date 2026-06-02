@@ -21,6 +21,7 @@ export default function PredictionHistory({
   const [sortOrder, setSortOrder] = useState("newest"); // 'newest' | 'oldest'
   const [selectedMatchModal, setSelectedMatchModal] = useState(null);
   const [expandedMatches, setExpandedMatches] = useState({});
+  const showLegacyExtras = false;
 
   const toggleMatch = (id) => {
     setExpandedMatches((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -181,15 +182,6 @@ export default function PredictionHistory({
             const matchObj = pred.match;
             if (!matchObj) return null;
             const isFinished = matchObj.status === "FINISHED";
-            const hasExtras =
-              pred.moreShots ||
-              pred.moreCorners ||
-              pred.morePossession ||
-              pred.moreFouls ||
-              pred.moreCards ||
-              pred.moreOffsides ||
-              pred.moreSaves;
-
             // Determine result label — only show definitive labels when calculated
             const pH = Number(pred.homeGoals),
               pA = Number(pred.awayGoals);
@@ -219,9 +211,7 @@ export default function PredictionHistory({
                       ? "border-l-amber-500/30"
                       : mainHit
                         ? "border-l-emerald-500"
-                        : pred.pointsEarned > 0
-                          ? "border-l-blue-500/50"
-                          : "border-l-red-500/50"
+                        : "border-l-red-500/50"
                   }`}
               >
                 {/* Top row: Match info + Score Prediction + Result */}
@@ -312,9 +302,7 @@ export default function PredictionHistory({
                                   ? "text-emerald-400"
                                   : isWinnerCorrect
                                     ? "text-blue-400"
-                                    : pred.pointsEarned > 0
-                                      ? "text-violet-400"
-                                      : "text-red-400"
+                                    : "text-red-400"
                                 }`}
                             >
                               {isExact
@@ -322,7 +310,7 @@ export default function PredictionHistory({
                                 : isWinnerCorrect
                                   ? "GANADOR"
                                   : pred.pointsEarned > 0
-                                    ? "BONUS"
+                                    ? "FALLO"
                                     : "FALLÓ"}
                               <span className="ml-1 opacity-70">
                                 +{pred.pointsEarned}pts
@@ -341,7 +329,7 @@ export default function PredictionHistory({
                   </div>
                 </div>
 
-                {hasExtras && (
+                {showLegacyExtras && (
                   <>
                     <button
                       onClick={() => toggleMatch(pred.id)}

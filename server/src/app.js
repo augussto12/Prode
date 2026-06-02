@@ -14,6 +14,7 @@ import adminRoutes from './routes/admin.routes.js';
 import dreamteamRoutes from './routes/dreamteam.routes.js';
 import outrightsRoutes from './routes/outrights.routes.js';
 import guruRoutes from './routes/guru.routes.js';
+import healthRoutes from './routes/health.routes.js';
 // [OCULTADO] Sportmonks, Fantasy y Cron Jobs — No se usan por ahora
 import syncRoutes from './routes/sync.routes.js';
 import competitionRoutes from './routes/competition.routes.js';
@@ -118,8 +119,14 @@ const noCacheMiddleware = (req, res, next) => {
 app.use(noCacheMiddleware);
 
 // --- RUTAS ---
+app.use('/api/health', healthRoutes);
+
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/verify-email', authLimiter);
+app.use('/api/auth/resend-verification', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
+app.use('/api/auth/reset-password', authLimiter);
 
 app.use('/api/auth', authRoutes);
 

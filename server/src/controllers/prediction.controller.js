@@ -19,7 +19,10 @@ export async function getMy(req, res, next) {
 
 export async function getForFixture(req, res, next) {
   try {
-    const predictions = await predictionService.getPredictionsForFixture(String(req.params.fixtureId));
+    const predictions = await predictionService.getPredictionsForFixture(
+      String(req.params.fixtureId),
+      req.user.id,
+    );
     res.json(predictions);
   } catch (err) { next(err); }
 }

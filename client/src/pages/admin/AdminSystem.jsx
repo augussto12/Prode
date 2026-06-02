@@ -9,7 +9,7 @@ export default function AdminSystem({ tab, scoringConfig, onConfigUpdate, fetchC
   return (
     <>
       {tab === "scoring" && scoringConfig && (
-        <ScoringConfigEditor config={scoringConfig} onUpdate={onConfigUpdate} />
+        <ResultScoringConfigEditor config={scoringConfig} onUpdate={onConfigUpdate} />
       )}
       {tab === "sync" && (
         <SyncPanel onSyncComplete={() => { onConfigUpdate(); fetchCompetitions(); }} />
@@ -18,6 +18,153 @@ export default function AdminSystem({ tab, scoringConfig, onConfigUpdate, fetchC
       {tab === "sportmonks" && <SportmonksPanel />}
       */}
     </>
+  );
+}
+
+function ResultScoringConfigEditor({ config, onUpdate }) {
+  const [form, setForm] = useState({
+    exactScore: config.exactScore,
+    correctWinner: config.correctWinner,
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api.put("/admin/scoring/config", {
+        exactScore: Number(form.exactScore),
+        correctWinner: Number(form.correctWinner),
+      });
+      useToastStore
+        .getState()
+        .addToast({ type: "success", message: "Configuracion guardada" });
+      onUpdate();
+    } catch (err) {
+      useToastStore
+        .getState()
+        .addToast({ type: "error", message: "Error al guardar configuracion" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const fields = [
+    {
+      key: "exactScore",
+      label: "Resultado exacto",
+      desc: "Acertar los goles de ambos equipos.",
+      color: "emerald",
+    },
+    {
+      key: "correctWinner",
+      label: "Ganador o empate",
+      desc: "Acertar el signo del partido sin importar los goles exactos.",
+      color: "blue",
+    },
+  ];
+
+  const colorMap = {
+    emerald: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
+    blue: "bg-blue-500/10 border-blue-500/20 text-blue-400",
+  };
+
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-indigo-500/20">
+        <div className="flex items-start gap-3">
+          <Info size={18} className="text-indigo-400 shrink-0 mt-0.5" />
+          <div>
+            <h3 className="text-sm sm:text-base font-semibold text-white mb-1">
+              Scoring de resultado
+            </h3>
+            <p className="text-xs sm:text-sm text-white/50">
+              Solo se puntua resultado exacto o ganador/empate. El comodin x2
+              duplica esos puntos y se puede usar en 3 partidos por competencia.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 sm:p-4 text-center">
+          <div className="text-2xl sm:text-3xl font-black text-emerald-400">
+            {form.exactScore}
+          </div>
+          <div className="text-[10px] sm:text-xs text-white/60 mt-1">
+            Exacto
+          </div>
+        </div>
+        <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-3 sm:p-4 text-center">
+          <div className="text-2xl sm:text-3xl font-black text-blue-400">
+            {form.correctWinner}
+          </div>
+          <div className="text-[10px] sm:text-xs text-white/60 mt-1">
+            Ganador/empate
+          </div>
+        </div>
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 sm:p-4 text-center">
+          <div className="text-2xl sm:text-3xl font-black text-amber-400">
+            {form.exactScore * 2}
+          </div>
+          <div className="text-[10px] sm:text-xs text-white/60 mt-1">
+            Exacto con x2
+          </div>
+        </div>
+      </div>
+
+      <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-6">
+        <h3 className="text-sm sm:text-lg font-semibold text-white mb-4">
+          Puntos activos
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+          {fields.map(({ key, label, desc, color }) => (
+            <div
+              key={key}
+              className={`rounded-xl p-3 sm:p-4 border ${colorMap[color]}`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm sm:text-base text-white font-semibold">
+                    {label}
+                  </div>
+                  <p className="text-[10px] sm:text-xs text-white/60 mt-1">
+                    {desc}
+                  </p>
+                </div>
+                <div className="shrink-0">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={form[key]}
+                    onChange={(e) =>
+                      setForm({ ...form, [key]: Number(e.target.value) })
+                    }
+                    className="w-14 sm:w-16 h-10 sm:h-12 text-center bg-black/30 border border-white/20 rounded-xl text-white text-lg sm:text-xl font-black focus:outline-none focus:border-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <div className="text-[9px] text-center text-white/50 mt-1">
+                    pts
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-bold text-sm cursor-pointer border-none hover:opacity-90 disabled:opacity-50 shadow-lg"
+        style={{
+          background:
+            "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
+        }}
+      >
+        {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+        {saving ? "Guardando..." : "Guardar configuracion"}
+      </button>
+    </div>
   );
 }
 
@@ -124,8 +271,10 @@ function ScoringConfigEditor({ config, onUpdate }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { id, ...data } = form;
-      await api.put("/admin/scoring/config", data);
+      await api.put("/admin/scoring/config", {
+        exactScore: Number(form.exactScore),
+        correctWinner: Number(form.correctWinner),
+      });
       useToastStore
         .getState()
         .addToast({ type: "success", message: "Configuración guardada ✅" });
@@ -140,8 +289,8 @@ function ScoringConfigEditor({ config, onUpdate }) {
   };
 
   // Calculate example totals for preview
-  const exampleExact = form.exactScore + form.moreShots + form.moreCorners;
-  const exampleWinner = form.correctWinner + form.moreShots + form.moreCorners;
+  const exampleExact = form.exactScore;
+  const exampleWinner = form.correctWinner;
   const exampleExactJoker = exampleExact * 2;
 
   const colorMap = {
@@ -235,7 +384,7 @@ function ScoringConfigEditor({ config, onUpdate }) {
           Configuración de Puntos Activos
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-          {activeFields.map(
+          {activeFields.slice(0, 2).map(
             ({ key, label, desc, example, note, icon, color }) => (
               <div
                 key={key}
@@ -285,7 +434,7 @@ function ScoringConfigEditor({ config, onUpdate }) {
       </div>
 
       {/* Legacy Fields (collapsed) */}
-      <details className="glass-card rounded-xl sm:rounded-2xl overflow-hidden">
+      {Boolean(import.meta.env.VITE_SHOW_LEGACY_PRODE_MARKETS) && <details className="glass-card rounded-xl sm:rounded-2xl overflow-hidden">
         <summary className="p-4 sm:p-5 cursor-pointer text-xs sm:text-sm text-white/60 font-medium hover:text-white/60 transition-colors flex items-center gap-2">
           <ChevronDown size={14} /> Campos Legacy (no activos en el cálculo)
         </summary>
@@ -320,7 +469,7 @@ function ScoringConfigEditor({ config, onUpdate }) {
             </div>
           ))}
         </div>
-      </details>
+      </details>}
 
       {/* Save Button */}
       <button

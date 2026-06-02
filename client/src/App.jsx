@@ -3,13 +3,15 @@ import { useEffect, lazy, Suspense } from "react";
 import useAuthStore from "./store/authStore";
 import useThemeStore from "./store/themeStore";
 import useCompetitionStore from "./store/competitionStore";
-import useToastStore from "./store/toastStore";
 import Layout from "./components/layout/Layout";
 import PwaPrompt from "./components/layout/PwaPrompt";
 import Toaster from "./components/layout/Toaster";
 import PageSkeleton from "./components/skeletons/PageSkeleton";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import "./index.css";
 
 // Lazy-loaded pages (code-splitting)
@@ -94,6 +96,30 @@ export default function App() {
             element={
               <PublicRoute>
                 <Register />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/verify-email"
+            element={
+              <PublicRoute>
+                <VerifyEmail />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/forgot-password"
+            element={
+              <PublicRoute>
+                <ForgotPassword />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/reset-password"
+            element={
+              <PublicRoute>
+                <ResetPassword />
               </PublicRoute>
             }
           />

@@ -93,7 +93,6 @@ export default function Competition({ hideHeader }) {
         <ProdeMatches
           competitionId={activeCompetition?.id}
           initialTab={tab === "predictions" ? "history" : "matches"}
-          simpleMode={activeCompetition?.externalId === 1} // Solo resultado para Mundial
         />
       )}
 

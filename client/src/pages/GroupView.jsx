@@ -16,6 +16,7 @@ import {
   X,
   Calendar,
   RotateCcw,
+  UserPlus,
 } from "lucide-react";
 import useAuthStore from "../store/authStore";
 
@@ -33,6 +34,9 @@ export default function GroupView() {
   const [group, setGroup] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [bannedList, setBannedList] = useState([]);
+  const [inviteList, setInviteList] = useState([]);
+  const [inviteUsername, setInviteUsername] = useState("");
+  const [isAddingInvite, setIsAddingInvite] = useState(false);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState("leaderboard"); // 'leaderboard' | 'banned'
@@ -41,6 +45,7 @@ export default function GroupView() {
   const [editForm, setEditForm] = useState({
     name: "",
     description: "",
+    joinPolicy: "OPEN_WITH_CODE",
   });
 
   useEffect(() => {
@@ -62,6 +67,13 @@ export default function GroupView() {
           setBannedList(bData);
         } catch (e) {
           /* silently fail for non-admins */
+        }
+
+        try {
+          const { data: inviteData } = await api.get(`/groups/${id}/invites`);
+          setInviteList(inviteData);
+        } catch (e) {
+          /* silently fail while DB migrations are pending */
         }
       }
     } catch (err) {
@@ -201,17 +213,56 @@ export default function GroupView() {
     });
   };
 
+  const handleAddInvite = async (e) => {
+    e.preventDefault();
+    const username = inviteUsername.trim();
+    if (!username) return;
+
+    setIsAddingInvite(true);
+    try {
+      const { data } = await api.post(`/groups/${id}/invites`, { username });
+      setInviteList((prev) => {
+        const others = prev.filter((invite) => invite.id !== data.id);
+        return [data, ...others];
+      });
+      setInviteUsername("");
+      useToastStore
+        .getState()
+        .addToast({ type: "success", message: "Usuario habilitado" });
+    } catch (err) {
+      useToastStore
+        .getState()
+        .addToast({
+          type: "error",
+          message: err.response?.data?.error || "Error al habilitar usuario",
+        });
+    } finally {
+      setIsAddingInvite(false);
+    }
+  };
+
+  const handleRevokeInvite = async (inviteId) => {
+    try {
+      await api.delete(`/groups/${id}/invites/${inviteId}`);
+      setInviteList((prev) => prev.filter((invite) => invite.id !== inviteId));
+      useToastStore
+        .getState()
+        .addToast({ type: "success", message: "Invitacion revocada" });
+    } catch (err) {
+      useToastStore
+        .getState()
+        .addToast({
+          type: "error",
+          message: err.response?.data?.error || "Error al revocar invitacion",
+        });
+    }
+  };
+
   const openEditModal = () => {
     setEditForm({
       name: group.name || "",
       description: group.description || "",
-      allowMoreShots: group.allowMoreShots ?? true,
-      allowMoreCorners: group.allowMoreCorners ?? true,
-      allowMorePossession: group.allowMorePossession ?? true,
-      allowMoreFouls: group.allowMoreFouls ?? true,
-      allowMoreCards: group.allowMoreCards ?? true,
-      allowMoreOffsides: group.allowMoreOffsides ?? true,
-      allowMoreSaves: group.allowMoreSaves ?? true,
+      joinPolicy: group.joinPolicy || "OPEN_WITH_CODE",
     });
     setShowEditModal(true);
   };
@@ -337,6 +388,14 @@ export default function GroupView() {
                   <Settings size={14} /> Admin
                 </span>
               )}
+              <span className="flex items-center gap-1.5 text-white/80 bg-white/5 px-2.5 py-1 rounded-full">
+                <UserPlus size={14} />
+                {group.joinPolicy === "INVITE_ONLY"
+                  ? "Solo invitacion"
+                  : group.joinPolicy === "WHITELIST_WITH_CODE"
+                    ? "Whitelist + codigo"
+                    : "Codigo abierto"}
+              </span>
             </div>
           </div>
 
@@ -445,17 +504,30 @@ export default function GroupView() {
               <Calendar size={14} /> Partidos
             </button>
             {group.isAdmin && (
-              <button
-                onClick={() => setActiveTab("banned")}
-                className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
-                  activeTab === "banned"
-                    ? "bg-red-500/20 text-red-400"
-                    : "bg-transparent text-white/60 hover:text-white/60"
-                }`}
-              >
-                <ShieldBan size={14} /> Baneados{" "}
-                {bannedList.length > 0 && `(${bannedList.length})`}
-              </button>
+              <>
+                <button
+                  onClick={() => setActiveTab("invites")}
+                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
+                    activeTab === "invites"
+                      ? "bg-emerald-500/20 text-emerald-400"
+                      : "bg-transparent text-white/60 hover:text-white/60"
+                  }`}
+                >
+                  <UserPlus size={14} /> Invitados{" "}
+                  {inviteList.length > 0 && `(${inviteList.length})`}
+                </button>
+                <button
+                  onClick={() => setActiveTab("banned")}
+                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
+                    activeTab === "banned"
+                      ? "bg-red-500/20 text-red-400"
+                      : "bg-transparent text-white/60 hover:text-white/60"
+                  }`}
+                >
+                  <ShieldBan size={14} /> Baneados{" "}
+                  {bannedList.length > 0 && `(${bannedList.length})`}
+                </button>
+              </>
             )}
           </div>
 
@@ -565,6 +637,79 @@ export default function GroupView() {
                     <p className="text-sm">Todavía no hay puntajes</p>
                   </div>
                 )}
+              </m.div>
+            )}
+
+            {activeTab === "invites" && group.isAdmin && (
+              <m.div
+                key="invites"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-3"
+              >
+                <form
+                  onSubmit={handleAddInvite}
+                  className="flex flex-col sm:flex-row gap-2 p-3 sm:p-4 rounded-xl border border-white/10 bg-white/[0.03]"
+                >
+                  <input
+                    type="text"
+                    value={inviteUsername}
+                    onChange={(e) => setInviteUsername(e.target.value)}
+                    placeholder="username"
+                    className="flex-1 px-3 py-2 bg-black/30 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isAddingInvite || !inviteUsername.trim()}
+                    className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs sm:text-sm font-bold border-none cursor-pointer"
+                  >
+                    {isAddingInvite ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <UserPlus size={14} />
+                    )}
+                    Habilitar
+                  </button>
+                </form>
+
+                <div className="space-y-2">
+                  {inviteList.length === 0 ? (
+                    <div className="py-12 text-center text-white/60 glass-card rounded-xl">
+                      <UserPlus size={36} className="mx-auto mb-3 opacity-30" />
+                      <p className="text-sm">No hay usuarios habilitados</p>
+                    </div>
+                  ) : (
+                    inviteList.map((invite) => (
+                      <m.div
+                        key={invite.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-emerald-500/10 bg-emerald-500/[0.03]"
+                      >
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-sm sm:text-base font-bold border border-emerald-500/20 shrink-0">
+                          {invite.username.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs sm:text-sm font-medium text-white truncate">
+                            @{invite.username}
+                          </div>
+                          <div className="text-[10px] sm:text-xs text-white/60 truncate">
+                            {invite.status === "ACCEPTED"
+                              ? "Ya ingreso al grupo"
+                              : "Pendiente"}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleRevokeInvite(invite.id)}
+                          className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-[10px] sm:text-xs font-bold hover:bg-red-500/20 transition-colors border-none cursor-pointer shrink-0"
+                        >
+                          <X size={12} /> Quitar
+                        </button>
+                      </m.div>
+                    ))
+                  )}
+                </div>
               </m.div>
             )}
 
@@ -736,6 +881,26 @@ export default function GroupView() {
               </div>
 
               <div>
+                <label className="block text-white/60 text-xs sm:text-sm mb-1">
+                  Entrada al grupo
+                </label>
+                <select
+                  value={editForm.joinPolicy}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, joinPolicy: e.target.value })
+                  }
+                  className="w-full px-3 sm:px-4 py-2 bg-black/40 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
+                >
+                  <option value="OPEN_WITH_CODE">Cualquiera con codigo</option>
+                  <option value="WHITELIST_WITH_CODE">
+                    Solo usuarios habilitados + codigo
+                  </option>
+                  <option value="INVITE_ONLY">Solo invitacion de un uso</option>
+                </select>
+              </div>
+
+              {Boolean(import.meta.env.VITE_SHOW_LEGACY_PRODE_MARKETS) && (
+              <div>
                 <label className="block text-white/60 text-xs sm:text-sm mb-2">
                   Módulos de Juego
                 </label>
@@ -777,6 +942,7 @@ export default function GroupView() {
                   obligatorios.
                 </p>
               </div>
+              )}
 
 
 

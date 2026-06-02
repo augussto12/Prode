@@ -115,6 +115,14 @@ export default function Login() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              <div className="mt-2 text-right">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-indigo-300 hover:text-indigo-200 no-underline font-medium"
+                >
+                  Olvide mi contrasena
+                </Link>
+              </div>
             </div>
 
             <button

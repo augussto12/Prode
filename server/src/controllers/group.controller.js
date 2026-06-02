@@ -65,6 +65,31 @@ export async function getPublic(req, res, next) {
   } catch (err) { next(err); }
 }
 
+export async function getInvites(req, res, next) {
+  try {
+    const invites = await groupService.getGroupInvites(Number(req.params.id));
+    res.json(invites);
+  } catch (err) { next(err); }
+}
+
+export async function addInvite(req, res, next) {
+  try {
+    const invite = await groupService.addGroupInvite(
+      Number(req.params.id),
+      req.body.username,
+      req.user.id
+    );
+    res.status(201).json(invite);
+  } catch (err) { next(err); }
+}
+
+export async function revokeInvite(req, res, next) {
+  try {
+    await groupService.revokeGroupInvite(Number(req.params.id), Number(req.params.inviteId));
+    res.json({ message: 'Invitacion revocada correctamente' });
+  } catch (err) { next(err); }
+}
+
 export async function removeMember(req, res, next) {
   try {
     await groupService.removeMember(Number(req.params.id), Number(req.params.userId), req.user.id);

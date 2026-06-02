@@ -12,6 +12,17 @@ enum Role {
   ADMIN
   SUPERADMIN
 }
+enum GroupJoinPolicy {
+  OPEN_WITH_CODE
+  WHITELIST_WITH_CODE
+  INVITE_ONLY
+}
+
+enum GroupInviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+}
 
 // MatchStatus enum eliminado — ya no hay tabla Match
 
@@ -23,6 +34,7 @@ model User {
   displayName   String
   avatar        String?
   role          Role          @default(PLAYER)
+  emailVerifiedAt DateTime?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -31,6 +43,10 @@ model User {
 
   predictions   Prediction[]
   groupUsers        GroupUser[]
+  sentGroupInvites  GroupInvite[] @relation("GroupInviteSender")
+  acceptedGroupInvites GroupInvite[] @relation("GroupInviteAcceptor")
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens PasswordResetToken[]
   favorites         Favorite[]
   leagueFavorites   LeagueFavorite[]
   messages          Message[]
@@ -43,6 +59,34 @@ model User {
 
   @@index([email])
   @@index([username])
+}
+
+model EmailVerificationToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 // Para equipos/selecciones favoritas
@@ -89,6 +133,7 @@ model Group {
   description   String?
   inviteCode    String        @unique @default(uuid())
   isPublic      Boolean       @default(false)
+  joinPolicy    GroupJoinPolicy @default(OPEN_WITH_CODE)
   createdById   Int
 
 
@@ -110,9 +155,11 @@ model Group {
   updatedAt     DateTime      @updatedAt
 
   groupUsers    GroupUser[]
+  invites       GroupInvite[]
   messages      Message[]
 
   @@index([inviteCode])
+  @@index([joinPolicy])
 }
 
 model GroupUser {
@@ -130,6 +177,28 @@ model GroupUser {
 
   @@unique([userId, groupId])
   @@index([groupId, totalPoints(sort: Desc)])
+}
+
+model GroupInvite {
+  id                 Int               @id @default(autoincrement())
+  groupId            Int
+  username           String
+  normalizedUsername String
+  invitedById        Int?
+  status             GroupInviteStatus @default(PENDING)
+  acceptedById       Int?
+  acceptedAt         DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  group              Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  invitedBy          User?             @relation("GroupInviteSender", fields: [invitedById], references: [id], onDelete: SetNull)
+  acceptedBy         User?             @relation("GroupInviteAcceptor", fields: [acceptedById], references: [id], onDelete: SetNull)
+
+  @@unique([groupId, normalizedUsername])
+  @@index([groupId, status])
+  @@index([normalizedUsername])
+  @@index([acceptedById])
 }
 
 model Team {
@@ -656,3 +725,4 @@ model IdealTeamEntry {
   @@unique([gameweekId, playerId])
   @@index([gameweekId])
 }
+

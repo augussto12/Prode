@@ -14,6 +14,19 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Campo requerido').max(100),
 });
 
+export const emailOnlySchema = z.object({
+  email: z.string().email('Email invalido').max(255),
+});
+
+export const authTokenSchema = z.object({
+  token: z.string().min(32, 'Token invalido').max(256, 'Token invalido'),
+});
+
+export const passwordResetSchema = z.object({
+  token: z.string().min(32, 'Token invalido').max(256, 'Token invalido'),
+  password: z.string().min(6, 'Minimo 6 caracteres').max(100),
+});
+
 // --- PROFILE ---
 const hexColorRegex = /^#[0-9a-fA-F]{6}$/;
 
@@ -36,51 +49,35 @@ export const predictionSchema = z.object({
   competitionId: z.number().int().positive(),
   homeGoals: z.number().int().min(0).max(20).optional().nullable(),
   awayGoals: z.number().int().min(0).max(20).optional().nullable(),
-  winner: z.enum(['HOME', 'AWAY', 'DRAW']).optional().nullable(),
-  doubleChance: z.enum(['1X', '2X', '12']).optional().nullable(),
-  btts: z.boolean().optional().nullable(),
-  overUnder25: z.enum(['OVER', 'UNDER']).optional().nullable(),
-  moreShots: z.enum(['HOME', 'AWAY', 'EQUAL']).optional().nullable(),
-  moreCorners: z.enum(['HOME', 'AWAY', 'EQUAL']).optional().nullable(),
-  morePossession: z.enum(['HOME', 'AWAY', 'EQUAL']).optional().nullable(),
-  moreFouls: z.enum(['HOME', 'AWAY', 'EQUAL']).optional().nullable(),
-  moreCards: z.enum(['HOME', 'AWAY', 'EQUAL']).optional().nullable(),
-  moreOffsides: z.enum(['HOME', 'AWAY', 'EQUAL']).optional().nullable(),
-  moreSaves: z.enum(['HOME', 'AWAY', 'EQUAL']).optional().nullable(),
   isJoker: z.boolean().optional().default(false),
 });
 
 // --- GROUPS ---
+const groupJoinPolicySchema = z.enum(['OPEN_WITH_CODE', 'WHITELIST_WITH_CODE', 'INVITE_ONLY']);
+
 export const groupCreateSchema = z.object({
   name: z.string().min(1, 'Nombre requerido').max(50, 'Máximo 50 caracteres').trim(),
   description: z.string().max(500).optional().default(''),
   isPublic: z.boolean().optional().default(false),
+  joinPolicy: groupJoinPolicySchema.optional().default('OPEN_WITH_CODE'),
   competitionId: z.number().int().positive('competitionId es requerido'),
-  allowMoreShots: z.boolean().optional(),
-  allowMoreCorners: z.boolean().optional(),
-  allowMorePossession: z.boolean().optional(),
-  allowMoreFouls: z.boolean().optional(),
-  allowMoreCards: z.boolean().optional(),
-  allowMoreOffsides: z.boolean().optional(),
-  allowMoreSaves: z.boolean().optional(),
 });
 
 export const groupThemeSchema = z.object({
   name: z.string().min(1, 'Nombre requerido').max(50, 'Máximo 50 caracteres').trim().optional(),
   description: z.string().max(500).optional(),
-  allowMoreShots: z.boolean().optional(),
-  allowMoreCorners: z.boolean().optional(),
-  allowMorePossession: z.boolean().optional(),
-  allowMoreFouls: z.boolean().optional(),
-  allowMoreCards: z.boolean().optional(),
-  allowMoreOffsides: z.boolean().optional(),
-  allowMoreSaves: z.boolean().optional(),
+  joinPolicy: groupJoinPolicySchema.optional(),
 });
 
 export const joinGroupSchema = z.object({
   inviteCode: z.string().uuid('Código de invitación inválido'),
 });
 
+export const groupInviteSchema = z.object({
+  username: z.string().min(3, 'Minimo 3 caracteres').max(20, 'Maximo 20 caracteres')
+    .regex(/^[a-zA-Z0-9_]+$/, 'Solo letras, numeros y guion bajo')
+    .trim(),
+});
 // --- MATCH RESULT (Admin) ---
 export const matchResultSchema = z.object({
   homeGoals: z.number().int().min(0).max(50),
@@ -109,16 +106,6 @@ export const guruMessageSchema = z.object({
 export const scoringConfigSchema = z.object({
   exactScore: z.number().int().min(0).max(100),
   correctWinner: z.number().int().min(0).max(100),
-  doubleChance: z.number().int().min(0).max(100),
-  btts: z.number().int().min(0).max(100),
-  moreShots: z.number().int().min(0).max(100),
-  moreCorners: z.number().int().min(0).max(100),
-  morePossession: z.number().int().min(0).max(100),
-  moreFouls: z.number().int().min(0).max(100),
-  moreCards: z.number().int().min(0).max(100),
-  moreOffsides: z.number().int().min(0).max(100),
-  moreSaves: z.number().int().min(0).max(100),
-  overUnder: z.number().int().min(0).max(100),
 });
 
 // --- ROLE UPDATE ---
@@ -159,3 +146,5 @@ export const competitionCreateSchema = z.object({
   logo: z.string().url().max(500).optional().nullable(),
   season: z.number().int().min(1900).max(2100).optional().default(2022),
 });
+
+

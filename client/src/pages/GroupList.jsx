@@ -19,6 +19,7 @@ export default function GroupList() {
     name: "",
     description: "",
     isPublic: false,
+    joinPolicy: "OPEN_WITH_CODE",
   });
   const navigate = useNavigate();
   const activeCompetition = useCompetitionStore(
@@ -194,6 +195,25 @@ export default function GroupList() {
               >
                 Grupo público (visible para todos)
               </label>
+            </div>
+
+            <div>
+              <label className="block text-white/60 text-sm mb-1">
+                Entrada al grupo
+              </label>
+              <select
+                value={createForm.joinPolicy}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, joinPolicy: e.target.value })
+                }
+                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
+              >
+                <option value="OPEN_WITH_CODE">Cualquiera con codigo</option>
+                <option value="WHITELIST_WITH_CODE">
+                  Solo usuarios habilitados + codigo
+                </option>
+                <option value="INVITE_ONLY">Solo invitacion de un uso</option>
+              </select>
             </div>
 
             <button
