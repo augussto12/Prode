@@ -121,6 +121,7 @@ model Competition {
   groups      Group[]
   dreamTeams  DreamTeam[]
   outrights   OutrightPrediction[]
+  outrightResult OutrightResult?
   playerStats PlayerCompetitionStats[]
   predictions Prediction[]
 
@@ -213,6 +214,12 @@ model Team {
   
   players     Player[]
   coaches     Coach[]
+  championPredictions OutrightPrediction[] @relation("ChampionTeam")
+  runnerUpPredictions OutrightPrediction[] @relation("RunnerUpTeam")
+  topScorerTeamPredictions OutrightPrediction[] @relation("TopScorerTeam")
+  goldenGloveTeamPredictions OutrightPrediction[] @relation("GoldenGloveTeam")
+  championResults OutrightResult[] @relation("ChampionResultTeam")
+  runnerUpResults OutrightResult[] @relation("RunnerUpResultTeam")
   
   @@unique([externalId, source])
   @@index([externalId])
@@ -284,6 +291,10 @@ model ScoringConfig {
   id            Int      @id @default(autoincrement())
   exactScore    Int      @default(5)
   correctWinner Int      @default(2)
+  champion      Int      @default(10)
+  runnerUp      Int      @default(7)
+  topScorer     Int      @default(5)
+  goldenGlove   Int      @default(5)
   doubleChance  Int      @default(0) // Legacy
   btts          Int      @default(0) // Legacy
   moreShots     Int      @default(1)
@@ -326,6 +337,9 @@ model Player {
   // Reverse relations to Outrights
   topScorers  OutrightPrediction[] @relation("TopScorer")
   bestPlayers OutrightPrediction[] @relation("BestPlayer")
+  goldenGloves OutrightPrediction[] @relation("GoldenGlove")
+  topScorerResults OutrightResult[] @relation("TopScorerResult")
+  goldenGloveResults OutrightResult[] @relation("GoldenGloveResult")
 
   @@unique([externalId, source])
   @@index([teamId])
@@ -476,15 +490,59 @@ model OutrightPrediction {
   
   championTeam      String?
   runnerUpTeam      String?
+  championTeamId    Int?
+  championTeamRef   Team?   @relation("ChampionTeam", fields: [championTeamId], references: [id])
+  runnerUpTeamId    Int?
+  runnerUpTeamRef   Team?   @relation("RunnerUpTeam", fields: [runnerUpTeamId], references: [id])
+  topScorerTeamId   Int?
+  topScorerTeam     Team?   @relation("TopScorerTeam", fields: [topScorerTeamId], references: [id])
+  goldenGloveTeamId Int?
+  goldenGloveTeam   Team?   @relation("GoldenGloveTeam", fields: [goldenGloveTeamId], references: [id])
   
   topScorerId       Int?
   topScorer         Player?  @relation("TopScorer", fields: [topScorerId], references: [id])
   bestPlayerId      Int?
   bestPlayer        Player?  @relation("BestPlayer", fields: [bestPlayerId], references: [id])
+  goldenGloveId     Int?
+  goldenGlove       Player?  @relation("GoldenGlove", fields: [goldenGloveId], references: [id])
+
+  championHit       Boolean?
+  runnerUpHit       Boolean?
+  topScorerHit      Boolean?
+  goldenGloveHit    Boolean?
+  pointsEarned      Int      @default(0)
+  isCalculated      Boolean  @default(false)
 
   updatedAt         DateTime @updatedAt
 
   @@unique([userId, competitionId])
+  @@index([competitionId])
+  @@index([championTeamId])
+  @@index([runnerUpTeamId])
+  @@index([topScorerId])
+  @@index([goldenGloveId])
+}
+
+model OutrightResult {
+  id                Int      @id @default(autoincrement())
+  competitionId     Int      @unique
+  competition       Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+
+  lockAt            DateTime?
+  championTeamId    Int?
+  championTeam      Team?   @relation("ChampionResultTeam", fields: [championTeamId], references: [id])
+  runnerUpTeamId    Int?
+  runnerUpTeam      Team?   @relation("RunnerUpResultTeam", fields: [runnerUpTeamId], references: [id])
+  topScorerId       Int?
+  topScorer         Player? @relation("TopScorerResult", fields: [topScorerId], references: [id])
+  goldenGloveId     Int?
+  goldenGlove       Player? @relation("GoldenGloveResult", fields: [goldenGloveId], references: [id])
+
+  calculatedAt      DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([competitionId])
 }
 
 model PlayerCompetitionStats {

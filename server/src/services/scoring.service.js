@@ -134,28 +134,24 @@ export async function scorePendingPredictions() {
 export async function recalculateAllLeaderboards() {
   await prisma.$executeRawUnsafe(`
     UPDATE "GroupUser" gu
-    SET "totalPoints" = COALESCE(sub.total, 0)
-    FROM (
-      SELECT gu2.id AS group_user_id, SUM(p."pointsEarned") AS total
-      FROM "GroupUser" gu2
-      JOIN "Group" g ON g.id = gu2."groupId"
-      JOIN "Prediction" p ON p."userId" = gu2."userId" AND p."isCalculated" = true
-      WHERE p."competitionId" = g."competitionId"
-      GROUP BY gu2.id
-    ) sub
-    WHERE gu.id = sub.group_user_id
-  `);
-
-  await prisma.$executeRawUnsafe(`
-    UPDATE "GroupUser" gu
-    SET "totalPoints" = 0
-    WHERE gu.id NOT IN (
-      SELECT gu2.id
-      FROM "GroupUser" gu2
-      JOIN "Group" g ON g.id = gu2."groupId"
-      JOIN "Prediction" p ON p."userId" = gu2."userId" AND p."isCalculated" = true
-      WHERE p."competitionId" = g."competitionId"
-    )
+    SET "totalPoints" =
+      COALESCE((
+        SELECT SUM(p."pointsEarned")
+        FROM "Prediction" p
+        JOIN "Group" g ON g.id = gu."groupId"
+        WHERE p."userId" = gu."userId"
+          AND p."isCalculated" = true
+          AND p."competitionId" = g."competitionId"
+      ), 0)
+      +
+      COALESCE((
+        SELECT SUM(o."pointsEarned")
+        FROM "OutrightPrediction" o
+        JOIN "Group" g ON g.id = gu."groupId"
+        WHERE o."userId" = gu."userId"
+          AND o."isCalculated" = true
+          AND o."competitionId" = g."competitionId"
+      ), 0)
   `);
 }
 
@@ -215,12 +211,17 @@ export async function reverifyRecentResults() {
 }
 
 export async function getScoringConfig() {
-  return prisma.scoringConfig.findFirst({ where: { id: 1 } });
+  return prisma.scoringConfig.upsert({
+    where: { id: 1 },
+    update: {},
+    create: { id: 1 },
+  });
 }
 
 export async function updateScoringConfig(data) {
-  return prisma.scoringConfig.update({
+  return prisma.scoringConfig.upsert({
     where: { id: 1 },
-    data,
+    update: data,
+    create: { id: 1, ...data },
   });
 }

@@ -22,6 +22,7 @@ import api from "../services/api";
 // import useSportmonksStore from "../store/useSportmonksStore";
 import useAuthStore from "../store/authStore";
 import { tCountry } from "../utils/translations";
+import { getLeagueLogo } from "../utils/worldCupLogo";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -408,9 +409,9 @@ export default function Explorer() {
                           to={`/liga/${l.league.id}`}
                           className="flex items-center gap-3 p-2 hover:bg-white/10 rounded-lg transition-colors no-underline"
                         >
-                          {l.league.logo ? (
+                          {getLeagueLogo(l.league) ? (
                             <img
-                              src={l.league.logo}
+                              src={getLeagueLogo(l.league)}
                               className="w-5 h-5 object-contain"
                               width={20}
                               height={20}
@@ -637,9 +638,9 @@ export default function Explorer() {
                 className="glass-card rounded-xl p-4 flex flex-col items-center gap-3 no-underline border-white/10 hover:border-white/30 hover:bg-white/[0.08] transition-all group shadow-md hover:shadow-xl relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                {l.league.logo ? (
+                {getLeagueLogo(l.league) ? (
                   <img
-                    src={l.league.logo}
+                    src={getLeagueLogo(l.league)}
                     alt={l.league.name}
                     loading="lazy"
                     decoding="async"
@@ -1085,9 +1086,9 @@ function CountryAccordion({ country: c, expanded, onToggle }) {
                   to={`/liga/${l.league.id}`}
                   className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/5 transition-all no-underline"
                 >
-                  {l.league.logo ? (
+                  {getLeagueLogo(l.league) ? (
                     <img
-                      src={l.league.logo}
+                      src={getLeagueLogo(l.league)}
                       alt=""
                       loading="lazy"
                       decoding="async"

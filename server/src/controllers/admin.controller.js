@@ -1,4 +1,5 @@
 import * as scoringService from '../services/scoring.service.js';
+import * as outrightsService from '../services/outrights.service.js';
 import prisma from '../config/database.js';
 
 export async function calculateScores(req, res, next) {
@@ -66,6 +67,35 @@ export async function updateScoringConfig(req, res, next) {
   try {
     const config = await scoringService.updateScoringConfig(req.body);
     res.json(config);
+  } catch (err) { next(err); }
+}
+
+export async function getOutrightResult(req, res, next) {
+  try {
+    const { competitionId } = req.query;
+    if (!competitionId) {
+      return res.status(400).json({ error: 'competitionId es requerido' });
+    }
+    const data = await outrightsService.getAdminResult(Number(competitionId));
+    res.json(data);
+  } catch (err) { next(err); }
+}
+
+export async function updateOutrightResult(req, res, next) {
+  try {
+    const result = await outrightsService.saveAdminResult(req.body);
+    res.json(result);
+  } catch (err) { next(err); }
+}
+
+export async function calculateOutrightScores(req, res, next) {
+  try {
+    const { competitionId } = req.body;
+    if (!competitionId) {
+      return res.status(400).json({ error: 'competitionId es requerido' });
+    }
+    const result = await outrightsService.calculateOutrightScores(Number(competitionId));
+    res.json(result);
   } catch (err) { next(err); }
 }
 

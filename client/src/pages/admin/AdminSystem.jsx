@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { m } from "framer-motion";
-import { Trophy, Save, Calculator, ChevronDown, Trash2, RefreshCw, Database, Loader2, CheckCircle, AlertCircle, Clock, Zap, Info, Globe, Play, Eye } from "lucide-react";
+import { Trophy, Save, Calculator, ChevronDown, Trash2, RefreshCw, Database, Loader2, CheckCircle, AlertCircle, Clock, Zap, Info, Globe, Play, Eye, Medal } from "lucide-react";
 import api from "../../services/api";
 import useToastStore from "../../store/toastStore";
 import useCompetitionStore from "../../store/competitionStore";
@@ -9,7 +9,10 @@ export default function AdminSystem({ tab, scoringConfig, onConfigUpdate, fetchC
   return (
     <>
       {tab === "scoring" && scoringConfig && (
-        <ResultScoringConfigEditor config={scoringConfig} onUpdate={onConfigUpdate} />
+        <div className="space-y-6">
+          <ResultScoringConfigEditor config={scoringConfig} onUpdate={onConfigUpdate} />
+          <OutrightResultAdmin />
+        </div>
       )}
       {tab === "sync" && (
         <SyncPanel onSyncComplete={() => { onConfigUpdate(); fetchCompetitions(); }} />
@@ -25,6 +28,10 @@ function ResultScoringConfigEditor({ config, onUpdate }) {
   const [form, setForm] = useState({
     exactScore: config.exactScore,
     correctWinner: config.correctWinner,
+    champion: config.champion ?? 10,
+    runnerUp: config.runnerUp ?? 7,
+    topScorer: config.topScorer ?? 5,
+    goldenGlove: config.goldenGlove ?? 5,
   });
   const [saving, setSaving] = useState(false);
 
@@ -34,6 +41,10 @@ function ResultScoringConfigEditor({ config, onUpdate }) {
       await api.put("/admin/scoring/config", {
         exactScore: Number(form.exactScore),
         correctWinner: Number(form.correctWinner),
+        champion: Number(form.champion),
+        runnerUp: Number(form.runnerUp),
+        topScorer: Number(form.topScorer),
+        goldenGlove: Number(form.goldenGlove),
       });
       useToastStore
         .getState()
@@ -61,11 +72,37 @@ function ResultScoringConfigEditor({ config, onUpdate }) {
       desc: "Acertar el signo del partido sin importar los goles exactos.",
       color: "blue",
     },
+    {
+      key: "champion",
+      label: "Campeon",
+      desc: "Acertar quien levanta la copa al final del Mundial.",
+      color: "amber",
+    },
+    {
+      key: "runnerUp",
+      label: "Subcampeon",
+      desc: "Acertar el finalista que termina segundo.",
+      color: "violet",
+    },
+    {
+      key: "topScorer",
+      label: "Goleador",
+      desc: "Acertar el ganador de la bota de oro.",
+      color: "emerald",
+    },
+    {
+      key: "goldenGlove",
+      label: "Guante de oro",
+      desc: "Acertar el arquero ganador del premio.",
+      color: "blue",
+    },
   ];
 
   const colorMap = {
     emerald: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
     blue: "bg-blue-500/10 border-blue-500/20 text-blue-400",
+    amber: "bg-amber-500/10 border-amber-500/20 text-amber-400",
+    violet: "bg-violet-500/10 border-violet-500/20 text-violet-400",
   };
 
   return (
@@ -85,7 +122,7 @@ function ResultScoringConfigEditor({ config, onUpdate }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
         <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 sm:p-4 text-center">
           <div className="text-2xl sm:text-3xl font-black text-emerald-400">
             {form.exactScore}
@@ -108,6 +145,30 @@ function ResultScoringConfigEditor({ config, onUpdate }) {
           </div>
           <div className="text-[10px] sm:text-xs text-white/60 mt-1">
             Exacto con x2
+          </div>
+        </div>
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 sm:p-4 text-center">
+          <div className="text-2xl sm:text-3xl font-black text-amber-400">
+            {form.champion}
+          </div>
+          <div className="text-[10px] sm:text-xs text-white/60 mt-1">
+            Campeon
+          </div>
+        </div>
+        <div className="bg-violet-500/5 border border-violet-500/20 rounded-xl p-3 sm:p-4 text-center">
+          <div className="text-2xl sm:text-3xl font-black text-violet-400">
+            {form.runnerUp}
+          </div>
+          <div className="text-[10px] sm:text-xs text-white/60 mt-1">
+            Subcampeon
+          </div>
+        </div>
+        <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-3 sm:p-4 text-center">
+          <div className="text-2xl sm:text-3xl font-black text-blue-400">
+            {Number(form.topScorer) + Number(form.goldenGlove)}
+          </div>
+          <div className="text-[10px] sm:text-xs text-white/60 mt-1">
+            Premios jugadores
           </div>
         </div>
       </div>
@@ -492,6 +553,287 @@ function ScoringConfigEditor({ config, onUpdate }) {
   );
 }
 
+
+function OutrightResultAdmin() {
+  const activeCompetition = useCompetitionStore((state) => state.activeCompetition);
+  const competitions = useCompetitionStore((state) => state.competitions);
+  const [competitionId, setCompetitionId] = useState(activeCompetition?.id ? String(activeCompetition.id) : "");
+  const [teams, setTeams] = useState([]);
+  const [topScorers, setTopScorers] = useState([]);
+  const [goalkeepers, setGoalkeepers] = useState([]);
+  const [form, setForm] = useState({
+    lockAt: "",
+    championTeamId: "",
+    runnerUpTeamId: "",
+    topScorerTeamId: "",
+    topScorerId: "",
+    goldenGloveTeamId: "",
+    goldenGloveId: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [calculating, setCalculating] = useState(false);
+
+  const loadAdminData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [optionsRes, resultRes] = await Promise.all([
+        api.get(`/outrights/options?competitionId=${competitionId}`),
+        api.get(`/admin/outrights/result?competitionId=${competitionId}`),
+      ]);
+      setTeams(optionsRes.data?.teams || []);
+      const result = resultRes.data?.result;
+      const defaultLockAt = result?.lockAt || resultRes.data?.lockAt || optionsRes.data?.lockAt || null;
+      setForm({
+        lockAt: toDateTimeLocal(defaultLockAt),
+        championTeamId: result?.championTeamId ? String(result.championTeamId) : "",
+        runnerUpTeamId: result?.runnerUpTeamId ? String(result.runnerUpTeamId) : "",
+        topScorerTeamId: result?.topScorer?.teamId ? String(result.topScorer.teamId) : "",
+        topScorerId: result?.topScorerId ? String(result.topScorerId) : "",
+        goldenGloveTeamId: result?.goldenGlove?.teamId ? String(result.goldenGlove.teamId) : "",
+        goldenGloveId: result?.goldenGloveId ? String(result.goldenGloveId) : "",
+      });
+    } catch (err) {
+      useToastStore.getState().addToast({
+        type: "error",
+        message: err.response?.data?.error || "Error al cargar premios finales",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [competitionId]);
+
+  const loadPlayers = useCallback(async (type, teamId) => {
+    try {
+      const positionParam = type === "goldenGlove" ? "&position=GK" : "";
+      const { data } = await api.get(
+        `/outrights/players?competitionId=${competitionId}&teamId=${teamId}${positionParam}`,
+      );
+      if (type === "goldenGlove") setGoalkeepers(data || []);
+      else setTopScorers(data || []);
+    } catch (err) {
+      useToastStore.getState().addToast({ type: "error", message: "Error al cargar jugadores" });
+    }
+  }, [competitionId]);
+
+  useEffect(() => {
+    if (!competitionId && activeCompetition?.id) {
+      setCompetitionId(String(activeCompetition.id));
+    }
+  }, [activeCompetition?.id, competitionId]);
+
+  useEffect(() => {
+    if (competitionId) loadAdminData();
+  }, [competitionId, loadAdminData]);
+
+  useEffect(() => {
+    if (form.topScorerTeamId) loadPlayers("topScorer", form.topScorerTeamId);
+    else setTopScorers([]);
+  }, [form.topScorerTeamId, loadPlayers]);
+
+  useEffect(() => {
+    if (form.goldenGloveTeamId) loadPlayers("goldenGlove", form.goldenGloveTeamId);
+    else setGoalkeepers([]);
+  }, [form.goldenGloveTeamId, loadPlayers]);
+
+  const handleTeamChange = (field, value) => {
+    const reset =
+      field === "topScorerTeamId"
+        ? { topScorerId: "" }
+        : field === "goldenGloveTeamId"
+          ? { goldenGloveId: "" }
+          : {};
+    setForm((prev) => ({ ...prev, [field]: value, ...reset }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api.put("/admin/outrights/result", {
+        competitionId: Number(competitionId),
+        lockAt: form.lockAt ? new Date(form.lockAt).toISOString() : null,
+        championTeamId: toNumberOrNull(form.championTeamId),
+        runnerUpTeamId: toNumberOrNull(form.runnerUpTeamId),
+        topScorerId: toNumberOrNull(form.topScorerId),
+        goldenGloveId: toNumberOrNull(form.goldenGloveId),
+      });
+      useToastStore.getState().addToast({ type: "success", message: "Premios finales guardados" });
+      await loadAdminData();
+    } catch (err) {
+      useToastStore.getState().addToast({
+        type: "error",
+        message: err.response?.data?.error || "Error al guardar premios finales",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCalculate = async () => {
+    setCalculating(true);
+    try {
+      const { data } = await api.post("/admin/outrights/calculate", {
+        competitionId: Number(competitionId),
+      });
+      useToastStore.getState().addToast({
+        type: "success",
+        message: data?.message || "Premios finales calculados",
+      });
+    } catch (err) {
+      useToastStore.getState().addToast({
+        type: "error",
+        message: err.response?.data?.error || "Error al calcular premios finales",
+      });
+    } finally {
+      setCalculating(false);
+    }
+  };
+
+  return (
+    <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-4">
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-300 flex items-center justify-center shrink-0">
+          <Medal size={20} />
+        </div>
+        <div>
+          <h3 className="text-sm sm:text-lg font-semibold text-white">Ganadores finales</h3>
+          <p className="text-xs sm:text-sm text-white/50">
+            Carga los resultados oficiales y calcula los puntos de campeon, subcampeon, goleador y guante de oro.
+          </p>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center gap-2 text-white/60 text-sm py-4">
+          <Loader2 size={16} className="animate-spin" /> Cargando premios...
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <AdminSelect
+              label="Competencia"
+              value={competitionId}
+              onChange={setCompetitionId}
+              options={competitions}
+              placeholder="Seleccionar competencia"
+            />
+            <label className="block">
+              <span className="block text-xs uppercase tracking-wider text-white/50 font-bold mb-2">
+                Bloqueo de predicciones
+              </span>
+              <input
+                type="datetime-local"
+                value={form.lockAt}
+                onChange={(e) => setForm((prev) => ({ ...prev, lockAt: e.target.value }))}
+                className="w-full border border-white/10 rounded-xl px-3 py-3 text-white text-sm focus:outline-none focus:border-amber-500/60"
+                style={{ background: "var(--bg-end-color, #111827)" }}
+              />
+            </label>
+            <AdminSelect
+              label="Campeon oficial"
+              value={form.championTeamId}
+              onChange={(value) => handleTeamChange("championTeamId", value)}
+              options={teams}
+              placeholder="Seleccionar campeon"
+            />
+            <AdminSelect
+              label="Subcampeon oficial"
+              value={form.runnerUpTeamId}
+              onChange={(value) => handleTeamChange("runnerUpTeamId", value)}
+              options={teams}
+              placeholder="Seleccionar subcampeon"
+            />
+            <AdminSelect
+              label="Seleccion del goleador"
+              value={form.topScorerTeamId}
+              onChange={(value) => handleTeamChange("topScorerTeamId", value)}
+              options={teams}
+              placeholder="Seleccionar seleccion"
+            />
+            <AdminSelect
+              label="Goleador oficial"
+              value={form.topScorerId}
+              onChange={(value) => setForm((prev) => ({ ...prev, topScorerId: value }))}
+              options={topScorers}
+              placeholder="Seleccionar jugador"
+              disabled={!form.topScorerTeamId}
+            />
+            <AdminSelect
+              label="Seleccion del guante de oro"
+              value={form.goldenGloveTeamId}
+              onChange={(value) => handleTeamChange("goldenGloveTeamId", value)}
+              options={teams}
+              placeholder="Seleccionar seleccion"
+            />
+            <AdminSelect
+              label="Guante de oro oficial"
+              value={form.goldenGloveId}
+              onChange={(value) => setForm((prev) => ({ ...prev, goldenGloveId: value }))}
+              options={goalkeepers}
+              placeholder="Seleccionar arquero"
+              disabled={!form.goldenGloveTeamId}
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handleSave}
+              disabled={saving || !competitionId}
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold border-none cursor-pointer disabled:opacity-50"
+            >
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              {saving ? "Guardando..." : "Guardar ganadores"}
+            </button>
+            <button
+              onClick={handleCalculate}
+              disabled={calculating || !competitionId}
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold border-none cursor-pointer disabled:opacity-50"
+            >
+              {calculating ? <Loader2 size={16} className="animate-spin" /> : <Calculator size={16} />}
+              {calculating ? "Calculando..." : "Calcular premios finales"}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function AdminSelect({ label, value, onChange, options, placeholder, disabled }) {
+  return (
+    <label className="block">
+      <span className="block text-xs uppercase tracking-wider text-white/50 font-bold mb-2">
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className="w-full border border-white/10 rounded-xl px-3 py-3 text-white text-sm focus:outline-none focus:border-amber-500/60 disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{ background: "var(--bg-end-color, #111827)" }}
+      >
+        <option value="">{placeholder}</option>
+        {options.map((item) => (
+          <option key={item.id} value={item.id}>
+            {item.name}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function toNumberOrNull(value) {
+  return value ? Number(value) : null;
+}
+
+function toDateTimeLocal(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const offsetMs = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+}
 
 function SyncPanel({ onSyncComplete }) {
   const [loading, setLoading] = useState({});

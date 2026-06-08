@@ -1,6 +1,9 @@
 import pkg from '@prisma/client';
 import bcrypt from 'bcrypt';
 
+const WORLD_CUP_2026_LOGO =
+  'https://upload.wikimedia.org/wikipedia/commons/1/17/2026_FIFA_World_Cup_emblem.svg';
+
 const { PrismaClient } = pkg;
 const prisma = new PrismaClient();
 
@@ -14,6 +17,10 @@ async function main() {
       id: 1,
       exactScore: 10,
       correctWinner: 3,
+      champion: 10,
+      runnerUp: 7,
+      topScorer: 5,
+      goldenGlove: 5,
       doubleChance: 0,
       btts: 0,
       overUnder: 0,
@@ -45,11 +52,11 @@ async function main() {
 
   const competition = await prisma.competition.upsert({
     where: { externalId_season: { externalId: 1, season: 2026 } },
-    update: {},
+    update: { logo: WORLD_CUP_2026_LOGO },
     create: {
       externalId: 1,
       name: 'Copa del Mundo 2026',
-      logo: 'https://media.api-sports.io/football/leagues/1.png',
+      logo: WORLD_CUP_2026_LOGO,
       season: 2026,
     },
   });

@@ -6,6 +6,7 @@
  */
 import prisma from '../config/database.js';
 import * as footballApi from './football-api.service.js';
+import { WORLD_CUP_2026_LOGO } from '../constants/worldCup.js';
 
 const LEAGUE_ID = Number(process.env.FOOTBALL_LEAGUE_ID) || 1;
 const SEASON = Number(process.env.FOOTBALL_SEASON) || 2022;
@@ -36,7 +37,12 @@ async function ensureCompetition(leagueId, season) {
     }
 
     competition = await prisma.competition.create({
-      data: { externalId: leagueId, name, logo, season },
+      data: {
+        externalId: leagueId,
+        name,
+        logo: Number(leagueId) === 1 && Number(season) === 2026 ? WORLD_CUP_2026_LOGO : logo,
+        season,
+      },
     });
   }
 

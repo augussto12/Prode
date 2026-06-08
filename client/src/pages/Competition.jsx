@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
-import { Calendar, Star, Zap, BarChart3, Lock } from "lucide-react";
+import { Calendar, Star, Zap, BarChart3, Lock, Trophy } from "lucide-react";
 import useCompetitionStore from "../store/competitionStore";
 import useAuthStore from "../store/authStore";
 import ProdeMatches from "../components/matches/ProdeMatches";
 import DreamTeam from "./DreamTeam";
+import OutrightPredictions from "../components/outrights/OutrightPredictions";
+import { WORLD_CUP_2026_LOGO } from "../utils/worldCupLogo";
 
 const TABS = [
   { id: "matches", label: "Partidos", icon: Calendar },
   { id: "predictions", label: "Predicciones", icon: BarChart3 },
   { id: "dreamteam", label: "Dream Team", icon: Star },
+  { id: "finals", label: "Finales", icon: Trophy },
 ];
 
 export default function Competition({ hideHeader }) {
@@ -33,7 +36,7 @@ export default function Competition({ hideHeader }) {
           name: "Copa del Mundo 2026",
           externalId: 1,
           season: 2026,
-          logo: "https://media.api-sports.io/football/leagues/1.png",
+          logo: WORLD_CUP_2026_LOGO,
         });
       }
     }
@@ -98,6 +101,11 @@ export default function Competition({ hideHeader }) {
 
       {/* Dream Team Tab */}
       {tab === "dreamteam" && <DreamTeam />}
+
+      {/* Final awards Tab */}
+      {tab === "finals" && (
+        <OutrightPredictions competitionId={activeCompetition?.id} />
+      )}
     </div>
   );
 }

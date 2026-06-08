@@ -104,8 +104,12 @@ export const guruMessageSchema = z.object({
 
 // --- SCORING CONFIG ---
 export const scoringConfigSchema = z.object({
-  exactScore: z.number().int().min(0).max(100),
-  correctWinner: z.number().int().min(0).max(100),
+  exactScore: z.number().int().min(0).max(100).optional(),
+  correctWinner: z.number().int().min(0).max(100).optional(),
+  champion: z.number().int().min(0).max(100).optional(),
+  runnerUp: z.number().int().min(0).max(100).optional(),
+  topScorer: z.number().int().min(0).max(100).optional(),
+  goldenGlove: z.number().int().min(0).max(100).optional(),
 });
 
 // --- ROLE UPDATE ---
@@ -118,8 +122,22 @@ export const outrightPredictionSchema = z.object({
   competitionId: z.number().int().positive('competitionId es requerido'),
   championTeam: z.string().max(100).optional().nullable(),
   runnerUpTeam: z.string().max(100).optional().nullable(),
+  championTeamId: z.number().int().positive().optional().nullable(),
+  runnerUpTeamId: z.number().int().positive().optional().nullable(),
+  topScorerTeamId: z.number().int().positive().optional().nullable(),
   topScorerId: z.number().int().positive().optional().nullable(),
+  goldenGloveTeamId: z.number().int().positive().optional().nullable(),
+  goldenGloveId: z.number().int().positive().optional().nullable(),
   bestPlayerId: z.number().int().positive().optional().nullable(),
+});
+
+export const outrightResultSchema = z.object({
+  competitionId: z.number().int().positive('competitionId es requerido'),
+  lockAt: z.string().datetime().optional().nullable(),
+  championTeamId: z.number().int().positive().optional().nullable(),
+  runnerUpTeamId: z.number().int().positive().optional().nullable(),
+  topScorerId: z.number().int().positive().optional().nullable(),
+  goldenGloveId: z.number().int().positive().optional().nullable(),
 });
 
 // --- DREAM TEAM ---

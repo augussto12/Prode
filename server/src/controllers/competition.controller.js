@@ -1,4 +1,5 @@
 import prisma from '../config/database.js';
+import { WORLD_CUP_2026_LOGO, withWorldCupLogo } from '../constants/worldCup.js';
 
 export async function listCompetitions(req, res, next) {
   try {
@@ -12,7 +13,7 @@ export async function listCompetitions(req, res, next) {
         },
       },
     });
-    res.json(competitions);
+    res.json(competitions.map(withWorldCupLogo));
   } catch (err) { next(err); }
 }
 
@@ -27,7 +28,7 @@ export async function getCompetitionById(req, res, next) {
       },
     });
     if (!competition) return res.status(404).json({ error: 'Competencia no encontrada' });
-    res.json(competition);
+    res.json(withWorldCupLogo(competition));
   } catch (err) { next(err); }
 }
 
@@ -35,16 +36,20 @@ export async function createCompetition(req, res, next) {
   try {
     const { externalId, name, logo, season } = req.body;
 
+    const normalizedLogo = Number(externalId) === 1 && Number(season) === 2026
+      ? WORLD_CUP_2026_LOGO
+      : logo || null;
+
     const competition = await prisma.competition.upsert({
       where: { externalId_season: { externalId: Number(externalId), season: Number(season) || 2022 } },
-      update: { name, logo: logo || null },
+      update: { name, logo: normalizedLogo },
       create: {
         externalId: Number(externalId),
         name,
-        logo: logo || null,
+        logo: normalizedLogo,
         season: Number(season) || 2022,
       },
     });
-    res.json(competition);
+    res.json(withWorldCupLogo(competition));
   } catch (err) { next(err); }
 }

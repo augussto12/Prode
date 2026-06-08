@@ -7,6 +7,8 @@ import { outrightPredictionSchema } from '../validators/schemas.js';
 const router = Router();
 router.use(authenticate);
 
+router.get('/options', ctrl.getOptions);
+router.get('/players', ctrl.getPlayers);
 router.get('/', ctrl.getMyOutrights);
 router.post('/', validate(outrightPredictionSchema), ctrl.saveOutrights);
 

@@ -24,6 +24,7 @@ import useAuthStore from "../store/authStore";
 import useCompetitionStore from "../store/competitionStore";
 import useToastStore from "../store/toastStore";
 import Competition from "./Competition";
+import { getLeagueLogo } from "../utils/worldCupLogo";
 
 const WORLD_CUP_ID = 1;
 
@@ -269,6 +270,7 @@ export default function LeagueView() {
 
   const leagueInfo = league?.league;
   const countryInfo = league?.country;
+  const displayLogo = getLeagueLogo(leagueInfo, season);
 
   return (
     <div className="space-y-6">
@@ -294,9 +296,9 @@ export default function LeagueView() {
           }}
         />
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-5 w-full">
-          {leagueInfo?.logo ? (
+          {displayLogo ? (
             <img
-              src={leagueInfo.logo}
+              src={displayLogo}
               alt={leagueInfo.name}
               width={64}
               height={64}
