@@ -575,6 +575,7 @@ function OutrightResultAdmin() {
   const [saving, setSaving] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const [syncingOptions, setSyncingOptions] = useState(false);
+  const [syncProgress, setSyncProgress] = useState(null);
 
   const loadAdminData = useCallback(async () => {
     setLoading(true);
@@ -693,14 +694,36 @@ function OutrightResultAdmin() {
 
   const handleSyncOptions = async () => {
     setSyncingOptions(true);
+    setSyncProgress({ processed: 0, total: null });
     try {
-      const { data } = await api.post("/admin/outrights/sync-options", {
-        competitionId: Number(competitionId),
-      });
-      const errorText = data?.errors?.length ? ` (${data.errors.length} con error)` : "";
+      let offset = 0;
+      const limit = 6;
+      const totals = {
+        teams: 0,
+        players: 0,
+        errors: 0,
+      };
+      let done = false;
+
+      while (!done) {
+        const { data } = await api.post("/admin/outrights/sync-options", {
+          competitionId: Number(competitionId),
+          offset,
+          limit,
+        });
+
+        totals.teams = data?.teams?.total ?? totals.teams;
+        totals.players += data?.players?.total ?? 0;
+        totals.errors += data?.errors?.length ?? 0;
+        offset = data?.nextOffset ?? offset + (data?.processed ?? limit);
+        done = Boolean(data?.done);
+        setSyncProgress({ processed: offset, total: totals.teams });
+      }
+
+      const errorText = totals.errors ? ` (${totals.errors} con error)` : "";
       useToastStore.getState().addToast({
         type: "success",
-        message: `Selecciones: ${data?.teams?.total ?? 0}. Jugadores: ${data?.players?.total ?? 0}${errorText}`,
+        message: `Selecciones: ${totals.teams}. Jugadores: ${totals.players}${errorText}`,
       });
       await loadAdminData();
     } catch (err) {
@@ -710,6 +733,7 @@ function OutrightResultAdmin() {
       });
     } finally {
       setSyncingOptions(false);
+      setSyncProgress(null);
     }
   };
 
@@ -806,7 +830,11 @@ function OutrightResultAdmin() {
               className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold border-none cursor-pointer disabled:opacity-50"
             >
               {syncingOptions ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-              {syncingOptions ? "Sincronizando..." : "Sincronizar selecciones y jugadores"}
+              {syncingOptions
+                ? syncProgress?.total
+                  ? `Sincronizando ${Math.min(syncProgress.processed, syncProgress.total)}/${syncProgress.total}`
+                  : "Sincronizando..."
+                : "Sincronizar selecciones y jugadores"}
             </button>
             <button
               onClick={handleSave}

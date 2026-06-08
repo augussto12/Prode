@@ -90,7 +90,7 @@ export async function updateOutrightResult(req, res, next) {
 
 export async function calculateOutrightScores(req, res, next) {
   try {
-    const { competitionId } = req.body;
+    const { competitionId, offset, limit } = req.body;
     if (!competitionId) {
       return res.status(400).json({ error: 'competitionId es requerido' });
     }
@@ -105,7 +105,7 @@ export async function syncOutrightOptions(req, res, next) {
     if (!competitionId) {
       return res.status(400).json({ error: 'competitionId es requerido' });
     }
-    const result = await outrightsService.syncCompetitionTeamsAndPlayers(Number(competitionId));
+    const result = await outrightsService.syncCompetitionTeamsAndPlayers(Number(competitionId), { offset, limit });
     res.json(result);
   } catch (err) { next(err); }
 }

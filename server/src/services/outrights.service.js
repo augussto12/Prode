@@ -217,8 +217,10 @@ async function syncAndListCompetitionTeams(competition) {
   }
 }
 
-export async function syncCompetitionTeamsAndPlayers(competitionId) {
+export async function syncCompetitionTeamsAndPlayers(competitionId, options = {}) {
   const competition = await getCompetition(Number(competitionId));
+  const offset = Math.max(0, Number(options.offset) || 0);
+  const limit = Math.min(12, Math.max(1, Number(options.limit) || 6));
   invalidateCache(`outrights:teams:${competition.externalId}:${competition.season}`);
 
   const result = await footballApi.fetchTeams(competition.externalId, competition.season);
@@ -264,12 +266,13 @@ export async function syncCompetitionTeamsAndPlayers(competitionId) {
     teams.push(saved);
   }
 
+  const batch = teams.slice(offset, offset + limit);
   let playersCreated = 0;
   let playersUpdated = 0;
   let playersTotal = 0;
   const errors = [];
 
-  for (const team of teams) {
+  for (const team of batch) {
     try {
       const squadResult = await syncSquad(team.externalId, competition.id);
       playersCreated += squadResult.created || 0;
@@ -281,10 +284,20 @@ export async function syncCompetitionTeamsAndPlayers(competitionId) {
     }
   }
 
+  const nextOffset = offset + batch.length;
+  const done = nextOffset >= teams.length;
+
   return {
-    message: `Selecciones y jugadores sincronizados para ${competition.name}.`,
+    message: done
+      ? `Selecciones y jugadores sincronizados para ${competition.name}.`
+      : `Sincronizadas ${nextOffset}/${teams.length} selecciones de ${competition.name}.`,
     competitionId: competition.id,
     competitionName: competition.name,
+    offset,
+    limit,
+    processed: batch.length,
+    nextOffset,
+    done,
     teams: {
       total: teams.length,
       created: teamsCreated,
