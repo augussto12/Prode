@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertCircle, Lock, Save, ShieldCheck, Trophy } from "lucide-react";
 import api from "../../services/api";
 import useToastStore from "../../store/toastStore";
+import { tTeamName } from "../../utils/translations";
 
 const emptyForm = {
   championTeamId: "",
@@ -271,7 +272,7 @@ function SelectField({ label, value, onChange, options, disabled, placeholder })
         <option value="">{placeholder}</option>
         {options.map((item) => (
           <option key={item.id} value={item.id}>
-            {item.name}
+            {item.displayName || tTeamName(item.name)}
           </option>
         ))}
       </select>

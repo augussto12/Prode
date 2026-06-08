@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { tTeamName } from "../../utils/translations";
 
 /**
  * Single team row inside a MatchCard.
@@ -39,7 +40,7 @@ export default function TeamRow({ team, goals, isWinner, isLoser }) {
               : "text-white/90"
         }`}
       >
-        {team.name}
+        {tTeamName(team.name)}
       </span>
       <span
         className={`text-sm font-bold font-mono min-w-[20px] text-right ${

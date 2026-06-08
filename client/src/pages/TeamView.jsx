@@ -4,7 +4,7 @@ import { m } from "framer-motion";
 import { ArrowLeft, User, Calendar, MapPin } from "lucide-react";
 import api from "../services/api";
 import PlayerAvatar from "../components/shared/PlayerAvatar";
-import { tCountry } from "../utils/translations";
+import { tCountry, tTeamName } from "../utils/translations";
 
 export default function TeamView() {
   const { id } = useParams();
@@ -253,7 +253,7 @@ export default function TeamView() {
         </div>
         <div className="flex-1 text-center md:text-left space-y-2">
           <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
-            {team.name}
+            {tTeamName(team.name)}
           </h1>
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-white/60 mt-1">
             <span className="flex items-center gap-1.5">
@@ -752,7 +752,7 @@ export default function TeamView() {
                           }}
                         />
                         <span className="text-white font-bold text-sm truncate max-w-[120px]">
-                          {otherTeam.name}
+                          {tTeamName(otherTeam.name)}
                         </span>
                       </div>
                     </div>

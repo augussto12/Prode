@@ -1,6 +1,9 @@
 import prisma from '../config/database.js';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../utils/errors.js';
 import { recalculateAllLeaderboards } from './scoring.service.js';
+import * as footballApi from './football-api.service.js';
+import { syncSquad } from './sync.service.js';
+import { cachedApiCall, invalidateCache } from './cache.service.js';
 
 const WORLD_CUP_2026_START = new Date('2026-06-11T00:00:00.000Z');
 
@@ -59,6 +62,35 @@ export async function getLockInfo(competitionId) {
 
 export async function listTeams(competitionId) {
   const compId = Number(competitionId);
+  const competition = await getCompetition(compId);
+
+  const teamsFromApi = await syncAndListCompetitionTeams(competition);
+  if (teamsFromApi.length > 0) return teamsFromApi;
+
+  const fixtures = await prisma.fixture.findMany({
+    where: {
+      leagueId: competition.externalId,
+      OR: [
+        { seasonId: competition.season },
+        { seasonId: null },
+      ],
+    },
+    select: { homeTeamId: true, awayTeamId: true },
+  });
+
+  const fixtureTeamIds = [
+    ...new Set(fixtures.flatMap((fixture) => [fixture.homeTeamId, fixture.awayTeamId]).filter(Boolean)),
+  ];
+
+  if (fixtureTeamIds.length > 0) {
+    const teams = await prisma.team.findMany({
+      where: { id: { in: fixtureTeamIds } },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, logo: true, flag: true, country: true },
+    });
+    return formatTeamOptions(teams);
+  }
+
   const teamsFromStats = await prisma.team.findMany({
     where: {
       players: {
@@ -73,12 +105,9 @@ export async function listTeams(competitionId) {
     select: { id: true, name: true, logo: true, flag: true, country: true },
   });
 
-  if (teamsFromStats.length > 0) return teamsFromStats;
+  if (teamsFromStats.length > 0) return formatTeamOptions(teamsFromStats);
 
-  return prisma.team.findMany({
-    orderBy: { name: 'asc' },
-    select: { id: true, name: true, logo: true, flag: true, country: true },
-  });
+  return [];
 }
 
 export async function listPlayers({ competitionId, teamId, position }) {
@@ -106,6 +135,16 @@ export async function listPlayers({ competitionId, teamId, position }) {
   });
 
   if (players.length === 0 && competitionId) {
+    const team = await prisma.team.findUnique({
+      where: { id: Number(teamId) },
+      select: { externalId: true, source: true },
+    });
+    if (team?.source === 'api-football' && team.externalId) {
+      await syncSquad(team.externalId, Number(competitionId)).catch((err) => {
+        console.warn(`[Outrights] No se pudo sincronizar plantel ${team.externalId}: ${err.message}`);
+      });
+    }
+
     players = await prisma.player.findMany({
       where: {
         teamId: Number(teamId),
@@ -128,10 +167,147 @@ export async function listPlayers({ competitionId, teamId, position }) {
   return players;
 }
 
-async function validateTeamId(teamId, field) {
+async function syncAndListCompetitionTeams(competition) {
+  try {
+    const apiTeams = await cachedApiCall(
+      `outrights:teams:${competition.externalId}:${competition.season}`,
+      24 * 60 * 60,
+      async () => {
+        const result = await footballApi.fetchTeams(competition.externalId, competition.season);
+        return (result.response || []).map((item) => item.team).filter((team) => team?.id && team?.name);
+      },
+    );
+
+    const teams = (apiTeams || []).filter((team) => team?.id && team?.name);
+
+    const teamIds = [];
+    for (const team of teams) {
+      const data = {
+        externalId: Number(team.id),
+        source: 'api-football',
+        name: team.name,
+        code: team.code || null,
+        logo: team.logo || null,
+        country: team.country || team.name,
+        flag: team.national && team.code
+          ? `https://media.api-sports.io/flags/${team.code.toLowerCase()}.svg`
+          : null,
+      };
+
+      const saved = await prisma.team.upsert({
+        where: { externalId_source: { externalId: data.externalId, source: data.source } },
+        update: data,
+        create: data,
+        select: { id: true },
+      });
+      teamIds.push(saved.id);
+    }
+
+    if (teamIds.length === 0) return [];
+
+    const savedTeams = await prisma.team.findMany({
+      where: { id: { in: teamIds } },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, logo: true, flag: true, country: true },
+    });
+    return formatTeamOptions(savedTeams);
+  } catch (err) {
+    console.warn(`[Outrights] No se pudieron cargar equipos desde API-Football: ${err.message}`);
+    return [];
+  }
+}
+
+export async function syncCompetitionTeamsAndPlayers(competitionId) {
+  const competition = await getCompetition(Number(competitionId));
+  invalidateCache(`outrights:teams:${competition.externalId}:${competition.season}`);
+
+  const result = await footballApi.fetchTeams(competition.externalId, competition.season);
+  const apiTeams = (result.response || [])
+    .map((item) => item.team)
+    .filter((team) => team?.id && team?.name);
+
+  const teams = [];
+  let teamsCreated = 0;
+  let teamsUpdated = 0;
+
+  for (const team of apiTeams) {
+    const data = {
+      externalId: Number(team.id),
+      source: 'api-football',
+      name: team.name,
+      code: team.code || null,
+      logo: team.logo || null,
+      country: team.country || team.name,
+      flag: team.national && team.code
+        ? `https://media.api-sports.io/flags/${team.code.toLowerCase()}.svg`
+        : null,
+    };
+
+    const existing = await prisma.team.findUnique({
+      where: { externalId_source: { externalId: data.externalId, source: data.source } },
+      select: { id: true },
+    });
+
+    const saved = existing
+      ? await prisma.team.update({
+          where: { externalId_source: { externalId: data.externalId, source: data.source } },
+          data,
+          select: { id: true, externalId: true, name: true },
+        })
+      : await prisma.team.create({
+          data,
+          select: { id: true, externalId: true, name: true },
+        });
+
+    if (existing) teamsUpdated++;
+    else teamsCreated++;
+    teams.push(saved);
+  }
+
+  let playersCreated = 0;
+  let playersUpdated = 0;
+  let playersTotal = 0;
+  const errors = [];
+
+  for (const team of teams) {
+    try {
+      const squadResult = await syncSquad(team.externalId, competition.id);
+      playersCreated += squadResult.created || 0;
+      playersUpdated += squadResult.updated || 0;
+      playersTotal += squadResult.total || 0;
+      await delay(250);
+    } catch (err) {
+      errors.push({ team: team.name, error: err.message });
+    }
+  }
+
+  return {
+    message: `Selecciones y jugadores sincronizados para ${competition.name}.`,
+    competitionId: competition.id,
+    competitionName: competition.name,
+    teams: {
+      total: teams.length,
+      created: teamsCreated,
+      updated: teamsUpdated,
+    },
+    players: {
+      total: playersTotal,
+      created: playersCreated,
+      updated: playersUpdated,
+    },
+    errors,
+  };
+}
+
+async function validateTeamId(teamId, field, competitionId = null) {
   if (!teamId) return null;
   const team = await prisma.team.findUnique({ where: { id: Number(teamId) } });
   if (!team) throw new BadRequestError(`${field} no existe`);
+  if (competitionId) {
+    const allowedTeams = await listTeams(Number(competitionId));
+    const allowed = allowedTeams.some((option) => option.id === team.id);
+    if (!allowed) throw new BadRequestError(`${field} no pertenece a esta competencia`);
+  }
   return team.id;
 }
 
@@ -173,14 +349,14 @@ export async function saveMyOutrights(userId, data) {
   const { locked } = await getLockInfo(competitionId);
   if (locked) throw new ForbiddenError('El Mundial ya empezo y estas predicciones no se pueden cambiar');
 
-  const championTeamId = await validateTeamId(data.championTeamId, 'Campeon');
-  const runnerUpTeamId = await validateTeamId(data.runnerUpTeamId, 'Subcampeon');
+  const championTeamId = await validateTeamId(data.championTeamId, 'Campeon', competitionId);
+  const runnerUpTeamId = await validateTeamId(data.runnerUpTeamId, 'Subcampeon', competitionId);
   if (championTeamId && runnerUpTeamId && championTeamId === runnerUpTeamId) {
     throw new BadRequestError('Campeon y subcampeon no pueden ser el mismo equipo');
   }
 
-  const topScorerTeamId = await validateTeamId(data.topScorerTeamId, 'Seleccion del goleador');
-  const goldenGloveTeamId = await validateTeamId(data.goldenGloveTeamId, 'Seleccion del guante de oro');
+  const topScorerTeamId = await validateTeamId(data.topScorerTeamId, 'Seleccion del goleador', competitionId);
+  const goldenGloveTeamId = await validateTeamId(data.goldenGloveTeamId, 'Seleccion del guante de oro', competitionId);
   const topScorerId = await validatePlayerForTeam(data.topScorerId, topScorerTeamId, 'Goleador');
   const goldenGloveId = await validatePlayerForTeam(data.goldenGloveId, goldenGloveTeamId, 'Guante de oro', 'GK');
 
@@ -230,8 +406,8 @@ export async function saveAdminResult(data) {
   const competitionId = Number(data.competitionId);
   await getCompetition(competitionId);
 
-  const championTeamId = await validateTeamId(data.championTeamId, 'Campeon oficial');
-  const runnerUpTeamId = await validateTeamId(data.runnerUpTeamId, 'Subcampeon oficial');
+  const championTeamId = await validateTeamId(data.championTeamId, 'Campeon oficial', competitionId);
+  const runnerUpTeamId = await validateTeamId(data.runnerUpTeamId, 'Subcampeon oficial', competitionId);
   if (championTeamId && runnerUpTeamId && championTeamId === runnerUpTeamId) {
     throw new BadRequestError('Campeon y subcampeon oficiales no pueden ser el mismo equipo');
   }
@@ -347,4 +523,71 @@ export async function calculateOutrightScores(competitionId) {
 
 function normalizedName(value) {
   return String(value || '').trim().toLowerCase();
+}
+
+const NATIONAL_TEAM_NAMES_ES = {
+  Algeria: 'Argelia',
+  Argentina: 'Argentina',
+  Australia: 'Australia',
+  Austria: 'Austria',
+  Belgium: 'Bélgica',
+  'Bosnia & Herzegovina': 'Bosnia y Herzegovina',
+  Brazil: 'Brasil',
+  Canada: 'Canada',
+  'Cape Verde Islands': 'Cabo Verde',
+  Colombia: 'Colombia',
+  'Congo DR': 'RD Congo',
+  Croatia: 'Croacia',
+  Curacao: 'Curazao',
+  Curaçao: 'Curazao',
+  'Czech Republic': 'Republica Checa',
+  Ecuador: 'Ecuador',
+  Egypt: 'Egipto',
+  England: 'Inglaterra',
+  France: 'Francia',
+  Germany: 'Alemania',
+  Ghana: 'Ghana',
+  Haiti: 'Haití',
+  Iran: 'Irán',
+  Iraq: 'Irak',
+  'Ivory Coast': 'Costa de Marfil',
+  Japan: 'Japón',
+  Jordan: 'Jordania',
+  Mexico: 'México',
+  Morocco: 'Marruecos',
+  Netherlands: 'Países Bajos',
+  'New Zealand': 'Nueva Zelanda',
+  Norway: 'Noruega',
+  Panama: 'Panamá',
+  Paraguay: 'Paraguay',
+  Portugal: 'Portugal',
+  Qatar: 'Catar',
+  'Saudi Arabia': 'Arabia Saudita',
+  Scotland: 'Escocia',
+  Senegal: 'Senegal',
+  'South Africa': 'Sudáfrica',
+  'South Korea': 'Corea del Sur',
+  Spain: 'España',
+  Sweden: 'Suecia',
+  Switzerland: 'Suiza',
+  Tunisia: 'Túnez',
+  Türkiye: 'Turquía',
+  USA: 'Estados Unidos',
+  Uruguay: 'Uruguay',
+  Uzbekistan: 'Uzbekistán',
+};
+
+function translateTeamName(name) {
+  return NATIONAL_TEAM_NAMES_ES[name] || name;
+}
+
+function formatTeamOptions(teams) {
+  return teams.map((team) => ({
+    ...team,
+    displayName: translateTeamName(team.name),
+  }));
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

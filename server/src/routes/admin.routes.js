@@ -33,6 +33,7 @@ router.put('/scoring/config', authenticate, isSuperAdmin, validate(scoringConfig
 router.get('/outrights/result', authenticate, isAdmin, ctrl.getOutrightResult);
 router.put('/outrights/result', authenticate, isSuperAdmin, validate(outrightResultSchema), ctrl.updateOutrightResult);
 router.post('/outrights/calculate', authenticate, isSuperAdmin, ctrl.calculateOutrightScores);
+router.post('/outrights/sync-options', authenticate, isSuperAdmin, ctrl.syncOutrightOptions);
 
 // Sportmonks sync management (SUPERADMIN only)
 router.post('/sportmonks/sync-initial', authenticate, isSuperAdmin, smSyncCtrl.syncInitial);

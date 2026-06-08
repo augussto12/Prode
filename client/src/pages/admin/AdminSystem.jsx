@@ -4,6 +4,7 @@ import { Trophy, Save, Calculator, ChevronDown, Trash2, RefreshCw, Database, Loa
 import api from "../../services/api";
 import useToastStore from "../../store/toastStore";
 import useCompetitionStore from "../../store/competitionStore";
+import { tTeamName } from "../../utils/translations";
 
 export default function AdminSystem({ tab, scoringConfig, onConfigUpdate, fetchCompetitions }) {
   return (
@@ -573,6 +574,7 @@ function OutrightResultAdmin() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [calculating, setCalculating] = useState(false);
+  const [syncingOptions, setSyncingOptions] = useState(false);
 
   const loadAdminData = useCallback(async () => {
     setLoading(true);
@@ -689,6 +691,28 @@ function OutrightResultAdmin() {
     }
   };
 
+  const handleSyncOptions = async () => {
+    setSyncingOptions(true);
+    try {
+      const { data } = await api.post("/admin/outrights/sync-options", {
+        competitionId: Number(competitionId),
+      });
+      const errorText = data?.errors?.length ? ` (${data.errors.length} con error)` : "";
+      useToastStore.getState().addToast({
+        type: "success",
+        message: `Selecciones: ${data?.teams?.total ?? 0}. Jugadores: ${data?.players?.total ?? 0}${errorText}`,
+      });
+      await loadAdminData();
+    } catch (err) {
+      useToastStore.getState().addToast({
+        type: "error",
+        message: err.response?.data?.error || "Error al sincronizar selecciones y jugadores",
+      });
+    } finally {
+      setSyncingOptions(false);
+    }
+  };
+
   return (
     <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-4">
       <div className="flex items-start gap-3">
@@ -777,6 +801,14 @@ function OutrightResultAdmin() {
 
           <div className="flex flex-col sm:flex-row gap-3">
             <button
+              onClick={handleSyncOptions}
+              disabled={syncingOptions || !competitionId}
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold border-none cursor-pointer disabled:opacity-50"
+            >
+              {syncingOptions ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+              {syncingOptions ? "Sincronizando..." : "Sincronizar selecciones y jugadores"}
+            </button>
+            <button
               onClick={handleSave}
               disabled={saving || !competitionId}
               className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold border-none cursor-pointer disabled:opacity-50"
@@ -815,7 +847,7 @@ function AdminSelect({ label, value, onChange, options, placeholder, disabled })
         <option value="">{placeholder}</option>
         {options.map((item) => (
           <option key={item.id} value={item.id}>
-            {item.name}
+            {item.displayName || tTeamName(item.name)}
           </option>
         ))}
       </select>

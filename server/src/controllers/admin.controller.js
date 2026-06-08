@@ -99,6 +99,17 @@ export async function calculateOutrightScores(req, res, next) {
   } catch (err) { next(err); }
 }
 
+export async function syncOutrightOptions(req, res, next) {
+  try {
+    const { competitionId } = req.body;
+    if (!competitionId) {
+      return res.status(400).json({ error: 'competitionId es requerido' });
+    }
+    const result = await outrightsService.syncCompetitionTeamsAndPlayers(Number(competitionId));
+    res.json(result);
+  } catch (err) { next(err); }
+}
+
 export async function getCronLogs(req, res, next) {
   try {
     const { page = 1, limit = 50, module } = req.query;

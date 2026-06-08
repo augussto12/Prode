@@ -21,8 +21,8 @@ import api from "../services/api";
 // } from '../constants/sportmonks.constants.js';
 // import useSportmonksStore from "../store/useSportmonksStore";
 import useAuthStore from "../store/authStore";
-import { tCountry } from "../utils/translations";
-import { getLeagueLogo } from "../utils/worldCupLogo";
+import { tCountry, tRound, tTeamName } from "../utils/translations";
+import { WORLD_CUP_2026_LOGO, getLeagueLogo } from "../utils/worldCupLogo";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -498,8 +498,17 @@ export default function Explorer() {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
             <div className="relative z-10 p-4 md:p-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-5">
-              <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-white/20 backdrop-blur border border-white/30 flex items-center justify-center shrink-0 shadow-xl">
-                <Trophy size={28} className="text-white drop-shadow-md" />
+              <div className="w-14 h-14 md:w-20 md:h-20 rounded-2xl bg-white/90 backdrop-blur border border-white/40 flex items-center justify-center shrink-0 shadow-xl p-2">
+                <img
+                  src={WORLD_CUP_2026_LOGO}
+                  alt="FIFA World Cup 26"
+                  className="w-full h-full object-contain"
+                  loading="eager"
+                  decoding="async"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
               </div>
               <div className="flex-1">
                 <div className="inline-block px-2 py-0.5 bg-white/20 backdrop-blur rounded text-white/90 text-[8px] font-bold uppercase tracking-widest mb-1.5 border border-white/20">
@@ -955,13 +964,7 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
                                     className="truncate max-w-[150px] text-right"
                                     title={m.league.round}
                                   >
-                                    {m.league.round
-                                      .replace(/Regular Season - /i, "Fecha ")
-                                      .replace(/Reg /i, "Fecha ")
-                                      .replace(
-                                        /Group Stage/i,
-                                        "Fase de Grupos",
-                                      )}
+                                    {tRound(m.league.round)}
                                   </span>
                                 )}
                               </div>
@@ -983,7 +986,7 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
                                 />
                               )}
                               <span className="text-xs sm:text-[13px] text-white font-semibold truncate">
-                                {m.teams?.home?.name}
+                                {tTeamName(m.teams?.home?.name)}
                               </span>
                             </div>
                             <div className="text-sm font-bold text-white px-1 text-center w-6">
@@ -1007,7 +1010,7 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
                                     />
                                   )}
                                   <span className="text-xs sm:text-[13px] text-white font-semibold truncate">
-                                    {m.teams?.away?.name}
+                                    {tTeamName(m.teams?.away?.name)}
                                   </span>
                                 </div>
                                 <div className="text-sm font-bold text-white px-1 text-center w-6">
@@ -1247,7 +1250,7 @@ const SmTodayMatchesRow = ({ fixtures }) => {
                               )}
                               {f.round && (
                                 <span className="truncate max-w-[130px] text-right">
-                                  {f.round}
+                                  {tRound(f.round)}
                                 </span>
                               )}
                             </div>
@@ -1267,7 +1270,7 @@ const SmTodayMatchesRow = ({ fixtures }) => {
                                   />
                                 )}
                                 <span className="text-xs sm:text-[13px] text-white font-semibold truncate">
-                                  {f.homeTeamName || `ID:${f.homeTeamId}`}
+                                  {tTeamName(f.homeTeamName) || `ID:${f.homeTeamId}`}
                                 </span>
                               </div>
                               <div className="text-sm font-bold text-white w-6 text-center">
@@ -1290,7 +1293,7 @@ const SmTodayMatchesRow = ({ fixtures }) => {
                                   />
                                 )}
                                 <span className="text-xs sm:text-[13px] text-white font-semibold truncate">
-                                  {f.awayTeamName || `ID:${f.awayTeamId}`}
+                                  {tTeamName(f.awayTeamName) || `ID:${f.awayTeamId}`}
                                 </span>
                               </div>
                               <div className="text-sm font-bold text-white w-6 text-center">

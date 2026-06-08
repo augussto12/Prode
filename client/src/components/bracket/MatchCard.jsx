@@ -1,6 +1,7 @@
 import { m } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useTilt } from "../../hooks/useTilt";
+import { tTeamName } from "../../utils/translations";
 
 /**
  * Compact match card for bracket.
@@ -69,7 +70,7 @@ export default function MatchCard({ matchup, index = 0, onSelect }) {
           textOverflow: "ellipsis",
         }}
       >
-        {team.name}
+        {tTeamName(team.name)}
       </span>
       <span
         className={`text-[11px] font-bold font-mono min-w-[14px] text-right shrink-0 ${

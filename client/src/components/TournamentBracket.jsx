@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { m } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { tRound } from "../utils/translations";
+import { tRound, tTeamName } from "../utils/translations";
 
 // Knockout round keys in order of progression
 const KNOCKOUT_PHASES = [
@@ -297,7 +297,7 @@ function TeamRow({ team, goals, isWinner, isLoser, navigate }) {
           isWinner ? "text-emerald-300" : "text-white"
         }`}
       >
-        {team.name}
+        {tTeamName(team.name)}
       </span>
       <span
         className={`text-sm font-bold font-mono min-w-[20px] text-right ${

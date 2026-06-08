@@ -74,6 +74,19 @@ const COUNTRY_NAMES = {
   Asia: "Asia",
   Africa: "África",
   Oceania: "Oceanía",
+  USA: "Estados Unidos",
+  "Bosnia & Herzegovina": "Bosnia y Herzegovina",
+  "Cape Verde Islands": "Cabo Verde",
+  "Congo DR": "RD Congo",
+  Curacao: "Curazao",
+  Curaçao: "Curazao",
+  Haiti: "Haití",
+  "Ivory Coast": "Costa de Marfil",
+  Jordan: "Jordania",
+  "New Zealand": "Nueva Zelanda",
+  "South Africa": "Sudáfrica",
+  Türkiye: "Turquía",
+  Uzbekistan: "Uzbekistán",
 };
 
 const MATCH_STATUS = {
@@ -198,6 +211,11 @@ export function tCountry(name) {
   return COUNTRY_NAMES[name] || name;
 }
 
+/** Traduce nombres de selecciones nacionales cuando API-Football los devuelve en inglés */
+export function tTeamName(name) {
+  return COUNTRY_NAMES[name] || name;
+}
+
 /** Traduce un estado de partido */
 export function tStatus(status) {
   return MATCH_STATUS[status] || status;
@@ -216,6 +234,8 @@ export function tEvent(type) {
 /** Traduce una ronda/fecha */
 export function tRound(round) {
   if (!round) return "";
+  const groupMatch = String(round).match(/^Group\s+([A-Z0-9]+)$/i);
+  if (groupMatch) return `Grupo ${groupMatch[1].toUpperCase()}`;
   // "Regular Season - 15" → "Fecha 15"
   for (const [eng, esp] of Object.entries(ROUND_LABELS)) {
     if (round.startsWith(eng)) {

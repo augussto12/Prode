@@ -10,6 +10,7 @@ import {
   tMarket,
   tOddValue,
   tInjury,
+  tTeamName,
 } from "../utils/translations";
 
 export default function LiveMatch() {
@@ -245,11 +246,11 @@ export default function LiveMatch() {
               />
             ) : (
               <div className="w-12 h-12 md:w-24 md:h-24 rounded-full bg-white/5 flex items-center justify-center mb-1 md:mb-4 text-xl md:text-3xl group-hover:bg-white/10 transition-colors">
-                {teams?.home?.name?.[0]}
+                {tTeamName(teams?.home?.name)?.[0]}
               </div>
             )}
             <div className="text-sm md:text-2xl font-bold text-white tracking-tight group-hover:text-indigo-300 transition-colors max-w-[90px] md:max-w-[200px] leading-tight">
-              {teams?.home?.name}
+              {tTeamName(teams?.home?.name)}
             </div>
           </div>
 
@@ -305,7 +306,7 @@ export default function LiveMatch() {
                         {idaScoreText}
                       </span>
                       <span className="text-white/40 ml-1">
-                        ({firstLeg.teams?.home?.name})
+                        ({tTeamName(firstLeg.teams?.home?.name)})
                       </span>
                     </div>
                   </div>
@@ -377,11 +378,11 @@ export default function LiveMatch() {
               />
             ) : (
               <div className="w-12 h-12 md:w-24 md:h-24 rounded-full bg-white/5 flex items-center justify-center mb-1 md:mb-4 text-xl md:text-3xl group-hover:bg-white/10 transition-colors">
-                {teams?.away?.name?.[0]}
+                {tTeamName(teams?.away?.name)?.[0]}
               </div>
             )}
             <div className="text-sm md:text-2xl font-bold text-white tracking-tight group-hover:text-indigo-300 transition-colors max-w-[90px] md:max-w-[200px] leading-tight">
-              {teams?.away?.name}
+              {tTeamName(teams?.away?.name)}
             </div>
           </div>
         </div>
@@ -450,13 +451,13 @@ export default function LiveMatch() {
             onClick={() => setActiveLineupTab("home")}
             className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all border ${activeLineupTab === "home" ? "bg-white/20 text-white shadow border-white/10" : "text-white/60 border-transparent"}`}
           >
-            {teams?.home?.name || "Local"}
+            {tTeamName(teams?.home?.name) || "Local"}
           </button>
           <button
             onClick={() => setActiveLineupTab("away")}
             className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all border ${activeLineupTab === "away" ? "bg-white/20 text-white shadow border-white/10" : "text-white/60 border-transparent"}`}
           >
-            {teams?.away?.name || "Visita"}
+            {tTeamName(teams?.away?.name) || "Visita"}
           </button>
         </div>
       )}
@@ -661,7 +662,7 @@ export default function LiveMatch() {
                 {/* Home Injuries */}
                 <div className="w-1/2 pr-2 md:pr-4 space-y-3 md:space-y-4">
                   <div className="text-[9px] md:text-[10px] font-bold text-white/60 uppercase tracking-widest mb-2 md:mb-3 border-b border-white/10 pb-1 md:pb-2 truncate">
-                    {teams?.home?.name}
+                    {tTeamName(teams?.home?.name)}
                   </div>
                   {injuries
                     .filter((i) => i.team.id === teams?.home?.id)
@@ -716,7 +717,7 @@ export default function LiveMatch() {
                 {/* Away Injuries */}
                 <div className="w-1/2 pl-2 md:pl-4 space-y-3 md:space-y-4">
                   <div className="text-[9px] md:text-[10px] text-right font-bold text-white/60 uppercase tracking-widest mb-2 md:mb-3 border-b border-white/10 pb-1 md:pb-2 truncate">
-                    {teams?.away?.name}
+                    {tTeamName(teams?.away?.name)}
                   </div>
                   {injuries
                     .filter((i) => i.team.id === teams?.away?.id)

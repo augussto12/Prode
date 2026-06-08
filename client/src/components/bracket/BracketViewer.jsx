@@ -4,7 +4,7 @@ import { ArrowRight, GitBranch, List, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import MatchCard from "./MatchCard";
 import MatchDetailPanel from "./MatchDetailPanel";
-import { tRound } from "../../utils/translations";
+import { tRound, tTeamName } from "../../utils/translations";
 
 // ─── Desktop layout constants ───
 const CARD_W = 160;
@@ -636,7 +636,7 @@ function MobileVerticalCard({ matchup, index, cardW, onSelect }) {
   const getShortName = (team) => {
     if (team.id < 0) return "—";
     if (team.code) return team.code;
-    const name = team.name || "";
+    const name = tTeamName(team.name) || "";
     return name.length <= 3 ? name : name.substring(0, 3).toUpperCase();
   };
 

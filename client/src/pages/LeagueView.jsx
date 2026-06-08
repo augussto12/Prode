@@ -14,10 +14,9 @@ import {
   GitBranch,
   List,
   Loader2,
-  Check,
 } from "lucide-react";
 import api from "../services/api";
-import { tCountry, tRound } from "../utils/translations";
+import { tCountry, tRound, tTeamName } from "../utils/translations";
 import BracketViewer from "../components/bracket/BracketViewer";
 import { useBracket } from "../hooks/useBracket";
 import useAuthStore from "../store/authStore";
@@ -133,8 +132,9 @@ export default function LeagueView() {
       setLeague(data);
 
       // Auto-detect correct current season
-      const activeSeason =
-        data.seasons?.find((s) => s.current)?.year || currentYear;
+      const activeSeason = Number(id) === WORLD_CUP_ID
+        ? 2026
+        : data.seasons?.find((s) => s.current)?.year || currentYear;
       setSeason(activeSeason);
     } catch (err) {
       console.error(err);
@@ -284,14 +284,22 @@ export default function LeagueView() {
 
       {/* League Header — special gold for World Cup */}
       <div
-        className={`glass-card rounded-2xl p-6 relative overflow-hidden ${isWorldCup ? "border border-amber-500/30" : ""
+        className={`rounded-2xl p-6 relative overflow-hidden shadow-xl ${isWorldCup ? "border border-amber-300/30" : "glass-card"
           }`}
+        style={
+          isWorldCup
+            ? {
+                background:
+                  "linear-gradient(135deg, #082f49 0%, #14532d 42%, #92400e 74%, #581c87 100%)",
+              }
+            : undefined
+        }
       >
         <div
-          className="absolute inset-0 opacity-10 pointer-events-none"
+          className={`absolute inset-0 pointer-events-none ${isWorldCup ? "opacity-25" : "opacity-10"}`}
           style={{
             background: isWorldCup
-              ? "linear-gradient(135deg, #b8860b, #daa520, #ffd700)"
+              ? "linear-gradient(90deg, rgba(255,255,255,0.22), transparent 35%, rgba(251,191,36,0.22) 72%, rgba(34,197,94,0.18))"
               : "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
           }}
         />
@@ -380,15 +388,8 @@ export default function LeagueView() {
               </button>
             )}
 
-            {/* Admin Synced Indicator */}
-            {isAdmin && isSynced && (
-              <span className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
-                <Check size={14} /> Prode Disp.
-              </span>
-            )}
-
             {/* Season selector */}
-            <div className="relative">
+            {!isWorldCup && <div className="relative">
               <select
                 value={season || currentYear}
                 onChange={(e) => setSeason(Number(e.target.value))}
@@ -404,7 +405,7 @@ export default function LeagueView() {
                 size={14}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none"
               />
-            </div>
+            </div>}
           </div>
         </div>
       </div>
@@ -505,7 +506,7 @@ export default function LeagueView() {
                             : "bg-transparent text-white/60 border-transparent hover:bg-white/5 hover:text-white/80"
                             }`}
                         >
-                          {g[0]?.group || `Grupo ${i + 1}`}
+                          {tRound(g[0]?.group) || `Grupo ${i + 1}`}
                         </button>
                       ))}
                     </div>
@@ -619,7 +620,7 @@ export default function LeagueView() {
                                             />
                                           )}
                                           <span className="text-white font-medium text-xs group-hover:text-indigo-300 transition-colors whitespace-nowrap">
-                                            {row.team.name}
+                                            {tTeamName(row.team.name)}
                                           </span>
                                         </div>
                                       </td>
@@ -888,7 +889,7 @@ export default function LeagueView() {
                                 />
                               )}
                               <span className="text-[10px] md:text-xs text-white/60 truncate max-w-[80px] sm:max-w-[120px]">
-                                {stats?.team?.name}
+                                {tTeamName(stats?.team?.name)}
                               </span>
                             </div>
                           </td>
@@ -943,7 +944,7 @@ export default function LeagueView() {
                         </div>
                       )}
                       <span className="text-xs font-medium text-white text-center">
-                        {team.name}
+                        {tTeamName(team.name)}
                       </span>
                     </m.div>
                   ))}
@@ -1022,7 +1023,7 @@ function FixturesList({ fixtures }) {
                       />
                     )}
                     <span className="text-sm text-white font-medium truncate">
-                      {m.teams?.home?.name}
+                      {tTeamName(m.teams?.home?.name)}
                     </span>
                   </div>
                   <div className="px-4 text-center min-w-[70px]">
@@ -1050,7 +1051,7 @@ function FixturesList({ fixtures }) {
                   </div>
                   <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
                     <span className="text-sm text-white font-medium truncate">
-                      {m.teams?.away?.name}
+                      {tTeamName(m.teams?.away?.name)}
                     </span>
                     {m.teams?.away?.logo && (
                       <img
