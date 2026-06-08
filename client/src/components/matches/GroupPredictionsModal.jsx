@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { X, Loader2, Users } from "lucide-react";
 import api from "../../services/api";
+import { tTeamName } from "../../utils/translations";
 
 export default function GroupPredictionsModal({
   isOpen,
@@ -63,7 +64,7 @@ export default function GroupPredictionsModal({
                         }
                       />
                     )}
-                    {match.homeTeam}
+                    {tTeamName(match.homeTeam)}
                   </span>
                   {match.status === "FINISHED" ||
                   match.status === "LIVE" ||
@@ -85,7 +86,7 @@ export default function GroupPredictionsModal({
                         }
                       />
                     )}
-                    {match.awayTeam}
+                    {tTeamName(match.awayTeam)}
                   </span>
                 </div>
               )}

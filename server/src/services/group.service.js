@@ -47,7 +47,7 @@ export async function getMyGroups(userId) {
       group: {
         include: {
           _count: { select: { groupUsers: { where: { isBanned: false } } } },
-          competition: { select: { id: true, name: true, logo: true } },
+          competition: { select: { id: true, externalId: true, season: true, name: true, logo: true } },
         },
       },
     },
@@ -67,7 +67,7 @@ export async function getGroupById(groupId, userId) {
     where: { id: groupId },
     include: { 
       _count: { select: { groupUsers: { where: { isBanned: false } } } },
-      competition: { select: { id: true, name: true, logo: true } },
+      competition: { select: { id: true, externalId: true, season: true, name: true, logo: true } },
       messages: {
         take: 50,
         orderBy: { createdAt: 'asc' },

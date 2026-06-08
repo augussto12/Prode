@@ -10,6 +10,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import GroupPredictionsModal from "./GroupPredictionsModal";
+import { tRound, tTeamName } from "../../utils/translations";
 
 export default function PredictionHistory({
   predictions,
@@ -219,7 +220,7 @@ export default function PredictionHistory({
                   {/* Match Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-white/50 mb-1 sm:mb-1.5">
-                      <span className="truncate">{matchObj.stage}</span>
+                      <span className="truncate">{tRound(matchObj.stage)}</span>
                       <span>•</span>
                       <span className="shrink-0">
                         {new Date(matchObj.matchDate).toLocaleDateString(
@@ -242,13 +243,13 @@ export default function PredictionHistory({
                         />
                       )}
                       <span className="text-xs sm:text-sm font-medium text-white truncate">
-                        {matchObj.homeTeam}
+                        {tTeamName(matchObj.homeTeam)}
                       </span>
                       <span className="text-[10px] sm:text-xs text-white/50 shrink-0">
                         vs
                       </span>
                       <span className="text-xs sm:text-sm font-medium text-white truncate">
-                        {matchObj.awayTeam}
+                        {tTeamName(matchObj.awayTeam)}
                       </span>
                       {matchObj.awayTeamLogo && (
                         <img src={matchObj.awayTeamLogo}
@@ -452,9 +453,9 @@ export default function PredictionHistory({
                                     className={`text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded border ${market.colorClass}`}
                                   >
                                     {pred[market.key] === "HOME"
-                                      ? matchObj.homeTeam
+                                      ? tTeamName(matchObj.homeTeam)
                                       : pred[market.key] === "AWAY"
-                                        ? matchObj.awayTeam
+                                        ? tTeamName(matchObj.awayTeam)
                                         : "Igual"}
                                   </span>
                                   {isFinished && (

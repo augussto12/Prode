@@ -5,6 +5,7 @@ import { ArrowLeft, User, Calendar, MapPin } from "lucide-react";
 import api from "../services/api";
 import PlayerAvatar from "../components/shared/PlayerAvatar";
 import { tCountry, tTeamName } from "../utils/translations";
+import { getLeagueName } from "../utils/worldCupLogo";
 
 export default function TeamView() {
   const { id } = useParams();
@@ -474,7 +475,7 @@ export default function TeamView() {
                           )}
                         </span>
                         <span className="text-[10px] text-indigo-300 bg-indigo-500/10 px-1.5 rounded uppercase tracking-wider truncate max-w-[120px]">
-                          {f.league.name}
+                          {getLeagueName(f.league)}
                         </span>
                         {isLive && (
                           <span className="inline-flex items-center gap-1 text-[10px] text-red-400 bg-red-500/10 px-1.5 rounded font-bold">

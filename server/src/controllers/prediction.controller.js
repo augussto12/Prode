@@ -1,4 +1,5 @@
 import * as predictionService from '../services/prediction.service.js';
+import * as scoringService from '../services/scoring.service.js';
 
 export async function upsert(req, res, next) {
   try {
@@ -35,5 +36,15 @@ export async function getGroupPredictions(req, res, next) {
       req.user.id
     );
     res.json(predictions);
+  } catch (err) { next(err); }
+}
+
+export async function getScoringConfig(req, res, next) {
+  try {
+    const config = await scoringService.getScoringConfig();
+    res.json({
+      exactScore: config.exactScore,
+      correctWinner: config.correctWinner,
+    });
   } catch (err) { next(err); }
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { Calendar, Trophy, ChevronDown, Users, Loader2, X } from "lucide-react";
 import api from "../../services/api";
+import { tRound, tTeamName } from "../../utils/translations";
 
 export default function GroupMatches({ groupId, competitionId }) {
   const [matches, setMatches] = useState([]);
@@ -147,7 +148,7 @@ export default function GroupMatches({ groupId, competitionId }) {
                       loading="lazy"
                     />
                     <span className="text-sm font-semibold text-white truncate">
-                      {match.homeTeam}
+                      {tTeamName(match.homeTeam)}
                     </span>
                   </div>
 
@@ -172,7 +173,7 @@ export default function GroupMatches({ groupId, competitionId }) {
                   {/* Away */}
                   <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
                     <span className="text-sm font-semibold text-white truncate">
-                      {match.awayTeam}
+                      {tTeamName(match.awayTeam)}
                     </span>
                     <img
                       src={match.awayLogo || "/placeholder-team.svg"}
@@ -186,7 +187,7 @@ export default function GroupMatches({ groupId, competitionId }) {
                 {/* Round + Predictions indicator */}
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
                   <span className="text-[10px] text-white/40">
-                    {match.round.replace("Group Stage - ", "Grupo ")}
+                    {tRound(match.round)}
                   </span>
                   <div className={`flex items-center gap-1 text-[10px] ${finished ? "text-indigo-400" : "text-white/25"}`}>
                     <Users size={10} />
@@ -246,7 +247,7 @@ export default function GroupMatches({ groupId, competitionId }) {
                     alt=""
                   />
                   <span className="text-sm font-semibold text-white truncate">
-                    {selectedMatch.homeTeam}
+                    {tTeamName(selectedMatch.homeTeam)}
                   </span>
                 </div>
                 <div className="text-lg font-bold text-white px-2">
@@ -256,7 +257,7 @@ export default function GroupMatches({ groupId, competitionId }) {
                 </div>
                 <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
                   <span className="text-sm font-semibold text-white truncate">
-                    {selectedMatch.awayTeam}
+                    {tTeamName(selectedMatch.awayTeam)}
                   </span>
                   <img
                     src={selectedMatch.awayLogo}

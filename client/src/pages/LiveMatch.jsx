@@ -12,6 +12,7 @@ import {
   tInjury,
   tTeamName,
 } from "../utils/translations";
+import { getLeagueLogo, getLeagueName } from "../utils/worldCupLogo";
 
 export default function LiveMatch() {
   const { id } = useParams();
@@ -192,9 +193,9 @@ export default function LiveMatch() {
         {/* League & Venue Info */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/5 mb-2">
-            {league?.logo && (
+            {getLeagueLogo(league) && (
               <img
-                src={league.logo}
+                src={getLeagueLogo(league)}
                 alt=""
                 width={16}
                 height={16}
@@ -208,7 +209,7 @@ export default function LiveMatch() {
               />
             )}
             <span className="text-xs font-medium text-white/70">
-              {league?.name}
+              {getLeagueName(league)}
             </span>
             <span className="text-white/40 px-1">•</span>
             <span className="text-xs text-white/60">

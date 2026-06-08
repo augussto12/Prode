@@ -1,16 +1,14 @@
 import { useState, useEffect } from "react";
-import { Calendar, Star, Zap, BarChart3, Lock, Trophy } from "lucide-react";
+import { Calendar, Zap, BarChart3, Lock, Trophy } from "lucide-react";
 import useCompetitionStore from "../store/competitionStore";
 import useAuthStore from "../store/authStore";
 import ProdeMatches from "../components/matches/ProdeMatches";
-import DreamTeam from "./DreamTeam";
 import OutrightPredictions from "../components/outrights/OutrightPredictions";
 import { WORLD_CUP_2026_LOGO } from "../utils/worldCupLogo";
 
 const TABS = [
   { id: "matches", label: "Partidos", icon: Calendar },
   { id: "predictions", label: "Predicciones", icon: BarChart3 },
-  { id: "dreamteam", label: "Dream Team", icon: Star },
   { id: "finals", label: "Finales", icon: Trophy },
 ];
 
@@ -93,14 +91,12 @@ export default function Competition({ hideHeader }) {
 
       {/* Partidos Tab — delega a ProdeMatches (incluye matches + historial) */}
       {(tab === "matches" || tab === "predictions") && (
-        <ProdeMatches
-          competitionId={activeCompetition?.id}
-          initialTab={tab === "predictions" ? "history" : "matches"}
-        />
+      <ProdeMatches
+        competitionId={activeCompetition?.id}
+        initialTab={tab === "predictions" ? "history" : "matches"}
+        showSubTabs={false}
+      />
       )}
-
-      {/* Dream Team Tab */}
-      {tab === "dreamteam" && <DreamTeam />}
 
       {/* Final awards Tab */}
       {tab === "finals" && (

@@ -5,6 +5,7 @@ import { Star, Check, Lock } from "lucide-react";
 import api from "../../services/api";
 import useAuthStore from "../../store/authStore";
 import useToastStore from "../../store/toastStore";
+import { tRound, tTeamName } from "../../utils/translations";
 
 export default memo(function MatchCard({
   match,
@@ -13,6 +14,8 @@ export default memo(function MatchCard({
   onPredictionSaved,
   hideStage = false,
   priority = false,
+  jokerRemaining = 0,
+  jokerLimit = 3,
 }) {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
@@ -30,6 +33,9 @@ export default memo(function MatchCard({
   const isPast = matchDate <= new Date() || match.status !== "SCHEDULED";
   const isLive = match.status === "LIVE";
   const isFinished = match.status === "FINISHED";
+  const canToggleJoker =
+    !isPast &&
+    (prediction.isJoker || existingPrediction?.isJoker || jokerRemaining > 0);
 
   useEffect(() => {
     if (existingProp) {
@@ -144,9 +150,7 @@ export default memo(function MatchCard({
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             {!hideStage && match.stage && (
               <span className="text-[10px] sm:text-xs text-white/60 font-medium truncate">
-                {match.stage
-                  .replace(/Regular Season - /i, "Fecha ")
-                  .replace(/Reg /i, "Fecha ")}
+                {tRound(match.stage)}
               </span>
             )}
             {match.round && /2nd\s*Leg/i.test(match.round) && (
@@ -164,17 +168,25 @@ export default memo(function MatchCard({
             {user && (
               <button
                 type="button"
-                onClick={() =>
-                  !isPast &&
-                  setPrediction((prev) => ({ ...prev, isJoker: !prev.isJoker }))
-                }
+                onClick={() => {
+                  if (!canToggleJoker) {
+                    addToast({
+                      type: "info",
+                      message: `Ya usaste los ${jokerLimit} comodines x2 de esta competencia`,
+                    });
+                    return;
+                  }
+                  setPrediction((prev) => ({ ...prev, isJoker: !prev.isJoker }));
+                }}
                 disabled={isPast}
                 className={`flex items-center justify-center px-1.5 py-0.5 rounded cursor-pointer transition-all border text-xs ${
                   prediction.isJoker
                     ? "bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.3)]"
-                    : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10"
+                    : canToggleJoker
+                      ? "bg-white/5 border-white/10 text-white/50 hover:bg-white/10"
+                      : "bg-white/[0.02] border-white/5 text-white/25"
                 } disabled:opacity-40 disabled:cursor-not-allowed`}
-                title="Comodin x2: maximo 3 partidos por competencia"
+                title={`Comodin x2: maximo ${jokerLimit} partidos por competencia`}
               >
                 x2
               </button>
@@ -192,7 +204,7 @@ export default memo(function MatchCard({
             {match.homeTeamLogo ? (
               <img
                 src={match.homeTeamLogo}
-                alt={match.homeTeam}
+                alt={tTeamName(match.homeTeam)}
                 width={32}
                 height={32}
                 className={`w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 object-contain ${match.homeTeamId ? "group-hover:scale-110 transition-transform" : ""}`}
@@ -207,7 +219,7 @@ export default memo(function MatchCard({
             <div
               className={`text-[11px] sm:text-sm font-semibold text-white truncate px-0.5 ${match.homeTeamId ? "group-hover:text-indigo-300 transition-colors" : ""}`}
             >
-              {match.homeTeam}
+              {tTeamName(match.homeTeam)}
             </div>
           </div>
 
@@ -267,7 +279,7 @@ export default memo(function MatchCard({
             {match.awayTeamLogo ? (
               <img
                 src={match.awayTeamLogo}
-                alt={match.awayTeam}
+                alt={tTeamName(match.awayTeam)}
                 width={32}
                 height={32}
                 className={`w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 object-contain ${match.awayTeamId ? "group-hover:scale-110 transition-transform" : ""}`}
@@ -282,7 +294,7 @@ export default memo(function MatchCard({
             <div
               className={`text-[11px] sm:text-sm font-semibold text-white truncate px-0.5 ${match.awayTeamId ? "group-hover:text-indigo-300 transition-colors" : ""}`}
             >
-              {match.awayTeam}
+              {tTeamName(match.awayTeam)}
             </div>
           </div>
         </div>

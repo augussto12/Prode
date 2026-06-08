@@ -22,7 +22,7 @@ import api from "../services/api";
 // import useSportmonksStore from "../store/useSportmonksStore";
 import useAuthStore from "../store/authStore";
 import { tCountry, tRound, tTeamName } from "../utils/translations";
-import { WORLD_CUP_2026_LOGO, getLeagueLogo } from "../utils/worldCupLogo";
+import { WORLD_CUP_2026_LOGO, getLeagueLogo, getLeagueName } from "../utils/worldCupLogo";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -35,6 +35,46 @@ function useDebounce(value, delay) {
 }
 
 const COUNTRIES_PER_PAGE = 25;
+const GROUP_CARD_VARIANTS = [
+  {
+    background: "linear-gradient(135deg, #0f766e 0%, #065f46 55%, #052e2b 100%)",
+    border: "rgba(45, 212, 191, 0.32)",
+    accent: "#5eead4",
+    badge: "rgba(20, 184, 166, 0.18)",
+  },
+  {
+    background: "linear-gradient(135deg, #1d4ed8 0%, #4338ca 52%, #172554 100%)",
+    border: "rgba(129, 140, 248, 0.35)",
+    accent: "#93c5fd",
+    badge: "rgba(96, 165, 250, 0.18)",
+  },
+  {
+    background: "linear-gradient(135deg, #be123c 0%, #9f1239 46%, #3f0b1b 100%)",
+    border: "rgba(251, 113, 133, 0.34)",
+    accent: "#fda4af",
+    badge: "rgba(244, 63, 94, 0.18)",
+  },
+  {
+    background: "linear-gradient(135deg, #854d0e 0%, #a16207 48%, #422006 100%)",
+    border: "rgba(251, 191, 36, 0.34)",
+    accent: "#fde68a",
+    badge: "rgba(245, 158, 11, 0.18)",
+  },
+  {
+    background: "linear-gradient(135deg, #6d28d9 0%, #7e22ce 45%, #2e1065 100%)",
+    border: "rgba(216, 180, 254, 0.32)",
+    accent: "#d8b4fe",
+    badge: "rgba(168, 85, 247, 0.18)",
+  },
+];
+
+const getGroupCardVariant = (group, index) => {
+  const rawId = Number(group?.id);
+  const variantIndex = Number.isFinite(rawId)
+    ? Math.abs(rawId) % GROUP_CARD_VARIANTS.length
+    : index % GROUP_CARD_VARIANTS.length;
+  return GROUP_CARD_VARIANTS[variantIndex];
+};
 
 // Helper: fecha de hoy en formato YYYY-MM-DD
 const getTodayDate = () => {
@@ -187,7 +227,7 @@ export default function Explorer() {
       byLeague[key].matches.push(m);
     });
     return Object.values(byLeague).sort((a, b) => {
-      return a.league.name.localeCompare(b.league.name);
+      return getLeagueName(a.league).localeCompare(getLeagueName(b.league), "es");
     });
   }
 
@@ -285,7 +325,7 @@ export default function Explorer() {
     const q = debouncedSearch.toLowerCase();
     return data.topLeagues.filter(
       (l) =>
-        l.league.name.toLowerCase().includes(q) ||
+        getLeagueName(l.league).toLowerCase().includes(q) ||
         tCountry(l.country?.name)?.toLowerCase().includes(q),
     );
   }, [data.topLeagues, debouncedSearch]);
@@ -296,7 +336,7 @@ export default function Explorer() {
     return data.byCountry.filter(
       (c) =>
         tCountry(c.country).toLowerCase().includes(q) ||
-        c.leagues.some((l) => l.league.name.toLowerCase().includes(q)),
+        c.leagues.some((l) => getLeagueName(l.league).toLowerCase().includes(q)),
     );
   }, [data.byCountry, debouncedSearch]);
 
@@ -312,7 +352,7 @@ export default function Explorer() {
     data.byCountry.forEach((c) => {
       c.leagues.forEach((l) => {
         if (
-          l.league.name.toLowerCase().includes(q) ||
+          getLeagueName(l.league).toLowerCase().includes(q) ||
           tCountry(c.country).toLowerCase().includes(q)
         ) {
           result.push({ ...l, countryObj: c });
@@ -427,7 +467,7 @@ export default function Explorer() {
                           )}
                           <div className="truncate">
                             <div className="text-sm font-medium text-white">
-                              {l.league.name}
+                              {getLeagueName(l.league)}
                             </div>
                             <div className="text-[10px] text-white/50">
                               {tCountry(l.countryObj?.country)}
@@ -544,47 +584,67 @@ export default function Explorer() {
             </Link>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/10 pt-2">
-            {myGroups.map((group) => (
-              <Link
-                key={group.id}
-                to={`/groups/${group.id}`}
-                className="flex-shrink-0 w-[280px] md:w-[320px] rounded-2xl p-5 no-underline transition-all hover:-translate-y-1 relative overflow-hidden group"
-                style={{
-                  background: `linear-gradient(135deg, var(--color-bg-start), var(--color-bg-end))`,
-                  border: "1px solid color-mix(in srgb, var(--color-secondary) 25%, transparent)",
-                }}
-              >
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Trophy size={60} />
-                </div>
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/20 backdrop-blur">
-                      <span className="text-lg font-bold text-white">
-                        {group.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="text-lg font-bold text-white truncate group-hover:text-amber-400 transition-colors">
-                        {group.name}
-                      </h3>
-                      <div className="text-xs text-white/50">
-                        {group.competition?.name || "Torneo Activo"}
+            {myGroups.map((group, index) => {
+              const variant = getGroupCardVariant(group, index);
+              const competitionName = group.competition
+                ? getLeagueName(group.competition)
+                : "Torneo Activo";
+
+              return (
+                <Link
+                  key={group.id}
+                  to={`/groups/${group.id}`}
+                  className="flex-shrink-0 w-[280px] md:w-[320px] rounded-2xl p-5 no-underline transition-all hover:-translate-y-1 relative overflow-hidden group shadow-lg"
+                  style={{
+                    background: variant.background,
+                    border: `1px solid ${variant.border}`,
+                  }}
+                >
+                  <div
+                    className="absolute inset-x-0 top-0 h-1"
+                    style={{ background: variant.accent }}
+                  />
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-white">
+                    <Trophy size={60} />
+                  </div>
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center border backdrop-blur"
+                        style={{
+                          background: variant.badge,
+                          borderColor: variant.border,
+                        }}
+                      >
+                        <span className="text-lg font-bold text-white">
+                          {group.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-lg font-bold text-white truncate">
+                          {group.name}
+                        </h3>
+                        <div className="text-xs text-white/65 truncate">
+                          {competitionName}
+                        </div>
                       </div>
                     </div>
+                    <div className="pt-4 border-t border-white/15 flex items-center justify-between">
+                      <span
+                        className="text-xs text-white/80 px-2 py-1 rounded"
+                        style={{ background: "rgba(0,0,0,0.22)" }}
+                      >
+                        Tu turno de predecir
+                      </span>
+                      <ChevronRight
+                        size={16}
+                        className="text-white/70 group-hover:text-white transition-colors"
+                      />
+                    </div>
                   </div>
-                  <div className="pt-4 border-t border-white/10 flex items-center justify-between">
-                    <span className="text-xs text-white/70 bg-black/20 px-2 py-1 rounded">
-                      Tu turno de predecir
-                    </span>
-                    <ChevronRight
-                      size={16}
-                      className="text-white/60 group-hover:text-white transition-colors"
-                    />
-                  </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
@@ -650,7 +710,7 @@ export default function Explorer() {
                 {getLeagueLogo(l.league) ? (
                   <img
                     src={getLeagueLogo(l.league)}
-                    alt={l.league.name}
+                    alt={getLeagueName(l.league)}
                     loading="lazy"
                     decoding="async"
                     width={48}
@@ -668,7 +728,7 @@ export default function Explorer() {
                 )}
                 <div className="text-center z-10 w-full mt-1">
                   <div className="text-xs font-bold text-white/90 truncate">
-                    {l.league.name}
+                    {getLeagueName(l.league)}
                   </div>
                   <div className="text-[9px] font-medium text-white/50 flex items-center justify-center gap-1 mt-1 uppercase tracking-wider">
                     {l.country?.flag && (
@@ -841,9 +901,9 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  {group.league.logo && (
+                  {getLeagueLogo(group.league) && (
                     <img
-                      src={group.league.logo}
+                      src={getLeagueLogo(group.league)}
                       alt=""
                       loading="lazy"
                       decoding="async"
@@ -862,7 +922,7 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
                         : "text-white/90 group-hover:text-indigo-300"
                     }`}
                   >
-                    {group.league.name}
+                    {getLeagueName(group.league)}
                   </span>
                   {isWorldCup && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">
@@ -1110,7 +1170,7 @@ function CountryAccordion({ country: c, expanded, onToggle }) {
                   )}
                   <div>
                     <div className="text-sm text-white font-medium">
-                      {l.league.name}
+                      {getLeagueName(l.league)}
                     </div>
                     <div className="text-[10px] text-white/50">
                       {l.league.type === "Cup" ? "Copa" : "Liga"}
@@ -1194,7 +1254,7 @@ const SmTodayMatchesRow = ({ fixtures }) => {
                     <Trophy size={12} className="text-white/40" />
                   </div>
                   <span className="text-sm text-white/90 font-bold uppercase tracking-wider transition-colors ml-1">
-                    {group.leagueName}
+                    {group.leagueName === "World Cup" ? "Copa del Mundo 2026" : group.leagueName}
                   </span>
                 </div>
                 <ChevronDown

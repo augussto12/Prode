@@ -150,6 +150,7 @@ const ROUND_LABELS = {
   "Semi-finals": "Semifinal",
   Final: "Final",
   "3rd Place Final": "Tercer Puesto",
+  "Ranking of third placed teams": "Ranking de terceros",
   "Preliminary Round": "Ronda Preliminar",
   Qualification: "Clasificación",
   "Play-offs": "Repechaje",
@@ -234,16 +235,20 @@ export function tEvent(type) {
 /** Traduce una ronda/fecha */
 export function tRound(round) {
   if (!round) return "";
-  const groupMatch = String(round).match(/^Group\s+([A-Z0-9]+)$/i);
+  const roundText = String(round);
+  const groupMatch = roundText.match(/^Group\s+([A-Z0-9]+)$/i);
   if (groupMatch) return `Grupo ${groupMatch[1].toUpperCase()}`;
+  if (/^Ranking of third placed teams/i.test(roundText)) {
+    return "Ranking de terceros";
+  }
   // "Regular Season - 15" → "Fecha 15"
   for (const [eng, esp] of Object.entries(ROUND_LABELS)) {
-    if (round.startsWith(eng)) {
-      const suffix = round.replace(eng, "").trim();
+    if (roundText.startsWith(eng)) {
+      const suffix = roundText.replace(eng, "").trim();
       return suffix ? `${esp} ${suffix.replace("- ", "")}` : esp;
     }
   }
-  return round;
+  return roundText;
 }
 
 /** Traduce un mercado de apuestas */

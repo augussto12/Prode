@@ -4,12 +4,17 @@ import { Calendar, ChevronDown, Star, BarChart3, List } from "lucide-react";
 import api from "../../services/api";
 import MatchCard from "./MatchCard";
 import PredictionHistory from "./PredictionHistory";
+import useAuthStore from "../../store/authStore";
+import { tRound, tTeamName } from "../../utils/translations";
+
+const JOKER_LIMIT = 3;
 
 export default function ProdeMatches({
   competitionId,
   groupId,
   groupSettings,
   initialTab = "matches",
+  showSubTabs = true,
 }) {
   const [matches, setMatches] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -20,6 +25,8 @@ export default function ProdeMatches({
   const [timeFilter, setTimeFilter] = useState("upcoming"); // 'upcoming', 'past', 'all'
   const [showFavPicker, setShowFavPicker] = useState(false);
   const [activeTab, setActiveTab] = useState(initialTab); // 'matches', 'history'
+  const [scoringConfig, setScoringConfig] = useState(null);
+  const user = useAuthStore((state) => state.user);
 
   // Sincronizar tab cuando Competition cambia entre tabs matches/predictions
   useEffect(() => {
@@ -31,6 +38,13 @@ export default function ProdeMatches({
       loadData();
     }
   }, [competitionId]);
+
+  useEffect(() => {
+    api
+      .get("/predictions/scoring-config")
+      .then(({ data }) => setScoringConfig(data))
+      .catch(() => setScoringConfig(null));
+  }, []);
 
   const loadData = async () => {
     try {
@@ -86,9 +100,7 @@ export default function ProdeMatches({
         const teams = f.teams;
         const goals = f.goals;
         const round = f.league.round || "";
-        const stage = round
-          .replace("Group Stage - ", "Grupo ")
-          .replace(/ - \d+$/, "");
+        const stage = tRound(round.replace(/ - \d+$/, ""));
 
         // Extract teams for the favorites picker
         if (!extractedTeams.has(teams.home.id)) {
@@ -132,7 +144,7 @@ export default function ProdeMatches({
       setMatches(normalizedMatches);
       setTeams(
         Array.from(extractedTeams.values()).sort((a, b) =>
-          a.name.localeCompare(b.name),
+          tTeamName(a.name).localeCompare(tTeamName(b.name), "es"),
         ),
       );
       setFavorites(favRes.data?.map((f) => f.teamName) || []);
@@ -148,6 +160,8 @@ export default function ProdeMatches({
   const predictionsMap = new Map(
     predictions.map((p) => [Number(p.externalFixtureId), p]),
   );
+  const usedJokers = predictions.filter((p) => p.isJoker).length;
+  const remainingJokers = Math.max(0, JOKER_LIMIT - usedJokers);
 
   const toggleFavorite = async (teamName) => {
     const updated = favorites.includes(teamName)
@@ -217,8 +231,32 @@ export default function ProdeMatches({
 
   return (
     <div className="space-y-3 sm:space-y-4">
-      {/* Sub-Tabs: Partidos / Historial */}
-      <div className="flex bg-white/5 p-1 rounded-xl w-full sm:w-fit">
+      {user && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
+          <div>
+            <div className="text-sm font-bold text-amber-200">Comodines x2</div>
+            <div className="text-xs text-amber-100/70">
+              Tenés 3 partidos por competencia. Podés moverlos mientras el partido no haya empezado.
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] text-white/70">
+              <span className="rounded-md bg-white/10 px-2 py-1">
+                Exacto: <strong className="text-white">{scoringConfig?.exactScore ?? "—"} pts</strong>
+              </span>
+              <span className="rounded-md bg-white/10 px-2 py-1">
+                Ganador/empate: <strong className="text-white">{scoringConfig?.correctWinner ?? "—"} pts</strong>
+              </span>
+              <span className="rounded-md bg-white/10 px-2 py-1">
+                Sin acierto: <strong className="text-white">0 pts</strong>
+              </span>
+            </div>
+          </div>
+          <div className="shrink-0 rounded-lg bg-black/20 border border-amber-500/20 px-3 py-1.5 text-sm font-black text-amber-200">
+            {remainingJokers}/{JOKER_LIMIT} disponibles
+          </div>
+        </div>
+      )}
+
+      {showSubTabs && <div className="flex bg-white/5 p-1 rounded-xl w-full sm:w-fit">
         <button
           onClick={() => setActiveTab("matches")}
           className={`flex items-center justify-center gap-1.5 sm:gap-2 flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all border-none cursor-pointer ${
@@ -239,7 +277,7 @@ export default function ProdeMatches({
         >
           <BarChart3 size={14} /> Historial
         </button>
-      </div>
+      </div>}
 
       {activeTab === "history" ? (
         <PredictionHistory
@@ -299,7 +337,7 @@ export default function ProdeMatches({
                   <option value="favorites">⭐ Mis Favoritos</option>
                   {stages.map((s) => (
                     <option key={s} value={s}>
-                      {s}
+                      {tRound(s)}
                     </option>
                   ))}
                 </select>
@@ -349,7 +387,7 @@ export default function ProdeMatches({
                           <span>⚽</span>
                         )}
                         <span className="truncate max-w-[60px] sm:max-w-none">
-                          {team.name}
+                          {tTeamName(team.name)}
                         </span>
                       </button>
                     ))}
@@ -383,7 +421,7 @@ export default function ProdeMatches({
                         style={{ background: "var(--color-primary)" }}
                       />
                       <span className="text-[10px] sm:text-xs font-medium text-white/50">
-                        {stage}
+                        {tRound(stage)}
                       </span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -399,6 +437,8 @@ export default function ProdeMatches({
                           onPredictionSaved={loadData}
                           hideStage={true}
                           groupSettings={groupSettings}
+                          jokerRemaining={remainingJokers}
+                          jokerLimit={JOKER_LIMIT}
                         />
                       ))}
                     </div>
