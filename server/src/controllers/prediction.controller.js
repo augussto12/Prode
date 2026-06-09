@@ -1,5 +1,6 @@
 import * as predictionService from '../services/prediction.service.js';
 import * as scoringService from '../services/scoring.service.js';
+import * as phaseWindowService from '../services/phase-window.service.js';
 
 export async function upsert(req, res, next) {
   try {
@@ -46,5 +47,22 @@ export async function getScoringConfig(req, res, next) {
       exactScore: config.exactScore,
       correctWinner: config.correctWinner,
     });
+  } catch (err) { next(err); }
+}
+
+export async function getPhaseWindows(req, res, next) {
+  try {
+    const { competitionId, fresh } = req.query;
+    if (!competitionId) {
+      return res.status(400).json({ error: 'competitionId es requerido' });
+    }
+
+    const windows = await phaseWindowService.getCompetitionPredictionWindows(
+      Number(competitionId),
+      { fresh: fresh === 'true' },
+    );
+
+    if (!windows) return res.status(404).json({ error: 'Competicion no encontrada' });
+    res.json(windows);
   } catch (err) { next(err); }
 }

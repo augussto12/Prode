@@ -5,6 +5,7 @@ import { Plus, Users, LogIn, Copy, Check, Globe, Loader2 } from "lucide-react";
 import api from "../services/api";
 import useToastStore from "../store/toastStore";
 import useCompetitionStore from "../store/competitionStore";
+import { getGroupCardVariant } from "../utils/groupCardVariants";
 
 export default function GroupList() {
   const [myGroups, setMyGroups] = useState([]);
@@ -267,7 +268,10 @@ export default function GroupList() {
 
       {/* My Groups */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {myGroups.map((group, i) => (
+        {myGroups.map((group, i) => {
+          const variant = getGroupCardVariant(group, i);
+
+          return (
           <m.div
             key={group.id}
             initial={{ opacity: 0, y: 15 }}
@@ -276,16 +280,23 @@ export default function GroupList() {
           >
             <Link
               to={`/groups/${group.id}`}
-              className="block glass-card rounded-2xl p-5 hover:bg-white/[0.08] transition-all no-underline group"
+              className="block rounded-2xl p-5 transition-all duration-300 no-underline group border hover:-translate-y-0.5"
               style={{
-                borderColor: "color-mix(in srgb, var(--color-secondary) 20%, transparent)",
+                background: variant.background,
+                borderColor: variant.border,
+                boxShadow: variant.shadow,
               }}
             >
+              <div
+                className="h-1 w-16 rounded-full mb-4"
+                style={{ background: variant.accent }}
+              />
               <div className="flex items-start justify-between mb-3">
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white border"
                   style={{
-                    background: `linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)`,
+                    background: variant.badge,
+                    borderColor: variant.border,
                   }}
                 >
                   <Users size={20} />
@@ -344,7 +355,8 @@ export default function GroupList() {
               )}
             </Link>
           </m.div>
-        ))}
+          );
+        })}
       </div>
 
       {myGroups.length === 0 && (

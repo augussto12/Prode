@@ -4,8 +4,9 @@ import { recalculateAllLeaderboards } from './scoring.service.js';
 import * as footballApi from './football-api.service.js';
 import { syncSquad } from './sync.service.js';
 import { cachedApiCall, invalidateCache } from './cache.service.js';
+import { isFinalMatchFinished } from './phase-window.service.js';
 
-const WORLD_CUP_2026_START = new Date('2026-06-11T00:00:00.000Z');
+const WORLD_CUP_2026_START = new Date('2026-06-11T19:00:00.000Z');
 
 const predictionInclude = {
   championTeamRef: { select: { id: true, name: true, logo: true, flag: true } },
@@ -532,6 +533,38 @@ export async function calculateOutrightScores(competitionId) {
     message: `Premios finales calculados para ${predictions.length} predicciones.`,
     predictionsCalculated: predictions.length,
   };
+}
+
+export async function calculateReadyOutrightScores() {
+  const results = await prisma.outrightResult.findMany({
+    where: {
+      calculatedAt: null,
+      championTeamId: { not: null },
+      runnerUpTeamId: { not: null },
+      topScorerId: { not: null },
+      goldenGloveId: { not: null },
+    },
+    select: { competitionId: true },
+  });
+
+  let checked = 0;
+  let calculated = 0;
+  const errors = [];
+
+  for (const result of results) {
+    checked++;
+    try {
+      const finalFinished = await isFinalMatchFinished(result.competitionId);
+      if (!finalFinished) continue;
+
+      await calculateOutrightScores(result.competitionId);
+      calculated++;
+    } catch (err) {
+      errors.push({ competitionId: result.competitionId, error: err.message });
+    }
+  }
+
+  return { checked, calculated, errors };
 }
 
 function normalizedName(value) {

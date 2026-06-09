@@ -7,9 +7,35 @@
 import prisma from '../config/database.js';
 import * as footballApi from './football-api.service.js';
 import { WORLD_CUP_2026_LOGO } from '../constants/worldCup.js';
+import { invalidateCacheByPrefix } from './cache.service.js';
+import { computePredictionWindows, invalidateCompetitionFixtureWindows } from './phase-window.service.js';
 
 const LEAGUE_ID = Number(process.env.FOOTBALL_LEAGUE_ID) || 1;
-const SEASON = Number(process.env.FOOTBALL_SEASON) || 2022;
+const SEASON = Number(process.env.FOOTBALL_SEASON) || 2026;
+
+function summarizeFixtures(fixtures = []) {
+  const totals = {
+    total: fixtures.length,
+    scheduled: 0,
+    live: 0,
+    finished: 0,
+    postponed: 0,
+    cancelled: 0,
+    other: 0,
+  };
+
+  for (const item of fixtures) {
+    const status = item.fixture?.status?.short;
+    if (['NS', 'TBD'].includes(status)) totals.scheduled++;
+    else if (['1H', '2H', 'HT', 'ET', 'BT', 'P', 'LIVE'].includes(status)) totals.live++;
+    else if (['FT', 'AET', 'PEN'].includes(status)) totals.finished++;
+    else if (['PST', 'SUSP', 'INT'].includes(status)) totals.postponed++;
+    else if (['CANC', 'ABD', 'AWD', 'WO'].includes(status)) totals.cancelled++;
+    else totals.other++;
+  }
+
+  return totals;
+}
 
 /**
  * Busca o crea la Competition en BD a partir de los datos de la liga.
@@ -87,6 +113,62 @@ export async function syncTeams(leagueId = LEAGUE_ID, season = SEASON) {
   }
 
   return { competitionId: competition.id, competitionName: competition.name, created, updated, total: response.length };
+}
+
+export async function syncFixtures(leagueId = LEAGUE_ID, season = SEASON) {
+  const competition = await ensureCompetition(Number(leagueId), Number(season));
+  const { response } = await footballApi.fetchFixtures(Number(leagueId), Number(season));
+  const fixtures = response || [];
+  invalidateCompetitionFixtureWindows();
+
+  return {
+    competitionId: competition.id,
+    competitionName: competition.name,
+    ...summarizeFixtures(fixtures),
+  };
+}
+
+export async function syncResults(leagueId = LEAGUE_ID, season = SEASON) {
+  const result = await syncFixtures(Number(leagueId), Number(season));
+  invalidateCacheByPrefix('api-football:fixture:raw:');
+  invalidateCompetitionFixtureWindows();
+
+  return {
+    ...result,
+    cacheInvalidated: true,
+  };
+}
+
+export async function syncKnockoutFixtures(leagueId = LEAGUE_ID, season = SEASON) {
+  const competition = await ensureCompetition(Number(leagueId), Number(season));
+  const { response } = await footballApi.fetchFixtures(Number(leagueId), Number(season));
+  const fixtures = response || [];
+  invalidateCacheByPrefix('api-football:fixture:raw:');
+  invalidateCompetitionFixtureWindows();
+
+  const windows = computePredictionWindows(fixtures);
+  const knockoutPhaseKeys = ['round32', 'round16', 'quarter', 'semi', 'thirdPlace', 'final'];
+  const phases = Object.fromEntries(
+    knockoutPhaseKeys
+      .filter((key) => windows.phaseWindows[key])
+      .map((key) => [key, windows.phaseWindows[key]]),
+  );
+
+  const knockoutFixtures = fixtures.filter((fixture) => {
+    const window = windows.fixtureWindows[String(fixture.fixture?.id || '')];
+    return window?.phaseRule;
+  });
+
+  const openPhases = Object.values(phases).filter((phase) => phase.canPredict).map((phase) => phase.label);
+
+  return {
+    competitionId: competition.id,
+    competitionName: competition.name,
+    fixtures: knockoutFixtures.length,
+    phases,
+    openPhases,
+    cacheInvalidated: true,
+  };
 }
 
 

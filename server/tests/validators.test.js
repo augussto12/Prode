@@ -38,6 +38,14 @@ describe('predictionSchema', () => {
 
     assert.equal(parsed.isJoker, false);
   });
+
+  it('requires both scores', () => {
+    assert.throws(() => predictionSchema.parse({
+      externalFixtureId: '789',
+      competitionId: 1,
+      homeGoals: 1,
+    }));
+  });
 });
 
 describe('scoringConfigSchema', () => {

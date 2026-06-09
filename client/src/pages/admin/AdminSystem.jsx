@@ -710,7 +710,7 @@ function OutrightResultAdmin() {
           competitionId: Number(competitionId),
           offset,
           limit,
-        });
+        }, { timeout: 60000 });
 
         totals.teams = data?.teams?.total ?? totals.teams;
         totals.players += data?.players?.total ?? 0;
@@ -899,17 +899,21 @@ function SyncPanel({ onSyncComplete }) {
   const [loading, setLoading] = useState({});
   const [results, setResults] = useState({});
   const [apiStatus, setApiStatus] = useState(null);
-  const [teams, setTeams] = useState([]);
-  const [leagueId, setLeagueId] = useState("1");
-  const [season, setSeason] = useState("2022");
   const activeCompetition = useCompetitionStore(
     (state) => state.activeCompetition,
   );
+  const [leagueId, setLeagueId] = useState(String(activeCompetition?.externalId || 1));
+  const [season, setSeason] = useState(String(activeCompetition?.season || 2026));
 
   useEffect(() => {
     loadApiStatus();
-    loadTeams();
   }, []);
+
+  useEffect(() => {
+    if (!activeCompetition) return;
+    setLeagueId(String(activeCompetition.externalId || 1));
+    setSeason(String(activeCompetition.season || 2026));
+  }, [activeCompetition?.externalId, activeCompetition?.season]);
 
   const loadApiStatus = async () => {
     try {
@@ -920,18 +924,9 @@ function SyncPanel({ onSyncComplete }) {
     }
   };
 
-  const loadTeams = async () => {
-    try {
-      const { data } = await api.get("/matches/teams");
-      setTeams(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const runSync = async (action, body = {}) => {
     const syncBody = { ...body };
-    if (["teams", "fixtures", "results"].includes(action)) {
+    if (["teams", "fixtures", "results", "knockout"].includes(action)) {
       syncBody.leagueId = Number(leagueId);
       syncBody.season = Number(season);
     }
@@ -951,7 +946,7 @@ function SyncPanel({ onSyncComplete }) {
           message: data.message || "Sincronizado ✅",
         });
       loadApiStatus();
-      if (["teams", "fixtures", "results"].includes(action)) onSyncComplete();
+      if (["teams", "fixtures", "results", "knockout"].includes(action)) onSyncComplete();
     } catch (err) {
       setResults((prev) => ({
         ...prev,
@@ -991,6 +986,13 @@ function SyncPanel({ onSyncComplete }) {
       label: "Actualizar Resultados",
       desc: "Goles y estados de partidos",
       icon: "📊",
+      callsUsed: 1,
+    },
+    {
+      id: "knockout",
+      label: "Actualizar Eliminatorias",
+      desc: "Cruces y ventanas de prediccion",
+      icon: "KO",
       callsUsed: 1,
     },
   ];

@@ -47,15 +47,21 @@ export function calculatePredictionPoints(prediction, fixtureData, config) {
 }
 
 /**
- * Fetch fixture data from Explorer API (cached).
+ * Fetch fixture data directly from API-Football for scoring.
+ * Scoring must not share cache keys with match detail responses, because
+ * those endpoints cache a different object shape.
  */
-async function getFixtureFromApi(fixtureId) {
-  const cacheKey = `fixture:${fixtureId}`;
-  const data = await cachedApiCall(cacheKey, 300, async () => {
+async function getFixtureFromApi(fixtureId, { fresh = false } = {}) {
+  const fetchFixture = async () => {
     const result = await footballApi.fetchFixtureById(fixtureId);
     return result.response?.[0] || null;
-  });
-  return data;
+  };
+
+  if (fresh) {
+    return fetchFixture();
+  }
+
+  return cachedApiCall(`api-football:fixture:raw:${fixtureId}`, 30, fetchFixture);
 }
 
 /**
@@ -66,8 +72,7 @@ async function getFixtureFromApi(fixtureId) {
  * 4. Recalculates leaderboards
  */
 export async function scorePendingPredictions() {
-  const config = await prisma.scoringConfig.findFirst({ where: { id: 1 } });
-  if (!config) throw new Error('No scoring config found');
+  const config = await getScoringConfig();
 
   const pendingFixtures = await prisma.prediction.findMany({
     where: { isCalculated: false },
@@ -85,7 +90,7 @@ export async function scorePendingPredictions() {
   const finishedFixtures = [];
 
   for (const { externalFixtureId } of pendingFixtures) {
-    const fixtureData = await getFixtureFromApi(externalFixtureId);
+    const fixtureData = await getFixtureFromApi(externalFixtureId, { fresh: true });
     if (!fixtureData) continue;
 
     const statusShort = fixtureData.fixture?.status?.short;
@@ -162,6 +167,7 @@ export async function recalculateAllLeaderboards() {
  */
 export async function reverifyRecentResults() {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const config = await getScoringConfig();
 
   const recentFixtures = await prisma.prediction.findMany({
     where: {
@@ -174,6 +180,7 @@ export async function reverifyRecentResults() {
 
   let checked = 0;
   let reset = 0;
+  let corrected = 0;
 
   for (const { externalFixtureId } of recentFixtures) {
     checked++;
@@ -197,17 +204,40 @@ export async function reverifyRecentResults() {
         });
         reset++;
         console.log(`[Reverify] Fixture ${externalFixtureId} reseteado; status actual: ${statusShort}, ${resetResult.count} predicciones afectadas`);
+        continue;
+      }
+
+      const predictions = await prisma.prediction.findMany({
+        where: { externalFixtureId, isCalculated: true },
+      });
+
+      for (const prediction of predictions) {
+        const result = calculatePredictionPoints(prediction, fixtureData, config);
+        if (
+          prediction.pointsEarned !== result.points ||
+          prediction.basePoints !== result.basePoints
+        ) {
+          await prisma.prediction.update({
+            where: { id: prediction.id },
+            data: {
+              pointsEarned: result.points,
+              basePoints: result.basePoints,
+              ...legacyHitFields,
+            },
+          });
+          corrected++;
+        }
       }
     } catch (err) {
       console.warn(`[Reverify] Error verificando fixture ${externalFixtureId}: ${err.message}`);
     }
   }
 
-  if (reset > 0) {
+  if (reset > 0 || corrected > 0) {
     await recalculateAllLeaderboards();
   }
 
-  return { checked, reset };
+  return { checked, reset, corrected };
 }
 
 export async function getScoringConfig() {

@@ -1,9 +1,18 @@
 import prisma from '../config/database.js';
 import { BadRequestError, NotFoundError, ForbiddenError } from '../utils/errors.js';
 import { recalculateAllLeaderboards } from './scoring.service.js';
+import { cachedApiCall } from './cache.service.js';
+import * as footballApi from './football-api.service.js';
 
 function normalizeUsername(username) {
   return String(username || '').trim().toLowerCase();
+}
+
+async function getFixtureFromApi(fixtureId) {
+  return cachedApiCall(`api-football:fixture:raw:${fixtureId}`, 30, async () => {
+    const result = await footballApi.fetchFixtureById(fixtureId);
+    return result.response?.[0] || null;
+  });
 }
 
 export async function createGroup(userId, data) {
@@ -12,7 +21,7 @@ export async function createGroup(userId, data) {
   }
 
   // Transacción: crear grupo + membresía admin atómicamente
-  return prisma.$transaction(async (tx) => {
+  const group = await prisma.$transaction(async (tx) => {
     const group = await tx.group.create({
       data: {
         name: data.name,
@@ -38,6 +47,9 @@ export async function createGroup(userId, data) {
 
     return group;
   });
+
+  await recalculateAllLeaderboards();
+  return group;
 }
 
 export async function getMyGroups(userId) {
@@ -149,6 +161,7 @@ export async function joinGroup(userId, inviteCode) {
     }
   });
 
+  await recalculateAllLeaderboards();
   return group;
 }
 
@@ -383,25 +396,37 @@ export async function unbanMember(groupId, userIdToUnban, requestingUserId) {
 }
 
 // --- PREDICTIONS ---
-export async function getMatchPredictions(groupId, externalFixtureId) {
+export async function getMatchPredictions(groupId, externalFixtureId, requestingUserId) {
+  const fixture = await getFixtureFromApi(externalFixtureId);
+  if (!fixture) throw new NotFoundError('Partido no encontrado en la API');
+
+  const statusShort = fixture.fixture?.status?.short;
+  const fixtureDate = fixture.fixture?.date ? new Date(fixture.fixture.date) : null;
+  const hasStarted =
+    !['NS', 'TBD', 'PST'].includes(statusShort) ||
+    (fixtureDate && Date.now() >= fixtureDate.getTime());
+
   // Obtener los miembros del grupo
   const members = await prisma.groupUser.findMany({
     where: { groupId, isBanned: false },
     select: { userId: true, user: { select: { displayName: true, avatar: true } }, totalPoints: true }
   });
 
-  const userIds = members.map(m => m.userId);
+  const visibleMembers = hasStarted
+    ? members
+    : members.filter(m => m.userId === requestingUserId);
+  const visibleUserIds = visibleMembers.map(m => m.userId);
 
   // Traer predicciones para este partido específicas de estos usuarios
   const predictions = await prisma.prediction.findMany({
     where: {
       externalFixtureId,
-      userId: { in: userIds }
+      userId: { in: visibleUserIds }
     }
   });
 
   // Mapear combinando predicción e info de usuario, ordenados por puntos de predicción o totalPoints si no hay predi
-  const result = members.map(m => {
+  const result = visibleMembers.map(m => {
     const p = predictions.find(pred => pred.userId === m.userId);
     return {
       user: m.user,
@@ -462,11 +487,8 @@ export async function resetGroupScores(groupId, requestingUserId) {
     },
   });
 
-  // 2. Resetear leaderboard del grupo
-  await prisma.groupUser.updateMany({
-    where: { groupId, isBanned: false },
-    data: { totalPoints: 0 },
-  });
+  // 2. Recalcular todos los leaderboards: las predicciones son globales por usuario/competencia.
+  await recalculateAllLeaderboards();
 
   console.log(`[Group] ✓ Puntajes reiniciados grupo ${groupId} — ${resetResult.count} predicciones, ${userIds.length} miembros`);
 

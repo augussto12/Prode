@@ -247,9 +247,9 @@ export default function OutrightPredictions({ competitionId }) {
       <button
         type="submit"
         disabled={saving || lockInfo.locked}
-        className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 text-sm font-bold border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        <Save size={16} />
+        <Save size={15} />
         {saving ? "Guardando..." : "Guardar predicciones finales"}
       </button>
     </form>

@@ -9,7 +9,7 @@ import { WORLD_CUP_2026_LOGO } from "../utils/worldCupLogo";
 const TABS = [
   { id: "matches", label: "Partidos", icon: Calendar },
   { id: "predictions", label: "Predicciones", icon: BarChart3 },
-  { id: "finals", label: "Finales", icon: Trophy },
+  { id: "finals", label: "Predicciones finales", icon: Trophy },
 ];
 
 export default function Competition({ hideHeader }) {
@@ -72,7 +72,7 @@ export default function Competition({ hideHeader }) {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-white/5 rounded-xl w-fit">
+      <div className="flex gap-1 p-1 bg-white/5 rounded-xl w-fit max-w-full overflow-x-auto">
         {TABS.filter((t) => user || t.id === "matches").map((t) => (
           <button
             key={t.id}
@@ -84,7 +84,9 @@ export default function Competition({ hideHeader }) {
               }`}
           >
             <t.icon size={16} aria-hidden="true" />
-            <span className="hidden sm:inline">{t.label}</span>
+            <span className={`${t.id === "finals" ? "inline" : "hidden sm:inline"} whitespace-nowrap`}>
+              {t.label}
+            </span>
           </button>
         ))}
       </div>

@@ -22,7 +22,8 @@ import api from "../services/api";
 // import useSportmonksStore from "../store/useSportmonksStore";
 import useAuthStore from "../store/authStore";
 import { tCountry, tRound, tTeamName } from "../utils/translations";
-import { WORLD_CUP_2026_LOGO, getLeagueLogo, getLeagueName } from "../utils/worldCupLogo";
+import { getLeagueLogo, getLeagueName } from "../utils/worldCupLogo";
+import { getGroupCardVariant } from "../utils/groupCardVariants";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -35,46 +36,6 @@ function useDebounce(value, delay) {
 }
 
 const COUNTRIES_PER_PAGE = 25;
-const GROUP_CARD_VARIANTS = [
-  {
-    background: "linear-gradient(135deg, #0f766e 0%, #065f46 55%, #052e2b 100%)",
-    border: "rgba(45, 212, 191, 0.32)",
-    accent: "#5eead4",
-    badge: "rgba(20, 184, 166, 0.18)",
-  },
-  {
-    background: "linear-gradient(135deg, #1d4ed8 0%, #4338ca 52%, #172554 100%)",
-    border: "rgba(129, 140, 248, 0.35)",
-    accent: "#93c5fd",
-    badge: "rgba(96, 165, 250, 0.18)",
-  },
-  {
-    background: "linear-gradient(135deg, #be123c 0%, #9f1239 46%, #3f0b1b 100%)",
-    border: "rgba(251, 113, 133, 0.34)",
-    accent: "#fda4af",
-    badge: "rgba(244, 63, 94, 0.18)",
-  },
-  {
-    background: "linear-gradient(135deg, #854d0e 0%, #a16207 48%, #422006 100%)",
-    border: "rgba(251, 191, 36, 0.34)",
-    accent: "#fde68a",
-    badge: "rgba(245, 158, 11, 0.18)",
-  },
-  {
-    background: "linear-gradient(135deg, #6d28d9 0%, #7e22ce 45%, #2e1065 100%)",
-    border: "rgba(216, 180, 254, 0.32)",
-    accent: "#d8b4fe",
-    badge: "rgba(168, 85, 247, 0.18)",
-  },
-];
-
-const getGroupCardVariant = (group, index) => {
-  const rawId = Number(group?.id);
-  const variantIndex = Number.isFinite(rawId)
-    ? Math.abs(rawId) % GROUP_CARD_VARIANTS.length
-    : index % GROUP_CARD_VARIANTS.length;
-  return GROUP_CARD_VARIANTS[variantIndex];
-};
 
 // Helper: fecha de hoy en formato YYYY-MM-DD
 const getTodayDate = () => {
@@ -531,17 +492,17 @@ export default function Explorer() {
           <m.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative rounded-3xl overflow-hidden group cursor-pointer shadow-[0_10px_30px_#b8860b33]"
+            className="relative rounded-3xl overflow-hidden group cursor-pointer shadow-[0_10px_30px_#b8860b33] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_48px_#b8860b45] focus-within:ring-2 focus-within:ring-white/30"
             style={{
               background: "linear-gradient(135deg, #b8860b, #daa520, #ffd700)",
             }}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
             <div className="relative z-10 p-4 md:p-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-5">
-              <div className="w-14 h-14 md:w-20 md:h-20 rounded-2xl bg-white/90 backdrop-blur border border-white/40 flex items-center justify-center shrink-0 shadow-xl p-2">
+              <div className="w-14 h-14 md:w-20 md:h-20 rounded-2xl bg-white/90 backdrop-blur border border-white/40 flex items-center justify-center shrink-0 shadow-xl p-2 transition-transform duration-300 group-hover:scale-[1.04]">
                 <img
-                  src={WORLD_CUP_2026_LOGO}
-                  alt="FIFA World Cup 26"
+                  src="/favicon.svg"
+                  alt="Prode Mundial 2026"
                   className="w-full h-full object-contain"
                   loading="eager"
                   decoding="async"
@@ -598,6 +559,7 @@ export default function Explorer() {
                   style={{
                     background: variant.background,
                     border: `1px solid ${variant.border}`,
+                    boxShadow: variant.shadow,
                   }}
                 >
                   <div

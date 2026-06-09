@@ -87,7 +87,7 @@ export default function TeamView() {
   };
 
   useEffect(() => {
-    if (team?.national && activeTab === "transfers") {
+    if (team?.national && (activeTab === "transfers" || activeTab === "statistics")) {
       setActiveTab("squad");
     }
   }, [team?.national, activeTab]);
@@ -110,7 +110,7 @@ export default function TeamView() {
           setLoadingTab(true);
           const res = await api.get(`/explorer/teams/${id}/transfers`).catch(() => ({ data: [] }));
           setTabData(prev => ({ ...prev, transfers: res.data || [] }));
-        } else if (activeTab === "statistics" && !tabData.statistics) {
+        } else if (activeTab === "statistics" && !team?.national && !tabData.statistics) {
           setLoadingTab(true);
           // Necesitamos las fixtures para sacar la liga primaria
           let currentFixtures = tabData.fixtures;
@@ -309,12 +309,14 @@ export default function TeamView() {
         >
           Partidos
         </button>
-        <button
-          onClick={() => setActiveTab("statistics")}
-          className={`px-2 sm:px-5 py-2.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-bold transition-all border text-center ${activeTab === "statistics" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md" : "bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5"}`}
-        >
-          Estadísticas
-        </button>
+        {!team?.national && (
+          <button
+            onClick={() => setActiveTab("statistics")}
+            className={`px-2 sm:px-5 py-2.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-bold transition-all border text-center ${activeTab === "statistics" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md" : "bg-transparent text-white/50 border-transparent hover:text-white hover:bg-white/5"}`}
+          >
+            Estadísticas
+          </button>
+        )}
         {!team?.national && (
           <button
             onClick={() => setActiveTab("transfers")}

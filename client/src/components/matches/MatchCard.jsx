@@ -30,12 +30,21 @@ export default memo(function MatchCard({
   const isSavingRef = useRef(false);
 
   const matchDate = new Date(match.matchDate);
-  const isPast = matchDate <= new Date() || match.status !== "SCHEDULED";
+  const lockoutDate = new Date(matchDate);
+  lockoutDate.setMinutes(lockoutDate.getMinutes() - 5);
+  const hasPhaseRule = Boolean(match.predictionWindow?.phaseRule);
+  const phaseLocked = hasPhaseRule && match.predictionWindow?.canPredict === false;
+  const isPast =
+    match.status !== "SCHEDULED" ||
+    phaseLocked ||
+    (!hasPhaseRule && new Date() >= lockoutDate);
   const isLive = match.status === "LIVE";
   const isFinished = match.status === "FINISHED";
   const canToggleJoker =
     !isPast &&
     (prediction.isJoker || existingPrediction?.isJoker || jokerRemaining > 0);
+  const hasCompleteScore =
+    prediction.homeGoals !== "" && prediction.awayGoals !== "";
 
   useEffect(() => {
     if (existingProp) {
@@ -50,18 +59,32 @@ export default memo(function MatchCard({
 
   const hasChanges = useMemo(() => {
     if (!existingPrediction) {
-      return prediction.homeGoals !== "" || prediction.awayGoals !== "";
+      return hasCompleteScore;
     }
 
     return (
-      String(prediction.homeGoals) !== String(existingPrediction.homeGoals ?? "") ||
-      String(prediction.awayGoals) !== String(existingPrediction.awayGoals ?? "") ||
-      (prediction.isJoker || false) !== (existingPrediction.isJoker || false)
+      hasCompleteScore &&
+      (
+        String(prediction.homeGoals) !== String(existingPrediction.homeGoals ?? "") ||
+        String(prediction.awayGoals) !== String(existingPrediction.awayGoals ?? "") ||
+        (prediction.isJoker || false) !== (existingPrediction.isJoker || false)
+      )
     );
-  }, [prediction, existingPrediction]);
+  }, [prediction, existingPrediction, hasCompleteScore]);
 
   const handleSave = async () => {
     if (isSavingRef.current) return;
+    if (isPast) {
+      addToast({
+        type: "warning",
+        message: match.predictionWindow?.reason || "Las predicciones de este partido estan cerradas",
+      });
+      return;
+    }
+    if (!hasCompleteScore) {
+      addToast({ type: "warning", message: "Carga los goles de los dos equipos" });
+      return;
+    }
     isSavingRef.current = true;
     setSaving(true);
 
@@ -245,6 +268,16 @@ export default memo(function MatchCard({
                   Predecir
                 </span>
               </button>
+            ) : phaseLocked ? (
+              <div
+                className="flex flex-col items-center justify-center mx-auto text-white/45 bg-white/5 rounded-lg px-3 py-1.5 border border-white/10"
+                title={match.predictionWindow?.reason || "Prediccion bloqueada"}
+              >
+                <Lock size={14} className="mb-1" />
+                <span className="text-[10px] uppercase font-bold leading-none">
+                  Bloqueado
+                </span>
+              </div>
             ) : (
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <input
@@ -313,6 +346,12 @@ export default memo(function MatchCard({
                 </span>
               )}
             </span>
+          </div>
+        )}
+
+        {user && phaseLocked && match.predictionWindow?.reason && (
+          <div className="mt-2 rounded-lg border border-sky-400/15 bg-sky-400/10 px-2.5 py-2 text-center text-[10px] sm:text-xs text-sky-100/75">
+            {match.predictionWindow.reason}
           </div>
         )}
       </div>

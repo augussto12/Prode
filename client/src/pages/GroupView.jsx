@@ -23,8 +23,8 @@ import useAuthStore from "../store/authStore";
 import api from "../services/api";
 import useToastStore from "../store/toastStore";
 import GroupChat from "../components/chat/GroupChat";
-import ProdeMatches from "../components/matches/ProdeMatches";
 import GroupMatches from "../components/matches/GroupMatches";
+import { getLeagueLogo, getLeagueName } from "../utils/worldCupLogo";
 
 export default function GroupView() {
   const { id } = useParams();
@@ -333,6 +333,12 @@ export default function GroupView() {
       </div>
     );
   if (!group) return null;
+  const competitionName = group.competition
+    ? getLeagueName(group.competition)
+    : "";
+  const competitionLogo = group.competition
+    ? getLeagueLogo(group.competition)
+    : null;
 
   return (
     <div className="w-full space-y-4 sm:space-y-6">
@@ -360,9 +366,9 @@ export default function GroupView() {
             <div className="flex flex-wrap items-center gap-2 mt-3 text-xs sm:text-sm">
               {group.competition && (
                 <span className="flex items-center gap-1.5 text-white/80 bg-white/5 px-2.5 py-1 rounded-full">
-                  {group.competition.logo && (
+                  {competitionLogo && (
                     <img
-                      src={group.competition.logo}
+                      src={competitionLogo}
                       alt=""
                       width={16}
                       height={16}
@@ -376,7 +382,7 @@ export default function GroupView() {
                     />
                   )}
                   <span className="truncate max-w-[120px] sm:max-w-none">
-                    {group.competition.name}
+                    {competitionName}
                   </span>
                 </span>
               )}
@@ -787,10 +793,10 @@ export default function GroupView() {
                 {/* Tournament Header */}
                 {group.competition && (
                   <div className="flex items-center gap-2.5 sm:gap-3 mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10">
-                    {group.competition.logo ? (
+                    {competitionLogo ? (
                       <img
-                        src={group.competition.logo}
-                        alt={group.competition.name}
+                        src={competitionLogo}
+                        alt={competitionName}
                         width={32}
                         height={32}
                         className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow-md shrink-0"
@@ -811,7 +817,7 @@ export default function GroupView() {
                         Torneo Activo
                       </div>
                       <h2 className="text-base sm:text-xl font-black text-white truncate">
-                        {group.competition.name}
+                        {competitionName}
                       </h2>
                     </div>
                   </div>

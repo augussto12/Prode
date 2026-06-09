@@ -2,14 +2,15 @@ import prisma from '../config/database.js';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../utils/errors.js';
 import { cachedApiCall } from '../services/cache.service.js';
 import * as footballApi from '../services/football-api.service.js';
+import { getFixturePredictionWindow } from './phase-window.service.js';
 
 /**
  * Fetch fixture data from Explorer API (cached).
  * Returns null if not found.
  */
 async function getFixtureFromApi(fixtureId) {
-  const cacheKey = `fixture:${fixtureId}`;
-  const data = await cachedApiCall(cacheKey, 300, async () => {
+  const cacheKey = `api-football:fixture:raw:${fixtureId}`;
+  const data = await cachedApiCall(cacheKey, 30, async () => {
     const result = await footballApi.fetchFixtureById(fixtureId);
     return result.response?.[0] || null;
   });
@@ -17,8 +18,19 @@ async function getFixtureFromApi(fixtureId) {
 }
 
 export async function upsertPrediction(userId, externalFixtureId, competitionId, data) {
+  if (data.homeGoals === null || data.homeGoals === undefined || data.awayGoals === null || data.awayGoals === undefined) {
+    throw new BadRequestError('Tenes que cargar los goles de los dos equipos');
+  }
+
   const fixture = await getFixtureFromApi(externalFixtureId);
   if (!fixture) throw new NotFoundError('Partido no encontrado en la API');
+
+  const competition = await prisma.competition.findUnique({ where: { id: competitionId } });
+  if (!competition) throw new NotFoundError('Competicion no encontrada');
+
+  if (Number(fixture.league?.id) !== Number(competition.externalId)) {
+    throw new BadRequestError('El partido no pertenece a esta competencia');
+  }
 
   const statusShort = fixture.fixture?.status?.short;
   const isStarted = !['NS', 'TBD', 'PST'].includes(statusShort);
@@ -27,17 +39,21 @@ export async function upsertPrediction(userId, externalFixtureId, competitionId,
     throw new BadRequestError('No se puede predecir despues de que el partido empezo');
   }
 
-  const now = new Date();
-  const matchDate = new Date(fixture.fixture.date);
-  const lockoutTime = new Date(matchDate);
-  lockoutTime.setMinutes(lockoutTime.getMinutes() - 5);
-
-  if (now >= lockoutTime) {
-    throw new BadRequestError('Las predicciones se cierran 5 minutos antes del partido');
+  const predictionWindow = await getFixturePredictionWindow(competition, fixture);
+  if (!predictionWindow.canPredict) {
+    throw new BadRequestError(predictionWindow.reason || 'Las predicciones de esta fase estan cerradas');
   }
 
-  const competition = await prisma.competition.findUnique({ where: { id: competitionId } });
-  if (!competition) throw new NotFoundError('Competicion no encontrada');
+  if (!predictionWindow.phaseRule) {
+    const now = new Date();
+    const matchDate = new Date(fixture.fixture.date);
+    const lockoutTime = new Date(matchDate);
+    lockoutTime.setMinutes(lockoutTime.getMinutes() - 5);
+
+    if (now >= lockoutTime) {
+      throw new BadRequestError('Las predicciones se cierran 5 minutos antes del partido');
+    }
+  }
 
   if (data.isJoker) {
     const usedJokers = await prisma.prediction.count({
@@ -100,7 +116,10 @@ export async function getPredictionsForFixture(externalFixtureId, requestingUser
   if (!fixture) throw new NotFoundError('Partido no encontrado en la API');
 
   const statusShort = fixture?.fixture?.status?.short;
-  const hasStarted = !['NS', 'TBD', 'PST'].includes(statusShort);
+  const fixtureDate = fixture?.fixture?.date ? new Date(fixture.fixture.date) : null;
+  const hasStarted =
+    !['NS', 'TBD', 'PST'].includes(statusShort) ||
+    (fixtureDate && Date.now() >= fixtureDate.getTime());
 
   if (!hasStarted) {
     return prisma.prediction.findMany({
@@ -132,7 +151,10 @@ export async function getGroupPredictionsForFixture(externalFixtureId, groupId, 
   if (!fixture) throw new NotFoundError('Partido no encontrado en la API');
 
   const statusShort = fixture?.fixture?.status?.short;
-  const hasStarted = !['NS', 'TBD', 'PST'].includes(statusShort);
+  const fixtureDate = fixture?.fixture?.date ? new Date(fixture.fixture.date) : null;
+  const hasStarted =
+    !['NS', 'TBD', 'PST'].includes(statusShort) ||
+    (fixtureDate && Date.now() >= fixtureDate.getTime());
 
   const groupMembers = await prisma.groupUser.findMany({
     where: { groupId, isBanned: false },

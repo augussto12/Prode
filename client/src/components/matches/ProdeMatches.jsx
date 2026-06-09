@@ -26,6 +26,7 @@ export default function ProdeMatches({
   const [showFavPicker, setShowFavPicker] = useState(false);
   const [activeTab, setActiveTab] = useState(initialTab); // 'matches', 'history'
   const [scoringConfig, setScoringConfig] = useState(null);
+  const [phaseWindows, setPhaseWindows] = useState(null);
   const user = useAuthStore((state) => state.user);
 
   // Sincronizar tab cuando Competition cambia entre tabs matches/predictions
@@ -57,14 +58,16 @@ export default function ProdeMatches({
 
       // 2. Fetch fixtures, favorites, and predictions in parallel
       // Las llamadas autenticadas fallan silenciosamente si no hay sesión
-      const [fixturesRes, favRes, predRes] = await Promise.all([
+      const [fixturesRes, favRes, predRes, windowsRes] = await Promise.all([
         api.get(`/explorer/leagues/${leagueId}/fixtures?season=${season}`),
         api.get("/auth/me/favorites").catch(() => ({ data: [] })),
         api.get(`/predictions/my${compParam}`).catch(() => ({ data: [] })),
+        api.get(`/predictions/phase-windows${compParam}`).catch(() => ({ data: null })),
       ]);
 
       const fixtures = fixturesRes.data || [];
       const userPreds = predRes.data || [];
+      const fixtureWindows = windowsRes.data?.fixtureWindows || {};
 
       // Mapear status de la API a nuestro enum local
       const statusMap = {
@@ -138,6 +141,7 @@ export default function ProdeMatches({
           round: round,
           venue: fix.venue ? `${fix.venue.name}, ${fix.venue.city}` : null,
           prediction: predMap.get(fix.id) || null,
+          predictionWindow: fixtureWindows[String(fix.id)] || null,
         };
       });
 
@@ -149,6 +153,7 @@ export default function ProdeMatches({
       );
       setFavorites(favRes.data?.map((f) => f.teamName) || []);
       setPredictions(userPreds);
+      setPhaseWindows(windowsRes.data || null);
     } catch (err) {
       console.error("Error loading matches/predictions:", err);
     } finally {
@@ -157,6 +162,9 @@ export default function ProdeMatches({
   };
 
   const stages = [...new Set(matches.map((m) => m.stage))];
+  const lockedPhaseMessages = Object.values(phaseWindows?.phaseWindows || {})
+    .filter((phase) => phase.phaseRule && !phase.canPredict && phase.reason)
+    .slice(0, 2);
   const predictionsMap = new Map(
     predictions.map((p) => [Number(p.externalFixtureId), p]),
   );
@@ -232,27 +240,52 @@ export default function ProdeMatches({
   return (
     <div className="space-y-3 sm:space-y-4">
       {user && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
-          <div>
-            <div className="text-sm font-bold text-amber-200">Comodines x2</div>
-            <div className="text-xs text-amber-100/70">
-              Tenés 3 partidos por competencia. Podés moverlos mientras el partido no haya empezado.
+        <div className="space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
+            <div>
+              <div className="text-sm font-bold text-amber-200">Comodines x2</div>
+              <div className="text-xs text-amber-100/70">
+                Tenés 3 partidos por competencia. Podés moverlos hasta 5 minutos antes del inicio.
+              </div>
             </div>
-            <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] text-white/70">
-              <span className="rounded-md bg-white/10 px-2 py-1">
-                Exacto: <strong className="text-white">{scoringConfig?.exactScore ?? "—"} pts</strong>
-              </span>
-              <span className="rounded-md bg-white/10 px-2 py-1">
-                Ganador/empate: <strong className="text-white">{scoringConfig?.correctWinner ?? "—"} pts</strong>
-              </span>
-              <span className="rounded-md bg-white/10 px-2 py-1">
-                Sin acierto: <strong className="text-white">0 pts</strong>
-              </span>
+            <div className="shrink-0 rounded-lg bg-black/20 border border-amber-500/20 px-3 py-1.5 text-sm font-black text-amber-200">
+              {remainingJokers}/{JOKER_LIMIT} disponibles
             </div>
           </div>
-          <div className="shrink-0 rounded-lg bg-black/20 border border-amber-500/20 px-3 py-1.5 text-sm font-black text-amber-200">
-            {remainingJokers}/{JOKER_LIMIT} disponibles
+
+          <div className="rounded-xl border border-white/10 bg-white/[0.035] px-4 py-3">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-white/45 shrink-0">
+                Puntaje por partido
+              </div>
+              <div className="flex flex-wrap gap-1.5 text-[11px] text-white/70">
+                <span className="rounded-md bg-white/10 px-2 py-1">
+                  Exacto: <strong className="text-white">{scoringConfig?.exactScore ?? "—"} pts</strong>
+                </span>
+                <span className="rounded-md bg-white/10 px-2 py-1">
+                  Ganador/empate: <strong className="text-white">{scoringConfig?.correctWinner ?? "—"} pts</strong>
+                </span>
+                <span className="rounded-md bg-white/10 px-2 py-1">
+                  Sin acierto: <strong className="text-white">0 pts</strong>
+                </span>
+              </div>
+            </div>
           </div>
+
+          {lockedPhaseMessages.length > 0 && (
+            <div className="rounded-xl border border-sky-400/20 bg-sky-400/10 px-4 py-3 text-xs text-sky-100/80">
+              <div className="font-bold text-sky-100 mb-1">
+                Ventanas de eliminatorias
+              </div>
+              <div className="space-y-1">
+                {lockedPhaseMessages.map((phase) => (
+                  <div key={phase.phaseKey}>
+                    {phase.label}: {phase.reason}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

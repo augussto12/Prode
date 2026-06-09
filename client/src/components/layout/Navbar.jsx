@@ -77,10 +77,15 @@ export default function Navbar() {
             aria-label="Ir al Inicio"
           >
             <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ background: "var(--color-primary)" }}
+              className="w-8 h-8 rounded-lg overflow-hidden shadow-sm"
             >
-              <Trophy size={16} aria-hidden="true" />
+              <img
+                src="/favicon.svg"
+                alt=""
+                className="h-full w-full"
+                width={32}
+                height={32}
+              />
             </div>
             <span className="text-base font-bold tracking-tight hidden sm:inline">
               Prode
