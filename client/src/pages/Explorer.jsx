@@ -957,14 +957,14 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
                     className="overflow-hidden"
                   >
                     {hasManyMatches && (
-                      <div className="flex justify-end px-1 pt-3 pb-2">
+                      <div className="flex justify-start sm:justify-end px-2 sm:px-3 pt-3 pb-2">
                         <button
                           type="button"
                           onClick={() => setExpandedLeague(group)}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-emerald-200 hover:bg-white/10 hover:text-emerald-100 transition-colors cursor-pointer"
+                          className="inline-flex h-9 min-w-[96px] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-white/10 bg-white/5 px-3 text-sm sm:text-xs font-bold text-emerald-200 hover:bg-white/10 hover:text-emerald-100 transition-colors cursor-pointer"
                         >
                           <Maximize2 size={14} />
-                          Ver todos
+                          Ver más
                         </button>
                       </div>
                     )}
