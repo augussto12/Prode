@@ -12,6 +12,8 @@ import {
   Users,
   Calendar,
   Star,
+  Maximize2,
+  X,
 } from "lucide-react";
 import api from "../services/api";
 // [OCULTADO] Sportmonks - Ya no se usa
@@ -36,6 +38,8 @@ function useDebounce(value, delay) {
 }
 
 const COUNTRIES_PER_PAGE = 25;
+const LARGE_MATCH_SECTION_THRESHOLD = 10;
+const MATCH_SECTION_PREVIEW_LIMIT = 5;
 
 // Helper: fecha de hoy en formato YYYY-MM-DD
 const getTodayDate = () => {
@@ -760,11 +764,21 @@ export default function Explorer() {
 const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
   const [collapsedLeagues, setCollapsedLeagues] = useState({});
   const [liveOnly, setLiveOnly] = useState(false);
+  const [expandedLeague, setExpandedLeague] = useState(null);
 
   const LIVE_STATUSES = ["1H", "2H", "HT", "ET", "BT", "P"];
   const WORLD_CUP_ID = 1;
 
   const filteredGrouped = data.grouped || [];
+
+  useEffect(() => {
+    if (!expandedLeague) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setExpandedLeague(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [expandedLeague]);
 
   // Ordenar: Mundial primero, luego favoritos, luego el resto
   const sortedGroups = [...filteredGrouped].sort((a, b) => {
@@ -837,6 +851,10 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
           const isCollapsed = collapsedLeagues[leagueId];
           const isWorldCup = leagueId === WORLD_CUP_ID;
           const isFav = leagueFavorites?.has(leagueId);
+          const hasManyMatches = group.matches.length >= LARGE_MATCH_SECTION_THRESHOLD;
+          const previewMatches = hasManyMatches
+            ? group.matches.slice(0, MATCH_SECTION_PREVIEW_LIMIT)
+            : group.matches;
           return (
             <div
               key={leagueId}
@@ -942,8 +960,25 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
+                    {hasManyMatches && (
+                      <div className="px-1 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedLeague(group)}
+                          className="w-full flex items-center justify-between gap-3 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-left text-xs font-bold text-emerald-100 hover:bg-emerald-400/15 transition-colors cursor-pointer"
+                        >
+                          <span>
+                            Mostrando {previewMatches.length} de {group.matches.length} partidos
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-emerald-300">
+                            <Maximize2 size={14} />
+                            Ver todos
+                          </span>
+                        </button>
+                      </div>
+                    )}
                     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/10 px-1 after:content-[''] after:w-4 after:shrink-0">
-                      {group.matches.map((m, mIndex) => {
+                      {previewMatches.map((m, mIndex) => {
                         const isLive = [
                           "1H",
                           "2H",
@@ -1053,6 +1088,157 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
           );
         })}
       </div>
+      <AnimatePresence>
+        {expandedLeague && (
+          <m.div
+            className="fixed inset-0 z-[100] flex items-center justify-center px-3 py-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <button
+              type="button"
+              aria-label="Cerrar"
+              onClick={() => setExpandedLeague(null)}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm cursor-default"
+            />
+            <m.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="expanded-league-title"
+              className="relative w-full max-w-6xl max-h-[90vh] overflow-hidden rounded-xl border border-white/10 bg-[#071b14] shadow-2xl"
+              initial={{ scale: 0.96, y: 18 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.96, y: 18 }}
+              transition={{ duration: 0.18 }}
+            >
+              <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-white/[0.03] px-4 py-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  {getLeagueLogo(expandedLeague.league) && (
+                    <img
+                      src={getLeagueLogo(expandedLeague.league)}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      width={28}
+                      height={28}
+                      className="w-7 h-7 object-contain"
+                      onError={(e) => {
+                        e.target.src = "/placeholder-team.svg";
+                      }}
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <h3
+                      id="expanded-league-title"
+                      className="text-base font-bold uppercase tracking-wider text-white truncate"
+                    >
+                      {getLeagueName(expandedLeague.league)}
+                    </h3>
+                    <p className="text-xs font-semibold text-white/45">
+                      {expandedLeague.matches.length} partido
+                      {expandedLeague.matches.length !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setExpandedLeague(null)}
+                  className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+                  aria-label="Cerrar"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="max-h-[calc(90vh-72px)] overflow-y-auto p-3 sm:p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
+                  {expandedLeague.matches.map((match, matchIndex) => {
+                    const status = match.fixture.status.short;
+                    const isLive = LIVE_STATUSES.includes(status);
+                    const isPending = ["NS", "TBD"].includes(status);
+
+                    return (
+                      <Link
+                        key={match.fixture.id}
+                        to={`/partido/${match.fixture.id}`}
+                        onClick={() => setExpandedLeague(null)}
+                        className={`bg-white/5 rounded-xl p-3 hover:bg-white/10 transition-all no-underline border flex flex-col justify-between overflow-hidden min-h-[104px] ${
+                          isLive ? "border-red-500/30 bg-red-500/5" : "border-transparent"
+                        }`}
+                      >
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between items-center text-[10px] font-medium text-white/50 border-b border-white/5 pb-1.5">
+                            {isLive ? (
+                              <span className="text-red-400 font-bold flex items-center gap-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
+                                {match.fixture.status.elapsed || 0}'
+                              </span>
+                            ) : isPending ? (
+                              <span>
+                                {new Date(match.fixture.date)
+                                  .toLocaleTimeString("en-US", {
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                  })
+                                  .toLowerCase()}
+                              </span>
+                            ) : (
+                              <span>{status}</span>
+                            )}
+                            {match.league?.round && (
+                              <span
+                                className="truncate max-w-[170px] text-right"
+                                title={match.league.round}
+                              >
+                                {tRound(match.league.round)}
+                              </span>
+                            )}
+                          </div>
+
+                          {[match.teams?.home, match.teams?.away].map((team, teamIndex) => (
+                            <div
+                              key={`${match.fixture.id}-${teamIndex}`}
+                              className="flex items-center justify-between gap-2.5"
+                            >
+                              <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                {team?.logo && (
+                                  <img
+                                    src={team.logo}
+                                    alt=""
+                                    loading={matchIndex < 4 ? "eager" : "lazy"}
+                                    fetchPriority={matchIndex < 4 ? "high" : "auto"}
+                                    decoding="async"
+                                    width={22}
+                                    height={22}
+                                    className="w-5 h-5 object-contain"
+                                    onError={(e) => {
+                                      e.target.src = "/placeholder-team.svg";
+                                    }}
+                                  />
+                                )}
+                                <span className="text-sm text-white font-semibold truncate">
+                                  {tTeamName(team?.name)}
+                                </span>
+                              </div>
+                              <div className="text-sm font-bold text-white px-1 text-center w-7">
+                                {!isPending
+                                  ? (teamIndex === 0 ? match.goals?.home : match.goals?.away) ?? 0
+                                  : "-"}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            </m.div>
+          </m.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

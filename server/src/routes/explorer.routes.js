@@ -12,10 +12,27 @@ import * as smPlayers from '../services/sportmonks/sportmonksPlayers.js';
 import { mapPlayerProfileSportmonksToApiFootball } from '../utils/sportmonksMapper.js';
 
 const router = Router();
+const FRIENDLIES_LEAGUE_IDS = new Set([10]);
+const YOUTH_TEAM_PATTERN = /\b(u-?\d{2}|under\s*-?\s*\d{2}|olympic)\b/i;
 
 // Current season helper — default to current year
 function getCurrentSeason() {
   return new Date().getFullYear();
+}
+
+function isSeniorInternationalFixture(match) {
+  const homeName = match.teams?.home?.name || '';
+  const awayName = match.teams?.away?.name || '';
+  return !YOUTH_TEAM_PATTERN.test(`${homeName} ${awayName}`);
+}
+
+function isAllowedExplorerFixture(match) {
+  const leagueId = Number(match.league?.id);
+  if (!ALLOWED_LEAGUE_IDS.has(leagueId)) return false;
+  if (FRIENDLIES_LEAGUE_IDS.has(leagueId)) {
+    return isSeniorInternationalFixture(match);
+  }
+  return true;
 }
 
 /**
@@ -206,7 +223,7 @@ router.get('/leagues/:id/fixtures', async (req, res, next) => {
       result = await footballApi.fetchFixtures(leagueId, season);
     }
 
-    res.json((result.response || []).map(trimMatch));
+    res.json((result.response || []).filter(isAllowedExplorerFixture).map(trimMatch));
   } catch (err) { next(err); }
 });
 
@@ -262,7 +279,7 @@ router.get('/live', async (req, res, next) => {
     const matches = result.response || [];
 
     // Filtrar solo ligas curadas (doble check) — convertir a Number porque API devuelve strings
-    const filtered = matches.filter(m => ALLOWED_LEAGUE_IDS.has(Number(m.league?.id)));
+    const filtered = matches.filter(isAllowedExplorerFixture);
 
     // Agrupar por liga
     const byLeague = {};
@@ -316,7 +333,7 @@ router.get('/today', async (req, res, next) => {
     }
 
     const data = result.response || [];
-    const filtered = data.filter(m => ALLOWED_LEAGUE_IDS.has(Number(m.league?.id)));
+    const filtered = data.filter(isAllowedExplorerFixture);
 
     const byLeague = {};
     filtered.forEach(m => {
@@ -370,7 +387,7 @@ router.get('/fixtures/date/:date', async (req, res, next) => {
 
     const allFixtures = result.response || [];
     // Filtrar solo ligas permitidas (convertir a Number porque API devuelve strings)
-    const filteredFixtures = allFixtures.filter(m => ALLOWED_LEAGUE_IDS.has(Number(m.league?.id)));
+    const filteredFixtures = allFixtures.filter(isAllowedExplorerFixture);
 
     console.log(`[EXPLORER FIXTURES DATE] Date=${req.params.date} Raw=${allFixtures.length} Filtered=${filteredFixtures.length}`);
 

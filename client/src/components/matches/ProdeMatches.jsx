@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { m, AnimatePresence } from "framer-motion";
-import { Calendar, ChevronDown, Star, BarChart3, List, Maximize2, X } from "lucide-react";
+import { Calendar, ChevronDown, Star, BarChart3, List } from "lucide-react";
 import api from "../../services/api";
 import MatchCard from "./MatchCard";
 import PredictionHistory from "./PredictionHistory";
@@ -8,8 +8,6 @@ import useAuthStore from "../../store/authStore";
 import { tRound, tTeamName } from "../../utils/translations";
 
 const JOKER_LIMIT = 3;
-const LARGE_SECTION_THRESHOLD = 10;
-const PREVIEW_MATCH_LIMIT = 4;
 
 export default function ProdeMatches({
   competitionId,
@@ -29,7 +27,6 @@ export default function ProdeMatches({
   const [activeTab, setActiveTab] = useState(initialTab); // 'matches', 'history'
   const [scoringConfig, setScoringConfig] = useState(null);
   const [phaseWindows, setPhaseWindows] = useState(null);
-  const [expandedSection, setExpandedSection] = useState(null);
   const user = useAuthStore((state) => state.user);
 
   // Sincronizar tab cuando Competition cambia entre tabs matches/predictions
@@ -49,17 +46,6 @@ export default function ProdeMatches({
       .then(({ data }) => setScoringConfig(data))
       .catch(() => setScoringConfig(null));
   }, []);
-
-  useEffect(() => {
-    if (!expandedSection) return;
-
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") setExpandedSection(null);
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [expandedSection]);
 
   const loadData = async () => {
     try {
@@ -188,80 +174,6 @@ export default function ProdeMatches({
     if (!groupedMatches[dateKey]) groupedMatches[dateKey] = [];
     groupedMatches[dateKey].push(m);
   });
-
-  const renderMatchCards = (sectionMatches, extraProps = {}) => (
-    sectionMatches.map((match) => (
-      <MatchCard
-        key={match.id}
-        match={match}
-        isFavorite={
-          favorites.includes(match.homeTeam) ||
-          favorites.includes(match.awayTeam)
-        }
-        existingPrediction={predictionsMap.get(Number(match.id))}
-        onPredictionSaved={loadData}
-        hideStage={true}
-        groupSettings={groupSettings}
-        jokerRemaining={remainingJokers}
-        jokerLimit={JOKER_LIMIT}
-        {...extraProps}
-      />
-    ))
-  );
-
-  const renderSection = (date, stage, stageMatches) => {
-    const isLargeSection = stageMatches.length >= LARGE_SECTION_THRESHOLD;
-    const visibleMatches = isLargeSection
-      ? stageMatches.slice(0, PREVIEW_MATCH_LIMIT)
-      : stageMatches;
-
-    return (
-      <div key={stage} className="mb-3 sm:mb-4">
-        <div className="flex items-center justify-between gap-2 mb-2 ml-1">
-          <div className="flex items-center gap-2 min-w-0">
-            <div
-              className="w-1.5 h-1.5 rounded-full shrink-0"
-              style={{ background: "var(--color-primary)" }}
-            />
-            <span className="text-[10px] sm:text-xs font-medium text-white/50 truncate">
-              {tRound(stage)}
-            </span>
-            <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-white/40">
-              {stageMatches.length}
-            </span>
-          </div>
-
-          {isLargeSection && (
-            <button
-              type="button"
-              onClick={() => setExpandedSection({ date, stage, matches: stageMatches })}
-              className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
-            >
-              <Maximize2 size={12} />
-              Ver todos
-            </button>
-          )}
-        </div>
-
-        {isLargeSection && (
-          <button
-            type="button"
-            onClick={() => setExpandedSection({ date, stage, matches: stageMatches })}
-            className="mb-3 flex w-full items-center justify-between gap-3 rounded-xl border border-indigo-400/20 bg-indigo-400/10 px-3 py-2 text-left text-xs text-indigo-100/80 transition-colors hover:bg-indigo-400/15 cursor-pointer"
-          >
-            <span>
-              Hay {stageMatches.length} partidos en esta seccion. Te mostramos los primeros {PREVIEW_MATCH_LIMIT}.
-            </span>
-            <span className="shrink-0 font-semibold text-indigo-100">Abrir lista</span>
-          </button>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-          {renderMatchCards(visibleMatches)}
-        </div>
-      </div>
-    );
-  };
 
   if (loading) {
     return (
@@ -480,9 +392,37 @@ export default function ProdeMatches({
                     {date}
                   </h2>
                 </div>
-                {Object.entries(byStage).map(([stage, stageMatches]) =>
-                  renderSection(date, stage, stageMatches),
-                )}
+                {Object.entries(byStage).map(([stage, stageMatches]) => (
+                  <div key={stage} className="mb-3 sm:mb-4">
+                    <div className="flex items-center gap-2 mb-2 ml-1">
+                      <div
+                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                        style={{ background: "var(--color-primary)" }}
+                      />
+                      <span className="text-[10px] sm:text-xs font-medium text-white/50">
+                        {tRound(stage)}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                      {stageMatches.map((match) => (
+                        <MatchCard
+                          key={match.id}
+                          match={match}
+                          isFavorite={
+                            favorites.includes(match.homeTeam) ||
+                            favorites.includes(match.awayTeam)
+                          }
+                          existingPrediction={predictionsMap.get(match.id)}
+                          onPredictionSaved={loadData}
+                          hideStage={true}
+                          groupSettings={groupSettings}
+                          jokerRemaining={remainingJokers}
+                          jokerLimit={JOKER_LIMIT}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             );
           })}
@@ -491,46 +431,6 @@ export default function ProdeMatches({
             <div className="text-center py-12 sm:py-16 text-white/60 glass-card rounded-xl">
               <Calendar size={40} className="mx-auto mb-3 sm:mb-4 opacity-30" />
               <p className="text-sm sm:text-lg">No hay partidos para mostrar</p>
-            </div>
-          )}
-
-          {expandedSection && (
-            <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4">
-              <button
-                type="button"
-                className="absolute inset-0 cursor-default bg-transparent border-none"
-                aria-label="Cerrar lista"
-                onClick={() => setExpandedSection(null)}
-              />
-              <div className="relative flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border border-white/10 bg-[#080b14] shadow-2xl">
-                <div className="flex items-start justify-between gap-3 border-b border-white/10 bg-white/[0.03] px-4 py-3 sm:px-5">
-                  <div className="min-w-0">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-                      {expandedSection.date}
-                    </div>
-                    <h3 className="mt-1 text-base sm:text-lg font-bold text-white truncate">
-                      {tRound(expandedSection.stage)}
-                    </h3>
-                    <p className="mt-0.5 text-xs text-white/50">
-                      {expandedSection.matches.length} partidos
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setExpandedSection(null)}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 cursor-pointer"
-                    aria-label="Cerrar"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-3 sm:p-5">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-                    {renderMatchCards(expandedSection.matches)}
-                  </div>
-                </div>
-              </div>
             </div>
           )}
         </>

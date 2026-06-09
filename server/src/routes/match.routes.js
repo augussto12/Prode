@@ -6,12 +6,6 @@ import { computePredictionWindows } from '../services/phase-window.service.js';
 
 const router = Router();
 
-const FRIENDLIES_LEAGUE_ID = 10;
-const FRIENDLIES_NAME = 'Amistosos Internacionales';
-const FRIENDLIES_WINDOW_DAYS_BACK = 14;
-const FRIENDLIES_WINDOW_DAYS_FORWARD = 120;
-const YOUTH_TEAM_PATTERN = /\b(u-?\d{2}|under\s*-?\s*\d{2}|olympic)\b/i;
-
 const STATUS_MAP = {
   NS: 'SCHEDULED',
   TBD: 'SCHEDULED',
@@ -34,36 +28,6 @@ const STATUS_MAP = {
   WO: 'CANCELLED',
 };
 
-function currentSeason() {
-  return new Date().getFullYear();
-}
-
-function addDays(date, days) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
-function isInFriendliesWindow(fixture) {
-  const rawDate = fixture?.fixture?.date;
-  if (!rawDate) return false;
-
-  const date = new Date(rawDate);
-  if (Number.isNaN(date.getTime())) return false;
-
-  const now = new Date();
-  return (
-    date >= addDays(now, -FRIENDLIES_WINDOW_DAYS_BACK) &&
-    date <= addDays(now, FRIENDLIES_WINDOW_DAYS_FORWARD)
-  );
-}
-
-function isSeniorInternationalFixture(fixture) {
-  const home = fixture?.teams?.home?.name || '';
-  const away = fixture?.teams?.away?.name || '';
-  return !YOUTH_TEAM_PATTERN.test(home) && !YOUTH_TEAM_PATTERN.test(away);
-}
-
 async function getFixturesForCompetition(competition) {
   return cachedApiCall(
     `api-football:matches:competition:${competition.externalId}:${competition.season}`,
@@ -76,25 +40,6 @@ async function getFixturesForCompetition(competition) {
       return result.response || [];
     },
   );
-}
-
-async function ensureFriendliesCompetition() {
-  const season = currentSeason();
-  return prisma.competition.upsert({
-    where: {
-      externalId_season: {
-        externalId: FRIENDLIES_LEAGUE_ID,
-        season,
-      },
-    },
-    update: { name: FRIENDLIES_NAME },
-    create: {
-      externalId: FRIENDLIES_LEAGUE_ID,
-      name: FRIENDLIES_NAME,
-      season,
-      logo: null,
-    },
-  });
 }
 
 function mapFixture(fixture, competition, predictionWindows = {}) {
@@ -144,17 +89,7 @@ async function getRequestedCompetitions(req) {
   });
   if (!competition) return [];
 
-  const competitions = [competition];
-  const includeFriendlies =
-    req.query.includeFriendlies !== 'false' &&
-    Number(competition.externalId) === 1;
-
-  if (includeFriendlies) {
-    const friendlies = await ensureFriendliesCompetition();
-    if (friendlies.id !== competition.id) competitions.push(friendlies);
-  }
-
-  return competitions;
+  return [competition];
 }
 
 router.get('/', async (req, res, next) => {
@@ -164,12 +99,7 @@ router.get('/', async (req, res, next) => {
 
     const chunks = await Promise.all(
       competitions.map(async (competition) => {
-        let fixtures = await getFixturesForCompetition(competition);
-        if (Number(competition.externalId) === FRIENDLIES_LEAGUE_ID) {
-          fixtures = fixtures.filter(
-            (fixture) => isInFriendliesWindow(fixture) && isSeniorInternationalFixture(fixture),
-          );
-        }
+        const fixtures = await getFixturesForCompetition(competition);
 
         const windows = computePredictionWindows(fixtures).fixtureWindows;
         return fixtures.map((fixture) => mapFixture(fixture, competition, windows));
@@ -192,13 +122,7 @@ router.get('/teams', async (req, res, next) => {
     const competitions = await getRequestedCompetitions(req);
     const fixturesByCompetition = await Promise.all(
       competitions.map(async (competition) => {
-        let fixtures = await getFixturesForCompetition(competition);
-        if (Number(competition.externalId) === FRIENDLIES_LEAGUE_ID) {
-          fixtures = fixtures.filter(
-            (fixture) => isInFriendliesWindow(fixture) && isSeniorInternationalFixture(fixture),
-          );
-        }
-        return fixtures;
+        return getFixturesForCompetition(competition);
       }),
     );
 
