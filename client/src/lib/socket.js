@@ -9,9 +9,12 @@ export function getSocket() {
       withCredentials: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 2000,
-      transports: ["websocket", "polling"], // WebSocket primero, polling como fallback
-      upgrade: true, // Upgradeará de polling a websocket automáticamente
-      closeOnBeforeunload: false, // Prevent socket.io from using unload listener (fixes BFCache)
+      timeout: 10000,
+      path: "/socket.io",
+      transports: ["polling", "websocket"],
+      upgrade: true,
+      tryAllTransports: true,
+      closeOnBeforeunload: false,
     });
   }
   return socket;

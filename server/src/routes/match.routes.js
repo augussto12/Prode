@@ -10,6 +10,7 @@ const FRIENDLIES_LEAGUE_ID = 10;
 const FRIENDLIES_NAME = 'Amistosos Internacionales';
 const FRIENDLIES_WINDOW_DAYS_BACK = 14;
 const FRIENDLIES_WINDOW_DAYS_FORWARD = 120;
+const YOUTH_TEAM_PATTERN = /\b(u-?\d{2}|under\s*-?\s*\d{2}|olympic)\b/i;
 
 const STATUS_MAP = {
   NS: 'SCHEDULED',
@@ -55,6 +56,12 @@ function isInFriendliesWindow(fixture) {
     date >= addDays(now, -FRIENDLIES_WINDOW_DAYS_BACK) &&
     date <= addDays(now, FRIENDLIES_WINDOW_DAYS_FORWARD)
   );
+}
+
+function isSeniorInternationalFixture(fixture) {
+  const home = fixture?.teams?.home?.name || '';
+  const away = fixture?.teams?.away?.name || '';
+  return !YOUTH_TEAM_PATTERN.test(home) && !YOUTH_TEAM_PATTERN.test(away);
 }
 
 async function getFixturesForCompetition(competition) {
@@ -159,7 +166,9 @@ router.get('/', async (req, res, next) => {
       competitions.map(async (competition) => {
         let fixtures = await getFixturesForCompetition(competition);
         if (Number(competition.externalId) === FRIENDLIES_LEAGUE_ID) {
-          fixtures = fixtures.filter(isInFriendliesWindow);
+          fixtures = fixtures.filter(
+            (fixture) => isInFriendliesWindow(fixture) && isSeniorInternationalFixture(fixture),
+          );
         }
 
         const windows = computePredictionWindows(fixtures).fixtureWindows;
@@ -185,7 +194,9 @@ router.get('/teams', async (req, res, next) => {
       competitions.map(async (competition) => {
         let fixtures = await getFixturesForCompetition(competition);
         if (Number(competition.externalId) === FRIENDLIES_LEAGUE_ID) {
-          fixtures = fixtures.filter(isInFriendliesWindow);
+          fixtures = fixtures.filter(
+            (fixture) => isInFriendliesWindow(fixture) && isSeniorInternationalFixture(fixture),
+          );
         }
         return fixtures;
       }),
