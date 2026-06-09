@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, Zap, BarChart3, Lock, Trophy } from "lucide-react";
+import { Calendar, BarChart3, Lock, Trophy } from "lucide-react";
 import useCompetitionStore from "../store/competitionStore";
 import useAuthStore from "../store/authStore";
 import ProdeMatches from "../components/matches/ProdeMatches";
@@ -45,14 +45,14 @@ export default function Competition({ hideHeader }) {
       {/* Header */}
       {!hideHeader && (
         <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{
-              background:
-                "linear-gradient(135deg, var(--color-primary) 30%, var(--color-secondary) 100%)",
-            }}
-          >
-            <Zap size={22} className="text-white" />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/90 border border-white/20 p-1.5">
+            <img
+              src={WORLD_CUP_2026_LOGO}
+              alt=""
+              className="w-full h-full object-contain"
+              width={28}
+              height={28}
+            />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">Mi Prode</h1>

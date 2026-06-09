@@ -10,7 +10,6 @@ import {
   X,
   User,
   Compass,
-  Zap,
   // [OCULTADO] Star icon solo se usaba para GranDT
   // Star,
 } from "lucide-react";
@@ -80,7 +79,7 @@ export default function Navbar() {
               className="w-8 h-8 rounded-lg overflow-hidden shadow-sm"
             >
               <img
-                src="/favicon.svg"
+                src="/favicon.svg?v=2026-2"
                 alt=""
                 className="h-full w-full"
                 width={32}

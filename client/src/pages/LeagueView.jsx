@@ -436,7 +436,7 @@ export default function LeagueView() {
               : "bg-transparent text-white/50 hover:text-white/70"
               }`}
           >
-            <Zap size={16} /> Mi Prode
+            <Trophy size={16} /> Mi Prode
           </button>
         </div>
       )}

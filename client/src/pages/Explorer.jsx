@@ -22,7 +22,7 @@ import api from "../services/api";
 // import useSportmonksStore from "../store/useSportmonksStore";
 import useAuthStore from "../store/authStore";
 import { tCountry, tRound, tTeamName } from "../utils/translations";
-import { getLeagueLogo, getLeagueName } from "../utils/worldCupLogo";
+import { WORLD_CUP_2026_LOGO, getLeagueLogo, getLeagueName } from "../utils/worldCupLogo";
 import { getGroupCardVariant } from "../utils/groupCardVariants";
 
 // Debounce hook
@@ -501,8 +501,8 @@ export default function Explorer() {
             <div className="relative z-10 p-4 md:p-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-5">
               <div className="w-14 h-14 md:w-20 md:h-20 rounded-2xl bg-white/90 backdrop-blur border border-white/40 flex items-center justify-center shrink-0 shadow-xl p-2 transition-transform duration-300 group-hover:scale-[1.04]">
                 <img
-                  src="/favicon.svg"
-                  alt="Prode Mundial 2026"
+                  src={WORLD_CUP_2026_LOGO}
+                  alt="Copa del Mundo 2026"
                   className="w-full h-full object-contain"
                   loading="eager"
                   decoding="async"
