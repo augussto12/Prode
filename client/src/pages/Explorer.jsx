@@ -39,7 +39,6 @@ function useDebounce(value, delay) {
 
 const COUNTRIES_PER_PAGE = 25;
 const LARGE_MATCH_SECTION_THRESHOLD = 10;
-const MATCH_SECTION_PREVIEW_LIMIT = 5;
 
 // Helper: fecha de hoy en formato YYYY-MM-DD
 const getTodayDate = () => {
@@ -852,9 +851,6 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
           const isWorldCup = leagueId === WORLD_CUP_ID;
           const isFav = leagueFavorites?.has(leagueId);
           const hasManyMatches = group.matches.length >= LARGE_MATCH_SECTION_THRESHOLD;
-          const previewMatches = hasManyMatches
-            ? group.matches.slice(0, MATCH_SECTION_PREVIEW_LIMIT)
-            : group.matches;
           return (
             <div
               key={leagueId}
@@ -961,24 +957,19 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
                     className="overflow-hidden"
                   >
                     {hasManyMatches && (
-                      <div className="px-1 pt-2">
+                      <div className="flex justify-end px-1 pt-3 pb-2">
                         <button
                           type="button"
                           onClick={() => setExpandedLeague(group)}
-                          className="w-full flex items-center justify-between gap-3 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-left text-xs font-bold text-emerald-100 hover:bg-emerald-400/15 transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-emerald-200 hover:bg-white/10 hover:text-emerald-100 transition-colors cursor-pointer"
                         >
-                          <span>
-                            Mostrando {previewMatches.length} de {group.matches.length} partidos
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-emerald-300">
-                            <Maximize2 size={14} />
-                            Ver todos
-                          </span>
+                          <Maximize2 size={14} />
+                          Ver todos
                         </button>
                       </div>
                     )}
                     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/10 px-1 after:content-[''] after:w-4 after:shrink-0">
-                      {previewMatches.map((m, mIndex) => {
+                      {group.matches.map((m, mIndex) => {
                         const isLive = [
                           "1H",
                           "2H",
