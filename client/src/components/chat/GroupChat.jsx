@@ -9,9 +9,9 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
   const [messages, setMessages] = useState(initialMessages);
   const [inputVal, setInputVal] = useState("");
   const [connected, setConnected] = useState(false);
+  const [chatError, setChatError] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [isPending, startTransition] = useState(false); // Can use React 19 useTransition if preferred but manual wrapper is reliable. Wait, I'll use import { useState, useEffect, useRef, useTransition } from 'react';
-  const [isUpdating, startMessageTransition] = useTransition();
+  const [, startMessageTransition] = useTransition();
 
   const socketRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -29,28 +29,42 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
   }, [messages]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
-    // Desconectar socket anterior si existe (previene listeners duplicados)
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
-
-    // Connect to server socket (cookie HttpOnly se envía automáticamente)
     const socket = getSocket();
-    socket.connect();
-
     socketRef.current = socket;
+    socket.off("connect");
+    socket.off("disconnect");
+    socket.off("connect_error");
+    socket.off("message_error");
+    socket.off("new_message");
+
+    if (socket.connected) {
+      setConnected(true);
+      setChatError("");
+      socket.emit("join_group", groupId);
+    } else {
+      socket.connect();
+    }
 
     socket.on("connect", () => {
       setConnected(true);
+      setChatError("");
       // Join group room
       socket.emit("join_group", groupId);
     });
 
     socket.on("disconnect", () => {
       setConnected(false);
+    });
+
+    socket.on("connect_error", () => {
+      setConnected(false);
+      setChatError("No se pudo conectar el chat. Volve a iniciar sesion si el problema sigue.");
+    });
+
+    socket.on("message_error", (message) => {
+      setChatError(message || "No se pudo enviar el mensaje.");
     });
 
     socket.on("new_message", (msg) => {
@@ -65,6 +79,11 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
 
     return () => {
       socket.emit("leave_group", groupId);
+      socket.off("connect");
+      socket.off("disconnect");
+      socket.off("connect_error");
+      socket.off("message_error");
+      socket.off("new_message");
       socket.disconnect();
       socketRef.current = null;
     };
@@ -79,6 +98,7 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
       content: inputVal,
     });
 
+    setChatError("");
     setInputVal("");
   };
 
@@ -196,6 +216,11 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
 
         {/* Form */}
         <div className="p-3 bg-white/[0.02] border-t border-white/5">
+          {chatError && (
+            <div className="mb-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+              {chatError}
+            </div>
+          )}
           <form onSubmit={handleSend} className="flex gap-2">
             <input
               type="text"
@@ -307,6 +332,11 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
 
             {/* Form */}
             <div className="p-3 bg-black/60 border-t border-white/10 pb-6">
+              {chatError && (
+                <div className="mb-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+                  {chatError}
+                </div>
+              )}
               <form onSubmit={handleSend} className="flex gap-2">
                 <input
                   type="text"

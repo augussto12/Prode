@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import api from "../services/api.js";
+import api, { getApiErrorMessage } from "../services/api.js";
 
 const useAuthStore = create((set, get) => ({
   // User data se guarda en localStorage para persistencia de UI
@@ -17,7 +17,7 @@ const useAuthStore = create((set, get) => ({
       set({ user: data.user, loading: false });
       return data;
     } catch (err) {
-      const msg = err.response?.data?.error || "Login failed";
+      const msg = getApiErrorMessage(err, "No se pudo iniciar sesion.");
       set({ error: msg, loading: false });
       throw err;
     }
@@ -35,7 +35,7 @@ const useAuthStore = create((set, get) => ({
       set({ loading: false });
       return data;
     } catch (err) {
-      const msg = err.response?.data?.error || "Registration failed";
+      const msg = getApiErrorMessage(err, "No se pudo crear la cuenta.");
       set({ error: msg, loading: false });
       throw err;
     }
@@ -49,7 +49,7 @@ const useAuthStore = create((set, get) => ({
       set({ user: data.user, loading: false });
       return data;
     } catch (err) {
-      const msg = err.response?.data?.error || "Verification failed";
+      const msg = getApiErrorMessage(err, "No se pudo verificar el email.");
       set({ error: msg, loading: false });
       throw err;
     }
@@ -62,7 +62,7 @@ const useAuthStore = create((set, get) => ({
       set({ loading: false });
       return data;
     } catch (err) {
-      const msg = err.response?.data?.error || "Resend failed";
+      const msg = getApiErrorMessage(err, "No se pudo reenviar el email.");
       set({ error: msg, loading: false });
       throw err;
     }
@@ -75,7 +75,7 @@ const useAuthStore = create((set, get) => ({
       set({ loading: false });
       return data;
     } catch (err) {
-      const msg = err.response?.data?.error || "Password reset failed";
+      const msg = getApiErrorMessage(err, "No se pudo enviar el reset.");
       set({ error: msg, loading: false });
       throw err;
     }
@@ -88,7 +88,7 @@ const useAuthStore = create((set, get) => ({
       set({ loading: false });
       return data;
     } catch (err) {
-      const msg = err.response?.data?.error || "Password reset failed";
+      const msg = getApiErrorMessage(err, "No se pudo actualizar la contrasena.");
       set({ error: msg, loading: false });
       throw err;
     }
@@ -103,6 +103,8 @@ const useAuthStore = create((set, get) => ({
     localStorage.removeItem("prode_user");
     set({ user: null });
   },
+
+  clearError: () => set({ error: null }),
 
   fetchProfile: async () => {
     try {

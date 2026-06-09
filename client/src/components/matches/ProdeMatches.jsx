@@ -51,97 +51,41 @@ export default function ProdeMatches({
     try {
       const compParam = `?competitionId=${competitionId}`;
 
-      // 1. Get competition info
-      const compRes = await api.get(`/competitions/${competitionId}`);
-      const leagueId = compRes.data.externalId;
-      const season = compRes.data.season;
-
-      // 2. Fetch fixtures, favorites, and predictions in parallel
-      // Las llamadas autenticadas fallan silenciosamente si no hay sesión
-      const [fixturesRes, favRes, predRes, windowsRes] = await Promise.all([
-        api.get(`/explorer/leagues/${leagueId}/fixtures?season=${season}`),
+      const [matchesRes, favRes, predRes, windowsRes] = await Promise.all([
+        api.get(`/matches${compParam}`),
         api.get("/auth/me/favorites").catch(() => ({ data: [] })),
-        api.get(`/predictions/my${compParam}`).catch(() => ({ data: [] })),
+        api.get("/predictions/my").catch(() => ({ data: [] })),
         api.get(`/predictions/phase-windows${compParam}`).catch(() => ({ data: null })),
       ]);
 
-      const fixtures = fixturesRes.data || [];
+      const matches = matchesRes.data || [];
       const userPreds = predRes.data || [];
-      const fixtureWindows = windowsRes.data?.fixtureWindows || {};
-
-      // Mapear status de la API a nuestro enum local
-      const statusMap = {
-        NS: "SCHEDULED",
-        TBD: "SCHEDULED",
-        "1H": "LIVE",
-        "2H": "LIVE",
-        HT: "LIVE",
-        ET: "LIVE",
-        P: "LIVE",
-        BT: "LIVE",
-        LIVE: "LIVE",
-        FT: "FINISHED",
-        AET: "FINISHED",
-        PEN: "FINISHED",
-        PST: "POSTPONED",
-        SUSP: "POSTPONED",
-        INT: "POSTPONED",
-        CANC: "CANCELLED",
-        ABD: "CANCELLED",
-        AWD: "CANCELLED",
-        WO: "CANCELLED",
-      };
-
       // Mapear predictions por externalFixtureId (convertir a Number para match con fix.id numérico)
       const predMap = new Map(userPreds.map((p) => [Number(p.externalFixtureId), p]));
 
       const extractedTeams = new Map();
 
-      // Normalizar datos de fixtures para el MatchCard
-      const normalizedMatches = fixtures.map((f) => {
-        const fix = f.fixture;
-        const teams = f.teams;
-        const goals = f.goals;
-        const round = f.league.round || "";
-        const stage = tRound(round.replace(/ - \d+$/, ""));
-
-        // Extract teams for the favorites picker
-        if (!extractedTeams.has(teams.home.id)) {
-          extractedTeams.set(teams.home.id, {
-            id: teams.home.id,
-            name: teams.home.name,
-            logo: teams.home.logo,
+      const normalizedMatches = matches.map((match) => {
+        if (match.homeTeamId && !extractedTeams.has(match.homeTeamId)) {
+          extractedTeams.set(match.homeTeamId, {
+            id: match.homeTeamId,
+            name: match.homeTeam,
+            logo: match.homeTeamLogo,
           });
         }
-        if (!extractedTeams.has(teams.away.id)) {
-          extractedTeams.set(teams.away.id, {
-            id: teams.away.id,
-            name: teams.away.name,
-            logo: teams.away.logo,
+        if (match.awayTeamId && !extractedTeams.has(match.awayTeamId)) {
+          extractedTeams.set(match.awayTeamId, {
+            id: match.awayTeamId,
+            name: match.awayTeam,
+            logo: match.awayTeamLogo,
           });
         }
 
+        const rawStage = match.round || match.stage || "";
         return {
-          id: fix.id, // Usamos el externalId como la key / id principal en el frontend
-          externalId: fix.id,
-          competitionId,
-          homeTeam: teams.home.name,
-          awayTeam: teams.away.name,
-          homeTeamLogo: teams.home.logo,
-          awayTeamLogo: teams.away.logo,
-          homeTeamId: teams.home.id,
-          awayTeamId: teams.away.id,
-          matchDate: fix.date,
-          status: statusMap[fix.status?.short] || "SCHEDULED",
-          statusShort: fix.status?.short,
-          elapsed: fix.status?.elapsed,
-          homeGoals: goals.home,
-          awayGoals: goals.away,
-          stage: stage,
-          round: round,
-          venue: fix.venue ? `${fix.venue.name}, ${fix.venue.city}` : null,
-          prediction: predMap.get(fix.id) || null,
-          predictionWindow: fixtureWindows[String(fix.id)] || null,
+          ...match,
+          stage: tRound(rawStage.replace(/ - \d+$/, "")),
+          prediction: predMap.get(Number(match.externalId)) || null,
         };
       });
 
@@ -168,7 +112,9 @@ export default function ProdeMatches({
   const predictionsMap = new Map(
     predictions.map((p) => [Number(p.externalFixtureId), p]),
   );
-  const usedJokers = predictions.filter((p) => p.isJoker).length;
+  const usedJokers = predictions.filter(
+    (p) => p.isJoker && Number(p.competitionId) === Number(competitionId),
+  ).length;
   const remainingJokers = Math.max(0, JOKER_LIMIT - usedJokers);
 
   const toggleFavorite = async (teamName) => {

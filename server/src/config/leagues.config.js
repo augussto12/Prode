@@ -17,6 +17,7 @@ export const CURATED_LEAGUES = {
     848,  // Conference League
     13,   // Copa Libertadores
     11,   // Copa Sudamericana
+    10,   // Friendlies / amistosos internacionales
     9,    // Copa América
     4,    // Euro
     5,    // UEFA Nations League

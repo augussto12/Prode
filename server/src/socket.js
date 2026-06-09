@@ -97,17 +97,26 @@ export function initSocket(server) {
       try {
         // --- Throttle: rechazar si envía demasiado rápido ---
         const now = Date.now();
-        if (now - socket.lastMessageTime < MESSAGE_COOLDOWN_MS) return;
+        if (now - socket.lastMessageTime < MESSAGE_COOLDOWN_MS) {
+          socket.emit('message_error', 'Espera un segundo antes de mandar otro mensaje.');
+          return;
+        }
         socket.lastMessageTime = now;
 
         const { groupId, content } = data;
 
         // Validar groupId
         const parsedGroupId = Number(groupId);
-        if (isNaN(parsedGroupId) || parsedGroupId <= 0) return;
+        if (isNaN(parsedGroupId) || parsedGroupId <= 0) {
+          socket.emit('message_error', 'Grupo invalido.');
+          return;
+        }
 
         // Validar contenido
-        if (!content || typeof content !== 'string' || content.trim().length === 0) return;
+        if (!content || typeof content !== 'string' || content.trim().length === 0) {
+          socket.emit('message_error', 'Escribi un mensaje antes de enviarlo.');
+          return;
+        }
         
         // Sanitizar: recortar, limitar largo, escapar HTML
         const sanitizedContent = escapeHtml(content.trim().slice(0, 500));
@@ -116,7 +125,10 @@ export function initSocket(server) {
         const membership = await prisma.groupUser.findUnique({
           where: { userId_groupId: { userId: socket.user.id, groupId: parsedGroupId } }
         });
-        if (!membership || membership.isBanned) return; // Silenciosamente ignora
+        if (!membership || membership.isBanned) {
+          socket.emit('message_error', 'No tenes permiso para escribir en este grupo.');
+          return;
+        }
 
         const savedMessage = await prisma.message.create({
           data: { content: sanitizedContent, userId: socket.user.id, groupId: parsedGroupId },
@@ -135,6 +147,7 @@ export function initSocket(server) {
         });
       } catch (err) {
         console.error('Socket send_message error:', err.message);
+        socket.emit('message_error', 'No se pudo enviar el mensaje.');
       }
     });
 

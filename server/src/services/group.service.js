@@ -82,7 +82,7 @@ export async function getGroupById(groupId, userId) {
       competition: { select: { id: true, externalId: true, season: true, name: true, logo: true } },
       messages: {
         take: 50,
-        orderBy: { createdAt: 'asc' },
+        orderBy: { createdAt: 'desc' },
         include: {
           user: { select: { id: true, displayName: true, role: true, themeId: true } }
         }
@@ -98,7 +98,13 @@ export async function getGroupById(groupId, userId) {
 
   if (membership?.isBanned) throw new ForbiddenError('Fuiste baneado de este grupo');
 
-  return { ...group, memberCount: group._count.groupUsers, isMember: !!membership, isAdmin: membership?.isAdmin };
+  return {
+    ...group,
+    messages: [...group.messages].reverse(),
+    memberCount: group._count.groupUsers,
+    isMember: !!membership,
+    isAdmin: membership?.isAdmin,
+  };
 }
 
 export async function joinGroup(userId, inviteCode) {

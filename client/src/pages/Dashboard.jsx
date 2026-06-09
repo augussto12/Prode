@@ -30,7 +30,7 @@ export default function Dashboard() {
       const [matchRes, favRes, teamRes, predRes] = await Promise.all([
         api.get(`/matches${compParam}`),
         api.get("/auth/me/favorites"),
-        api.get("/matches/teams"),
+        api.get(`/matches/teams${compParam}`),
         api.get(`/predictions/my${compParam}`),
       ]);
       setMatches(matchRes.data);
@@ -45,7 +45,9 @@ export default function Dashboard() {
   };
 
   // Map predictions by matchId for O(1) lookup
-  const predictionsMap = new Map(predictions.map((p) => [p.matchId, p]));
+  const predictionsMap = new Map(
+    predictions.map((p) => [Number(p.externalFixtureId || p.matchId), p]),
+  );
 
   const toggleFavorite = async (teamName) => {
     const updated = favorites.includes(teamName)
@@ -257,7 +259,7 @@ export default function Dashboard() {
                                 favorites.includes(match.homeTeam) ||
                                 favorites.includes(match.awayTeam)
                               }
-                              existingPrediction={predictionsMap.get(match.id)}
+                              existingPrediction={predictionsMap.get(Number(match.externalId || match.id))}
                               onPredictionSaved={loadData}
                             />
                           ))}

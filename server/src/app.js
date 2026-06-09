@@ -19,6 +19,7 @@ import healthRoutes from './routes/health.routes.js';
 import syncRoutes from './routes/sync.routes.js';
 import competitionRoutes from './routes/competition.routes.js';
 import explorerRoutes from './routes/explorer.routes.js';
+import matchRoutes from './routes/match.routes.js';
 // import sportmonksRoutes from './routes/sportmonks.routes.js';
 // import fantasyRoutes from './routes/fantasy.routes.js';
 // import { setupCronJobs } from './cron/scheduledTasks.js';
@@ -142,6 +143,7 @@ app.use('/api/guru', guruLimiter, guruRoutes);
 app.use('/api/admin/sync', syncRoutes);
 app.use('/api/competitions', competitionRoutes);
 app.use('/api/explorer', explorerRoutes);
+app.use('/api/matches', matchRoutes);
 
 // Error handler centralizado
 app.use(errorHandler);
