@@ -616,24 +616,24 @@ export default function Explorer() {
 
       {/* Selector de Fecha + Partidos */}
       <div className="glass-card rounded-2xl p-4 border border-white/5">
-        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
             <span className="text-sm font-bold text-white/50 uppercase tracking-wider">
               Partidos
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Calendar size={14} className="text-white/50" />
+          <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
+            <Calendar size={14} className="shrink-0 text-white/50" />
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-indigo-500 transition-all"
+              className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white transition-all focus:border-indigo-500 focus:outline-none sm:w-[9.5rem] sm:flex-none"
             />
             <button
               onClick={() => setSelectedDate(getTodayDate())}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border cursor-pointer ${
+              className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all cursor-pointer ${
                 selectedDate === getTodayDate()
                   ? "bg-indigo-500/20 text-indigo-400 border-indigo-500/30"
                   : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
@@ -822,7 +822,7 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-white/50 uppercase tracking-wider">
             {totalCount} encuentros
@@ -831,7 +831,7 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
         {liveCount > 0 && (
           <button
             onClick={() => setLiveOnly((prev) => !prev)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer ${
+            className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
               liveOnly
                 ? "bg-red-500/20 text-red-400 border-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.2)]"
                 : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white/60"

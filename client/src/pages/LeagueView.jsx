@@ -536,8 +536,8 @@ export default function LeagueView() {
                               </colgroup>
                               <thead>
                                 <tr className="text-white/50 text-xs">
-                                  <th className="text-left px-3 py-2 font-medium sticky-col backdrop-blur-md">
-                                    <span className="inline-block w-5 text-center text-white/50">
+                                  <th className="text-left px-2.5 py-2 font-medium sticky-col backdrop-blur-md">
+                                    <span className="inline-block w-4 text-center text-white/50">
                                       #
                                     </span>
                                     Equipo
@@ -603,15 +603,15 @@ export default function LeagueView() {
                                       className="border-t border-white/5 hover:bg-white/[0.02]"
                                     >
                                       <td
-                                        className={`px-3 py-2.5 sticky-col backdrop-blur-md border-r border-l-[3px] border-white/5 ${indicatorColor}`}
+                                        className={`px-2.5 py-2.5 sticky-col backdrop-blur-md border-r border-l-[3px] border-white/5 ${indicatorColor}`}
                                       >
                                         <div
-                                          className="flex items-center gap-1.5 cursor-pointer group"
+                                          className="flex items-center gap-1 cursor-pointer group"
                                           onClick={() =>
                                             navigate(`/equipo/${row.team.id}`)
                                           }
                                         >
-                                          <span className="w-5 shrink-0 font-bold text-white/60 text-xs text-center">
+                                          <span className="w-4 shrink-0 font-bold text-white/60 text-xs text-center">
                                             {row.rank}
                                           </span>
                                           {row.team.logo && (

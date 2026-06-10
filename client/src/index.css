@@ -138,14 +138,14 @@ th.sticky-col {
   right: 0;
   z-index: 10;
   box-shadow: -4px 0 10px rgba(0, 0, 0, 0.14);
-  background: color-mix(in srgb, var(--primary-color, #6366f1) 6%, rgba(0, 0, 0, 0.5));
+  background: color-mix(in srgb, var(--primary-color, #6366f1) 5%, rgba(0, 0, 0, 0.78));
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
 }
 
 th.sticky-points {
   z-index: 20;
-  background: color-mix(in srgb, var(--primary-color, #6366f1) 7%, rgba(0, 0, 0, 0.58));
+  background: color-mix(in srgb, var(--primary-color, #6366f1) 6%, rgba(0, 0, 0, 0.84));
 }
 
 .standings-table {
@@ -155,7 +155,7 @@ th.sticky-points {
 }
 
 .standings-table-team-col {
-  width: clamp(12.5rem, 54vw, 14.5rem);
+  width: clamp(11.75rem, 50vw, 13.25rem);
 }
 
 .standings-table-stat-col {
