@@ -79,7 +79,7 @@ export default function Navbar() {
               className="w-8 h-8 rounded-lg overflow-hidden shadow-sm"
             >
               <img
-                src="/favicon.svg?v=2026-3"
+                src="/icon-192.png?v=2026-5"
                 alt=""
                 className="h-full w-full"
                 width={32}
