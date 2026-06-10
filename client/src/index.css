@@ -148,6 +148,24 @@ th.sticky-points {
   background: color-mix(in srgb, var(--primary-color, #6366f1) 7%, rgba(0, 0, 0, 0.58));
 }
 
+.standings-table {
+  table-layout: fixed;
+  width: max-content;
+  min-width: 34rem;
+}
+
+.standings-table-team-col {
+  width: clamp(12.5rem, 54vw, 14.5rem);
+}
+
+.standings-table-stat-col {
+  width: 2.75rem;
+}
+
+.standings-table-points-col {
+  width: 3.25rem;
+}
+
 /* Safe areas para Mobile/iOS */
 .safe-padding-bottom {
   padding-bottom: env(safe-area-inset-bottom);

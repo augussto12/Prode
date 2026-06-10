@@ -522,11 +522,22 @@ export default function LeagueView() {
                           className="glass-card rounded-2xl overflow-hidden"
                         >
                           <div className="overflow-x-auto">
-                            <table className="w-full min-w-[640px] text-sm">
+                            <table className="standings-table text-sm">
+                              <colgroup>
+                                <col className="standings-table-team-col" />
+                                <col className="standings-table-stat-col" />
+                                <col className="standings-table-stat-col" />
+                                <col className="standings-table-stat-col" />
+                                <col className="standings-table-stat-col" />
+                                <col className="standings-table-stat-col" />
+                                <col className="standings-table-stat-col" />
+                                <col className="standings-table-stat-col" />
+                                <col className="standings-table-points-col" />
+                              </colgroup>
                               <thead>
                                 <tr className="text-white/50 text-xs">
-                                  <th className="text-left px-4 py-2 font-medium sticky-col backdrop-blur-md">
-                                    <span className="inline-block w-6 text-white/50">
+                                  <th className="text-left px-3 py-2 font-medium sticky-col backdrop-blur-md">
+                                    <span className="inline-block w-5 text-center text-white/50">
                                       #
                                     </span>
                                     Equipo
@@ -592,15 +603,15 @@ export default function LeagueView() {
                                       className="border-t border-white/5 hover:bg-white/[0.02]"
                                     >
                                       <td
-                                        className={`px-4 py-2.5 sticky-col backdrop-blur-md border-r border-l-[3px] border-white/5 ${indicatorColor}`}
+                                        className={`px-3 py-2.5 sticky-col backdrop-blur-md border-r border-l-[3px] border-white/5 ${indicatorColor}`}
                                       >
                                         <div
-                                          className="flex items-center gap-2 cursor-pointer group"
+                                          className="flex items-center gap-1.5 cursor-pointer group"
                                           onClick={() =>
                                             navigate(`/equipo/${row.team.id}`)
                                           }
                                         >
-                                          <span className="w-5 font-bold text-white/60 text-xs text-right mr-1">
+                                          <span className="w-5 shrink-0 font-bold text-white/60 text-xs text-center">
                                             {row.rank}
                                           </span>
                                           {row.team.logo && (
@@ -619,7 +630,10 @@ export default function LeagueView() {
                                               }}
                                             />
                                           )}
-                                          <span className="text-white font-medium text-xs group-hover:text-indigo-300 transition-colors whitespace-nowrap">
+                                          <span
+                                            className="min-w-0 truncate text-white font-medium text-xs group-hover:text-indigo-300 transition-colors"
+                                            title={tTeamName(row.team.name)}
+                                          >
                                             {tTeamName(row.team.name)}
                                           </span>
                                         </div>
