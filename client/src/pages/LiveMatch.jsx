@@ -23,9 +23,9 @@ export default function LiveMatch() {
   const [firstLeg, setFirstLeg] = useState(null); // Partido de ida (para llaves de vuelta)
   const [h2hMatches, setH2hMatches] = useState([]); // Historial H2H completo
   const [loading, setLoading] = useState(true);
+  const [activeMatchTab, setActiveMatchTab] = useState("timeline");
   const [activeLineupTab, setActiveLineupTab] = useState("home");
   const [activeOddsMarketIndex, setActiveOddsMarketIndex] = useState(0);
-  const [showH2H, setShowH2H] = useState(false);
   const intervalRef = useRef(null);
 
   useEffect(() => {
@@ -172,6 +172,17 @@ export default function LiveMatch() {
   const isFinished = ["FT", "AET", "PEN"].includes(match?.status?.short);
 
   const goalEvents = events.filter((e) => e.type === "Goal");
+  const matchTabs = [
+    { id: "timeline", label: "Timeline" },
+    { id: "lineups", label: "Alineaciones" },
+    { id: "stats", label: "Estadísticas" },
+  ];
+  const oddsMarkets = liveOdds[0]?.odds
+    ? liveOdds[0].odds.slice(0, 10)
+    : liveOdds[0]?.bookmakers?.[0]?.bets?.slice(0, 10) || [];
+  const currentOddsIndex =
+    activeOddsMarketIndex < oddsMarkets.length ? activeOddsMarketIndex : 0;
+  const currentOddsMarket = oddsMarkets[currentOddsIndex];
 
   return (
     <div className="space-y-6 max-w-[1536px] mx-auto pb-10 px-4 xl:px-8">
@@ -443,11 +454,26 @@ export default function LiveMatch() {
         )}
       </div>
 
-      {/* THREE-COLUMN LAYOUT (With Mobile Toggle) */}
+      <div className="flex gap-1 p-1 rounded-xl border border-white/10 bg-white/5 overflow-x-auto">
+        {matchTabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveMatchTab(tab.id)}
+            className={`flex-1 min-w-[118px] rounded-lg px-3 py-2 text-xs sm:text-sm font-bold transition-all cursor-pointer border ${
+              activeMatchTab === tab.id
+                ? "bg-white/15 text-white border-white/10"
+                : "bg-transparent text-white/55 border-transparent hover:text-white hover:bg-white/5"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-      {/* Mobile Toggle */}
-      {lineups.length >= 2 && (
-        <div className="flex lg:hidden bg-white/5 rounded-xl p-1 mb-2 border border-white/10 max-w-sm mx-auto">
+      {/* Lineup team tabs */}
+      {activeMatchTab === "lineups" && lineups.length >= 2 && (
+        <div className="flex bg-white/5 rounded-xl p-1 mb-2 border border-white/10 max-w-xl mx-auto">
           <button
             onClick={() => setActiveLineupTab("home")}
             className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all border ${activeLineupTab === "home" ? "bg-white/20 text-white shadow border-white/10" : "text-white/60 border-transparent"}`}
@@ -464,117 +490,28 @@ export default function LiveMatch() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* LEFT COLUMN: Home Lineup */}
-        {lineups.length >= 2 && (
-          <div
-            className={`lg:col-span-3 lg:border-none lg:block lg:order-1 ${activeLineupTab === "home" ? "block order-1" : "hidden"}`}
-          >
-            <LineupCard lineup={lineups[0]} align="left" navigate={navigate} />
-          </div>
-        )}
-
         {/* CENTER COLUMN: Stats & Events */}
         <div
-          className={`${lineups.length >= 2 ? "lg:col-span-6" : "lg:col-span-12"} space-y-6 order-2 lg:order-2 mb-6 lg:mb-0`}
+          className="lg:col-span-12 space-y-6 order-2 lg:order-2 mb-6 lg:mb-0"
         >
-          {/* Live Odds / Pre-Match Odds */}
-          {liveOdds.length > 0 && (
-            <m.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-card rounded-3xl p-6 ring-1 ring-amber-400/20"
-            >
-              <h3 className="text-sm font-bold text-amber-400/80 uppercase tracking-widest mb-4 flex items-center justify-center gap-2">
-                <span className="text-amber-400/50">📈</span>{" "}
-                {["1H", "2H", "HT", "ET", "BT", "P", "LIVE"].includes(
-                  match?.status?.short,
-                )
-                  ? "Live Cuotas"
-                  : "Cuotas Pre-Partido"}
-              </h3>
-              <div className="space-y-4">
-                {(() => {
-                  let markets = [];
-                  if (liveOdds[0]?.odds) {
-                    // LIVE ODDS FORMAT
-                    // Prioritize specific IDs (1: Match Winner, 23: Final Score, etc.) then rest, limit to 10
-                    markets = liveOdds[0].odds.slice(0, 10);
-                  } else if (liveOdds[0]?.bookmakers) {
-                    // PRE MATCH FORMAT
-                    markets =
-                      liveOdds[0].bookmakers[0]?.bets?.slice(0, 10) || [];
-                  }
-
-                  if (markets.length === 0)
-                    return (
-                      <div className="text-center text-xs text-white/60">
-                        No hay cuotas disponibles
-                      </div>
-                    );
-
-                  // Fallback if index gets out of bounds during a live update
-                  const currentIndex =
-                    activeOddsMarketIndex < markets.length
-                      ? activeOddsMarketIndex
-                      : 0;
-                  const currentMarket = markets[currentIndex];
-
-                  return (
-                    <div className="space-y-4">
-                      {/* Market Selector Tabs (Horizontal Scroll) */}
-                      <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
-                        {markets.map((market, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => setActiveOddsMarketIndex(idx)}
-                            className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-widest uppercase transition-all ${currentIndex === idx ? "bg-amber-500 text-black shadow-lg" : "bg-white/5 text-white/60 hover:bg-white/10"}`}
-                          >
-                            {tMarket(market.name)}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Active Market Content */}
-                      <m.div
-                        key={currentIndex}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="bg-white/[0.02] rounded-xl p-3 md:p-4 border border-white/5"
-                      >
-                        <div className="flex flex-wrap gap-2 justify-center">
-                          {(currentMarket.values || [])
-                            .filter((v) => v.odd)
-                            .slice(0, 12)
-                            .map((val, i) => (
-                              <div
-                                key={i}
-                                className={`px-4 py-2 rounded-xl text-center border transition-all ${val.main ? "bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]" : "bg-white/5 border-white/10 text-white/70"}`}
-                              >
-                                <div className="text-[10px] uppercase font-bold tracking-wider mb-0.5 opacity-70 truncate max-w-[100px]">
-                                  {tOddValue(val.value)} {val.handicap || ""}
-                                </div>
-                                <div className="text-sm font-black">
-                                  {val.odd}
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      </m.div>
-                    </div>
-                  );
-                })()}
+          {activeMatchTab === "lineups" && (
+            lineups.length >= 2 ? (
+              <div className="mx-auto max-w-3xl">
+                {activeLineupTab === "home" ? (
+                  <LineupCard lineup={lineups[0]} align="left" navigate={navigate} />
+                ) : (
+                  <LineupCard lineup={lineups[1]} align="right" navigate={navigate} />
+                )}
               </div>
-              <div className="text-center mt-4 text-[9px] font-mono text-white/40 uppercase tracking-widest">
-                {liveOdds[0]?.bookmakers
-                  ? `Vía ${liveOdds[0].bookmakers[0]?.name}`
-                  : "Live Odds Auto"}
+            ) : (
+              <div className="glass-card rounded-3xl p-8 text-center text-white/60 border border-white/5">
+                <p>Alineaciones no disponibles.</p>
               </div>
-            </m.div>
+            )
           )}
 
           {/* Statistics */}
-          {statistics.length >= 2 && (
+          {activeMatchTab === "stats" && statistics.length >= 2 && (
             <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -648,7 +585,7 @@ export default function LiveMatch() {
           )}
 
           {/* Injuries / Hospital */}
-          {injuries.length > 0 ? (
+          {activeMatchTab === "stats" && (injuries.length > 0 ? (
             <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -785,10 +722,10 @@ export default function LiveMatch() {
                 Todos los jugadores a disposición
               </p>
             </m.div>
-          )}
+          ))}
 
           {/* Events Timeline */}
-          {events.length > 0 && (
+          {activeMatchTab === "timeline" && events.length > 0 && (
             <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -920,169 +857,16 @@ export default function LiveMatch() {
             </m.div>
           )}
 
-          {/* Historial H2H (Últimos 5 partidos) */}
-          {h2hMatches.length > 0 ? (
-            <m.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-card rounded-3xl overflow-hidden border border-white/5"
-            >
-              <button
-                onClick={() => setShowH2H(!showH2H)}
-                className="w-full p-6 flex flex-col md:flex-row items-center justify-between cursor-pointer gap-2 hover:bg-white/5 transition-colors border-none bg-transparent"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-white/50 text-lg">⚔️</span>
-                  <h3 className="text-sm font-bold text-white uppercase tracking-widest text-left">
-                    Historial H2H
-                  </h3>
-                  <span className="text-[10px] text-white/60 bg-white/10 px-2 py-0.5 rounded-full ml-1">
-                    Últimos {h2hMatches.length}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* Resumen de victorias simple en el header del toggle */}
-                  {(() => {
-                    let wH = 0,
-                      wA = 0,
-                      d = 0;
-                    h2hMatches.forEach((m) => {
-                      const hWon = m.goals?.home > m.goals?.away;
-                      const aWon = m.goals?.away > m.goals?.home;
-                      if (hWon) {
-                        if (m.teams.home.id === teams.home.id) wH++;
-                        else wA++;
-                      } else if (aWon) {
-                        if (m.teams.away.id === teams.away.id) wA++;
-                        else wH++;
-                      } else d++;
-                    });
-                    return (
-                      <div className="flex text-[10px] font-bold">
-                        <span className="text-emerald-400 w-4 text-center">
-                          {wH}
-                        </span>
-                        <span className="text-white/50 px-1 border-x border-white/10 mx-1">
-                          {d}
-                        </span>
-                        <span className="text-blue-400 w-4 text-center">
-                          {wA}
-                        </span>
-                      </div>
-                    );
-                  })()}
-                  <m.div
-                    animate={{ rotate: showH2H ? 180 : 0 }}
-                    className="text-white/50 ml-2"
-                  >
-                    ▼
-                  </m.div>
-                </div>
-              </button>
+          {activeMatchTab === "timeline" && events.length === 0 && (
+            <div className="glass-card rounded-3xl p-8 text-center text-white/60 border border-white/5">
+              <p>Todavía no hay eventos para mostrar.</p>
+            </div>
+          )}
 
-              <AnimatePresence>
-                {showH2H && (
-                  <m.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-4 pb-4 space-y-2">
-                      {h2hMatches.map((m) => {
-                        const hG = m.goals?.home ?? "-";
-                        const aG = m.goals?.away ?? "-";
-                        const tHome = m.teams?.home;
-                        const tAway = m.teams?.away;
-                        const isDraw = hG === aG;
-
-                        return (
-                          <div
-                            key={m.fixture.id}
-                            onClick={() => navigate(`/partido/${m.fixture.id}`)}
-                            className="flex flex-col md:flex-row items-center max-w-full justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-colors cursor-pointer group"
-                          >
-                            <div className="flex items-center justify-center gap-1.5 md:gap-3 w-full max-w-full">
-                              <div className="flex-1 flex items-center justify-end gap-1.5 md:gap-2 min-w-0">
-                                <span
-                                  className={`text-[10px] md:text-xs font-bold truncate text-right ${hG > aG ? "text-white" : "text-white/60"}`}
-                                >
-                                  {tHome?.name}
-                                </span>
-                                {tHome?.logo && (
-                                  <img                                     src={tHome.logo}
-                                    alt=""
-                                    className="w-4 h-4 md:w-5 md:h-5 object-contain"
-                                  loading="lazy" decoding="async" width={16} height={16} />
-                                )}
-                              </div>
-
-                              <div className="flex flex-col items-center justify-center px-1 md:px-2 min-w-[50px] md:min-w-[60px]">
-                                <span className="text-[8px] md:text-[9px] text-white/50 mb-0.5">
-                                  {new Date(m.fixture.date).getFullYear()}
-                                </span>
-                                <div className="text-xs md:text-sm font-black font-mono tracking-widest text-center whitespace-nowrap">
-                                  <span
-                                    className={
-                                      hG > aG
-                                        ? "text-emerald-400"
-                                        : isDraw
-                                          ? "text-amber-400"
-                                          : "text-white/60"
-                                    }
-                                  >
-                                    {hG}
-                                  </span>
-                                  <span className="text-white/40 mx-1">:</span>
-                                  <span
-                                    className={
-                                      aG > hG
-                                        ? "text-blue-400"
-                                        : isDraw
-                                          ? "text-amber-400"
-                                          : "text-white/60"
-                                    }
-                                  >
-                                    {aG}
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className="flex-1 flex items-center justify-start gap-1.5 md:gap-2 min-w-0">
-                                {tAway?.logo && (
-                                  <img                                     src={tAway.logo}
-                                    alt=""
-                                    className="w-4 h-4 md:w-5 md:h-5 object-contain"
-                                  loading="lazy" decoding="async" width={16} height={16} />
-                                )}
-                                <span
-                                  className={`text-[10px] md:text-xs font-bold truncate text-left ${aG > hG ? "text-white" : "text-white/60"}`}
-                                >
-                                  {tAway?.name}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </m.div>
-                )}
-              </AnimatePresence>
-            </m.div>
-          ) : (
-            <m.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-card rounded-3xl p-6 border border-white/5"
-            >
-              <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
-                <span className="text-white/50">⚔️</span> Historial H2H
-              </h3>
-              <p className="text-center text-xs text-white/60">
-                No hay historial previo entre estos equipos
-              </p>
-            </m.div>
+          {activeMatchTab === "stats" && statistics.length < 2 && (
+            <div className="glass-card rounded-3xl p-8 text-center text-white/60 border border-white/5">
+              <p>Estadísticas no disponibles.</p>
+            </div>
           )}
 
           {/* No data */}
@@ -1096,14 +880,193 @@ export default function LiveMatch() {
             )}
         </div>
 
-        {/* RIGHT COLUMN: Away Lineup */}
-        {lineups.length >= 2 && (
-          <div
-            className={`lg:col-span-3 lg:border-none lg:block lg:order-3 ${activeLineupTab === "away" ? "block order-1" : "hidden"}`}
-          >
-            <LineupCard lineup={lineups[1]} align="right" navigate={navigate} />
+      </div>
+
+      <div className="space-y-6">
+        <m.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card rounded-3xl p-4 sm:p-6 ring-1 ring-amber-400/20"
+        >
+          <h3 className="text-sm font-bold text-amber-400/80 uppercase tracking-widest mb-4 text-center">
+            {["1H", "2H", "HT", "ET", "BT", "P", "LIVE"].includes(
+              match?.status?.short,
+            )
+              ? "Cuotas en vivo"
+              : "Cuotas"}
+          </h3>
+
+          {oddsMarkets.length > 0 ? (
+            <div className="space-y-4">
+              <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
+                {oddsMarkets.map((market, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveOddsMarketIndex(idx)}
+                    className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-widest uppercase transition-all cursor-pointer ${
+                      currentOddsIndex === idx
+                        ? "bg-amber-500 text-black shadow-lg"
+                        : "bg-white/5 text-white/60 hover:bg-white/10"
+                    }`}
+                  >
+                    {tMarket(market.name)}
+                  </button>
+                ))}
+              </div>
+
+              <m.div
+                key={currentOddsIndex}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white/[0.02] rounded-xl p-3 md:p-4 border border-white/5"
+              >
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {(currentOddsMarket?.values || [])
+                    .filter((v) => v.odd)
+                    .slice(0, 12)
+                    .map((val, i) => (
+                      <div
+                        key={i}
+                        className={`px-4 py-2 rounded-xl text-center border transition-all ${
+                          val.main
+                            ? "bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]"
+                            : "bg-white/5 border-white/10 text-white/70"
+                        }`}
+                      >
+                        <div className="text-[10px] uppercase font-bold tracking-wider mb-0.5 opacity-70 truncate max-w-[100px]">
+                          {tOddValue(val.value)} {val.handicap || ""}
+                        </div>
+                        <div className="text-sm font-black">{val.odd}</div>
+                      </div>
+                    ))}
+                </div>
+              </m.div>
+
+              <div className="text-center mt-4 text-[9px] font-mono text-white/40 uppercase tracking-widest">
+                {liveOdds[0]?.bookmakers
+                  ? `Vía ${liveOdds[0].bookmakers[0]?.name}`
+                  : "Live Odds Auto"}
+              </div>
+            </div>
+          ) : (
+            <p className="text-center text-sm text-white/55 py-6">
+              No hay cuotas disponibles.
+            </p>
+          )}
+        </m.div>
+
+        <m.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card rounded-3xl p-4 sm:p-6 border border-white/5"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+            <h3 className="text-sm font-bold text-white uppercase tracking-widest">
+              Historial H2H
+            </h3>
+            {h2hMatches.length > 0 && (
+              <span className="w-fit text-[10px] text-white/60 bg-white/10 px-2 py-0.5 rounded-full">
+                Últimos {h2hMatches.length}
+              </span>
+            )}
           </div>
-        )}
+
+          {h2hMatches.length > 0 ? (
+            <div className="space-y-2">
+              {h2hMatches.map((m) => {
+                const hG = m.goals?.home ?? "-";
+                const aG = m.goals?.away ?? "-";
+                const tHome = m.teams?.home;
+                const tAway = m.teams?.away;
+                const isDraw = hG === aG;
+
+                return (
+                  <div
+                    key={m.fixture.id}
+                    onClick={() => navigate(`/partido/${m.fixture.id}`)}
+                    className="flex flex-col md:flex-row items-center max-w-full justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-colors cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-center gap-1.5 md:gap-3 w-full max-w-full">
+                      <div className="flex-1 flex items-center justify-end gap-1.5 md:gap-2 min-w-0">
+                        <span
+                          className={`text-[10px] md:text-xs font-bold truncate text-right ${hG > aG ? "text-white" : "text-white/60"}`}
+                        >
+                          {tTeamName(tHome?.name)}
+                        </span>
+                        {tHome?.logo && (
+                          <img
+                            src={tHome.logo}
+                            alt=""
+                            className="w-4 h-4 md:w-5 md:h-5 object-contain"
+                            loading="lazy"
+                            decoding="async"
+                            width={16}
+                            height={16}
+                          />
+                        )}
+                      </div>
+
+                      <div className="flex flex-col items-center justify-center px-1 md:px-2 min-w-[50px] md:min-w-[60px]">
+                        <span className="text-[8px] md:text-[9px] text-white/50 mb-0.5">
+                          {new Date(m.fixture.date).getFullYear()}
+                        </span>
+                        <div className="text-xs md:text-sm font-black font-mono tracking-widest text-center whitespace-nowrap">
+                          <span
+                            className={
+                              hG > aG
+                                ? "text-emerald-400"
+                                : isDraw
+                                  ? "text-amber-400"
+                                  : "text-white/60"
+                            }
+                          >
+                            {hG}
+                          </span>
+                          <span className="text-white/40 mx-1">:</span>
+                          <span
+                            className={
+                              aG > hG
+                                ? "text-blue-400"
+                                : isDraw
+                                  ? "text-amber-400"
+                                  : "text-white/60"
+                            }
+                          >
+                            {aG}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 flex items-center justify-start gap-1.5 md:gap-2 min-w-0">
+                        {tAway?.logo && (
+                          <img
+                            src={tAway.logo}
+                            alt=""
+                            className="w-4 h-4 md:w-5 md:h-5 object-contain"
+                            loading="lazy"
+                            decoding="async"
+                            width={16}
+                            height={16}
+                          />
+                        )}
+                        <span
+                          className={`text-[10px] md:text-xs font-bold truncate text-left ${aG > hG ? "text-white" : "text-white/60"}`}
+                        >
+                          {tTeamName(tAway?.name)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-center text-xs text-white/60">
+              No hay historial previo entre estos equipos.
+            </p>
+          )}
+        </m.div>
       </div>
     </div>
   );

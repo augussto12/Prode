@@ -522,7 +522,7 @@ export default function LeagueView() {
                           className="glass-card rounded-2xl overflow-hidden"
                         >
                           <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
+                            <table className="w-full min-w-[640px] text-sm">
                               <thead>
                                 <tr className="text-white/50 text-xs">
                                   <th className="text-left px-4 py-2 font-medium sticky-col backdrop-blur-md">
@@ -552,7 +552,7 @@ export default function LeagueView() {
                                   <th className="px-2 py-2 font-medium text-center">
                                     DG
                                   </th>
-                                  <th className="px-2 py-2 font-medium text-center font-bold">
+                                  <th className="px-3 py-2 font-medium text-center font-bold sticky-points">
                                     Pts
                                   </th>
                                 </tr>
@@ -646,7 +646,7 @@ export default function LeagueView() {
                                         {row.goalsDiff > 0 ? "+" : ""}
                                         {row.goalsDiff}
                                       </td>
-                                      <td className="px-2 py-2.5 text-center text-white font-bold">
+                                      <td className="px-3 py-2.5 text-center text-white font-bold sticky-points">
                                         {row.points}
                                       </td>
                                     </tr>

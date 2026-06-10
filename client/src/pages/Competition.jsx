@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, BarChart3, Lock, Trophy } from "lucide-react";
+import { Calendar, BarChart3, Lock, Trophy, BookOpen, CheckCircle2 } from "lucide-react";
 import useCompetitionStore from "../store/competitionStore";
 import useAuthStore from "../store/authStore";
 import ProdeMatches from "../components/matches/ProdeMatches";
@@ -10,6 +10,17 @@ const TABS = [
   { id: "matches", label: "Partidos", icon: Calendar },
   { id: "predictions", label: "Predicciones", icon: BarChart3 },
   { id: "finals", label: "Predicciones finales", icon: Trophy },
+  { id: "rules", label: "Reglamento", icon: BookOpen },
+];
+
+const RULES = [
+  "Elegí el resultado de cada partido antes de que empiece.",
+  "Podés cambiar tu predicción hasta 5 minutos antes del inicio.",
+  "Si acertás el resultado exacto sumás más puntos.",
+  "Si acertás ganador o empate, aunque no sea exacto, también sumás.",
+  "Tenés 3 comodines x2 para duplicar los puntos de partidos clave.",
+  "Las predicciones finales son para campeón, finalistas y premios del torneo.",
+  "Una vez cerrado el partido, la predicción ya no se puede editar.",
 ];
 
 export default function Competition({ hideHeader }) {
@@ -73,7 +84,7 @@ export default function Competition({ hideHeader }) {
 
       {/* Tabs */}
       <div className="flex gap-1 p-1 bg-white/5 rounded-xl w-fit max-w-full overflow-x-auto">
-        {TABS.filter((t) => user || t.id === "matches").map((t) => (
+        {TABS.filter((t) => user || ["matches", "rules"].includes(t.id)).map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
@@ -103,6 +114,29 @@ export default function Competition({ hideHeader }) {
       {/* Final awards Tab */}
       {tab === "finals" && (
         <OutrightPredictions competitionId={activeCompetition?.id} />
+      )}
+
+      {tab === "rules" && (
+        <div className="glass-card rounded-2xl border border-white/10 p-4 sm:p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-bold text-white">Reglamento del Prode</h2>
+            <p className="mt-1 text-sm text-white/55">
+              Una guía rápida para saber qué hacer y cómo sumar.
+            </p>
+          </div>
+
+          <div className="grid gap-2">
+            {RULES.map((rule) => (
+              <div
+                key={rule}
+                className="flex items-start gap-3 rounded-xl border border-white/8 bg-white/[0.035] px-3 py-3"
+              >
+                <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-300" />
+                <span className="text-sm leading-relaxed text-white/75">{rule}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

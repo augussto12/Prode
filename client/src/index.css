@@ -133,6 +133,21 @@ th.sticky-col {
   background: color-mix(in srgb, var(--primary-color, #6366f1) 5%, rgba(0, 0, 0, 0.5));
 }
 
+.sticky-points {
+  position: sticky;
+  right: 0;
+  z-index: 10;
+  box-shadow: -4px 0 10px rgba(0, 0, 0, 0.14);
+  background: color-mix(in srgb, var(--primary-color, #6366f1) 6%, rgba(0, 0, 0, 0.5));
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+th.sticky-points {
+  z-index: 20;
+  background: color-mix(in srgb, var(--primary-color, #6366f1) 7%, rgba(0, 0, 0, 0.58));
+}
+
 /* Safe areas para Mobile/iOS */
 .safe-padding-bottom {
   padding-bottom: env(safe-area-inset-bottom);
@@ -225,4 +240,4 @@ select option {
 
 .bracket-scroll::-webkit-scrollbar-thumb:hover {
   background: color-mix(in srgb, var(--primary-color, #6366f1) 35%, rgba(255,255,255,0.15));
-}
+}

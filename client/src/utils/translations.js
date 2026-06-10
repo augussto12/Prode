@@ -263,7 +263,7 @@ export function tRound(round) {
   const roundText = String(round);
   const groupMatch = roundText.match(/^Group\s+([A-Z0-9]+)$/i);
   if (groupMatch) return `Grupo ${groupMatch[1].toUpperCase()}`;
-  if (/^Ranking of third placed teams/i.test(roundText)) {
+  if (/^Ranking of third[-\s]+placed teams/i.test(roundText)) {
     return "Ranking de terceros";
   }
   // "Regular Season - 15" → "Fecha 15"
