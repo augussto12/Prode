@@ -536,7 +536,7 @@ export default function Explorer() {
               </h2>
             </div>
             <Link to="/liga/1" className="text-xs text-indigo-400 hover:text-indigo-300 font-medium no-underline flex items-center gap-1 shrink-0">
-              Ver todos <ChevronRight size={12} />
+              Ver mas <ChevronRight size={12} />
             </Link>
           </div>
           {user && (
@@ -567,7 +567,7 @@ export default function Explorer() {
         <div>
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-bold text-white/50 uppercase tracking-wider flex items-center gap-2">
-              <Users size={14} /> Tus Prodes
+              <Users size={14} /> Tus Grupos
             </h2>
             <Link
               to="/groups"
