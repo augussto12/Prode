@@ -21,6 +21,12 @@ router.delete('/users/:id', authenticate, isSuperAdmin, ctrl.deleteUser);
 // Cron Logs (SUPERADMIN only)
 router.get('/cron-logs', authenticate, isSuperAdmin, ctrl.getCronLogs);
 
+// Groups & Scoring Monitor (SUPERADMIN only)
+router.get('/scoring/diagnostics', authenticate, isSuperAdmin, ctrl.getScoringDiagnostics);
+router.get('/groups', authenticate, isSuperAdmin, ctrl.getGroups);
+router.get('/groups/:id', authenticate, isSuperAdmin, ctrl.getGroupDetails);
+router.put('/groups/:groupId/members/:userId/points', authenticate, isSuperAdmin, ctrl.adjustMemberPoints);
+
 // Scoring management (ADMIN+)
 router.post('/scoring/calculate', authenticate, isAdmin, ctrl.calculateScores);
 router.post('/scoring/recalculate-leaderboards', authenticate, isAdmin, ctrl.recalculateLeaderboards);

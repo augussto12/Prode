@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { m } from "framer-motion";
-import { Star, Check, Lock } from "lucide-react";
+import { Star, Check, Lock, Clock } from "lucide-react";
 import api from "../../services/api";
 import useAuthStore from "../../store/authStore";
 import useToastStore from "../../store/toastStore";
@@ -32,6 +32,8 @@ export default memo(function MatchCard({
   const matchDate = new Date(match.matchDate);
   const lockoutDate = new Date(matchDate);
   lockoutDate.setMinutes(lockoutDate.getMinutes() - 5);
+  const minutesUntilLockout = Math.floor((lockoutDate - new Date()) / 60000);
+  const lockoutTimeStr = lockoutDate.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
   const hasPhaseRule = Boolean(match.predictionWindow?.phaseRule);
   const phaseLocked = hasPhaseRule && match.predictionWindow?.canPredict === false;
   const isPast =
@@ -43,6 +45,8 @@ export default memo(function MatchCard({
   const canToggleJoker =
     !isPast &&
     (prediction.isJoker || existingPrediction?.isJoker || jokerRemaining > 0);
+  const needsPrediction =
+    user && !existingPrediction && !isPast && !isLive && !isFinished && !phaseLocked;
   const hasCompleteScore =
     prediction.homeGoals !== "" && prediction.awayGoals !== "";
 
@@ -184,6 +188,12 @@ export default memo(function MatchCard({
             {match.round && /1st\s*Leg/i.test(match.round) && (
               <span className="px-1 sm:px-1.5 py-0.5 bg-white/5 text-white/60 rounded text-[8px] sm:text-[9px] font-bold uppercase tracking-wider border border-white/10 shrink-0">
                 Ida
+              </span>
+            )}
+            {needsPrediction && (
+              <span className="inline-flex items-center gap-1 text-[9px] text-amber-400/60 font-medium shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400/70" />
+                Sin cargar
               </span>
             )}
           </div>
@@ -332,8 +342,28 @@ export default memo(function MatchCard({
           </div>
         </div>
 
+        {/* Deadline indicator — solo casos relevantes */}
+        {user && !isLive && !isFinished && !phaseLocked && (
+          <>
+            {isPast && (
+              <div className="mt-1.5 sm:mt-2 text-center">
+                <span className="inline-flex items-center gap-1 text-[10px] text-white/30">
+                  <Lock size={9} /> Predicciones cerradas
+                </span>
+              </div>
+            )}
+            {!isPast && minutesUntilLockout <= 60 && (
+              <div className="mt-1.5 sm:mt-2 text-center">
+                <span className="inline-flex items-center gap-1 text-[10px] text-amber-400/80">
+                  <Clock size={9} /> Cierra en {minutesUntilLockout} min
+                </span>
+              </div>
+            )}
+          </>
+        )}
+
         {existingPrediction && (
-          <div className="mt-1.5 sm:mt-2 text-center">
+          <div className="mt-1 sm:mt-1.5 text-center">
             <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-green-400/70">
               <Check size={10} /> Guardado ({existingPrediction.homeGoals ?? "?"}-
               {existingPrediction.awayGoals ?? "?"})

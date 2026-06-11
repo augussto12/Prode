@@ -284,7 +284,7 @@ export default function LeagueView() {
 
       {/* League Header — special gold for World Cup */}
       <div
-        className={`rounded-2xl p-6 relative overflow-hidden shadow-xl ${isWorldCup ? "border border-amber-300/30" : "glass-card"
+        className={`rounded-2xl p-4 relative overflow-hidden shadow-xl ${isWorldCup ? "border border-amber-300/30" : "glass-card"
           }`}
         style={
           isWorldCup
@@ -310,7 +310,7 @@ export default function LeagueView() {
               alt={leagueInfo.name}
               width={64}
               height={64}
-              className={`object-contain ${isWorldCup ? "w-20 h-20" : "w-16 h-16"}`}
+              className={`object-contain ${isWorldCup ? "w-14 h-14" : "w-12 h-12"}`}
               loading="lazy"
               decoding="async"
 
@@ -320,7 +320,7 @@ export default function LeagueView() {
             />
           ) : (
             <div
-              className={`rounded-2xl flex items-center justify-center ${isWorldCup ? "w-20 h-20 bg-amber-500/20" : "w-16 h-16 bg-white/10"}`}
+              className={`rounded-2xl flex items-center justify-center ${isWorldCup ? "w-14 h-14 bg-amber-500/20" : "w-12 h-12 bg-white/10"}`}
             >
               <Trophy
                 size={isWorldCup ? 36 : 28}
@@ -330,7 +330,7 @@ export default function LeagueView() {
           )}
           <div className="flex-1 text-center md:text-left">
             <h1
-              className={`font-black ${isWorldCup ? "text-3xl" : "text-2xl"} text-white`}
+              className={`font-black ${isWorldCup ? "text-2xl" : "text-xl"} text-white`}
             >
               {isWorldCup ? "Copa del Mundo 2026" : leagueInfo?.name}
             </h1>

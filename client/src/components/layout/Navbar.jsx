@@ -68,136 +68,169 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 border-b border-white/10 shadow-lg" style={{ background: 'var(--bg-start-color, #0f172a)' }}>
       <div className="relative z-50 max-w-[1600px] mx-auto px-4 md:px-8">
-        <div className="flex items-center justify-between h-14">
-          {/* Logo */}
-          <Link
-            to="/explorar"
-            className="flex items-center gap-2 text-white no-underline"
-            aria-label="Ir al Inicio"
-          >
-            <div
-              className="w-8 h-8 rounded-lg overflow-hidden shadow-sm"
+        {/*
+          Mobile:  [left: flex-1 empty] [center: logo] [right: flex-1 justify-end hamburger]
+          Desktop: [left: flex-none logo] [center: flex-1 justify-center nav] [right: flex-none user]
+        */}
+        <div className="h-14 flex items-center">
+
+          {/* Left: flex-1 spacer on mobile, logo on desktop (flex-none) */}
+          <div className="flex-1 md:flex-none flex items-center">
+            <Link
+              to="/explorar"
+              className="hidden md:flex items-center gap-2 text-white no-underline shrink-0"
+              aria-label="Ir al Inicio"
             >
-              <img
-                src="/icon-192.png?v=2026-6"
-                alt=""
-                className="h-full w-full"
-                width={32}
-                height={32}
-              />
-            </div>
-            <span className="text-base font-bold tracking-tight hidden sm:inline">
-              Prode
-            </span>
-          </Link>
-
-          {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-0.5">
-            {links.map((link) => {
-              const isGroupsLink = link.to === "/groups";
-              const handleClick = (e) => {
-                if (isGroupsLink && !user) {
-                  e.preventDefault();
-                  useToastStore.getState().addToast({
-                    type: "warning",
-                    message: "Tenés que estar registrado para poder crear o unirse a un grupo de prode",
-                  });
-                }
-              };
-              return (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={handleClick}
-                  className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all no-underline ${isActive(link.to)
-                    ? "text-white"
-                    : link.gold
-                      ? "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
-                      : "text-white/50 hover:text-white hover:bg-white/5"
-                    }`}
-                  style={
-                    isActive(link.to)
-                      ? {
-                        background: link.gold
-                          ? "linear-gradient(135deg, #b8860b, #daa520)"
-                          : "var(--color-primary)",
-                        borderBottom: link.gold ? undefined : "2px solid var(--color-secondary)",
-                      }
-                      : {}
-                  }
-                >
-                  <link.icon size={14} />
-                  {link.label}
-                  {link.badge && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-[9px] font-bold flex items-center justify-center text-white animate-pulse">
-                      {link.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* User Status / Menu */}
-          <div className="hidden md:flex items-center gap-2">
-            {user ? (
-              <>
-                <Link
-                  to="/profile"
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-all no-underline text-xs"
-                >
-                  <User size={14} />
-                  {user.displayName}
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  aria-label="Cerrar sesión"
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-xs cursor-pointer border-none bg-transparent"
-                >
-                  <LogOut size={14} aria-hidden="true" />
-                </button>
-              </>
-            ) : (
-              <div className="flex gap-2">
-                <Link
-                  to="/login"
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white/80 hover:text-white hover:bg-white/5 transition-all no-underline"
-                >
-                  Ingresar
-                </Link>
-                <Link
-                  to="/register"
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-500 hover:bg-indigo-600 transition-all no-underline shadow-lg shadow-indigo-500/20"
-                >
-                  Registrarse
-                </Link>
+              <div className="w-8 h-8 rounded-lg overflow-hidden shadow-sm shrink-0">
+                <img
+                  src="/icon-192.png?v=2026-6"
+                  alt=""
+                  className="h-full w-full"
+                  width={32}
+                  height={32}
+                />
               </div>
-            )}
+              <span className="font-bold tracking-tight whitespace-nowrap leading-none">
+                <span className="hidden md:inline lg:hidden text-sm">Copa 2026</span>
+                <span className="hidden lg:inline text-base">Copa del Mundo 2026</span>
+              </span>
+            </Link>
           </div>
 
-          {/* Mobile: live badge + toggle */}
-          <div className="flex items-center gap-2 md:hidden">
-            {liveCount > 0 && (
-              <Link
-                to="/explorar"
-                className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-bold no-underline animate-pulse"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                {liveCount}
-              </Link>
-            )}
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
-              className="text-white bg-transparent border-none cursor-pointer p-1"
+          {/* Center: mobile logo / desktop nav (centered) */}
+          <div className="md:flex-1 flex items-center justify-center">
+            {/* Mobile logo */}
+            <Link
+              to="/explorar"
+              className="md:hidden flex items-center gap-1.5 text-white no-underline shrink-0"
+              aria-label="Ir al Inicio"
             >
-              {mobileOpen ? (
-                <X size={22} aria-hidden="true" />
-              ) : (
-                <Menu size={22} aria-hidden="true" />
-              )}
-            </button>
+              <div className="w-7 h-7 rounded-lg overflow-hidden shadow-sm shrink-0">
+                <img
+                  src="/icon-192.png?v=2026-6"
+                  alt=""
+                  className="h-full w-full"
+                  width={28}
+                  height={28}
+                />
+              </div>
+              <span className="font-bold tracking-tight whitespace-nowrap leading-none text-[10px] min-[357px]:text-sm">
+                Copa del Mundo 2026
+              </span>
+            </Link>
+
+            {/* Desktop nav links */}
+            <div className="hidden md:flex items-center gap-0.5">
+              {links.map((link) => {
+                const isGroupsLink = link.to === "/groups";
+                const handleClick = (e) => {
+                  if (isGroupsLink && !user) {
+                    e.preventDefault();
+                    useToastStore.getState().addToast({
+                      type: "warning",
+                      message: "Tenés que estar registrado para poder crear o unirse a un grupo de prode",
+                    });
+                  }
+                };
+                return (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    onClick={handleClick}
+                    className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all no-underline ${isActive(link.to)
+                      ? "text-white"
+                      : link.gold
+                        ? "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
+                        : "text-white/50 hover:text-white hover:bg-white/5"
+                      }`}
+                    style={
+                      isActive(link.to)
+                        ? {
+                          background: link.gold
+                            ? "linear-gradient(135deg, #b8860b, #daa520)"
+                            : "var(--color-primary)",
+                          borderBottom: link.gold ? undefined : "2px solid var(--color-secondary)",
+                        }
+                        : {}
+                    }
+                  >
+                    <link.icon size={14} />
+                    {link.label}
+                    {link.badge && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-[9px] font-bold flex items-center justify-center text-white animate-pulse">
+                        {link.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
+
+          {/* Right: flex-1 justify-end on mobile (hamburger), flex-none on desktop (user) */}
+          <div className="flex-1 md:flex-none flex items-center justify-end gap-2">
+            {/* Desktop: user status */}
+            <div className="hidden md:flex items-center gap-2">
+              {user ? (
+                <>
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-all no-underline text-xs"
+                  >
+                    <User size={14} />
+                    {user.displayName}
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    aria-label="Cerrar sesión"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-xs cursor-pointer border-none bg-transparent"
+                  >
+                    <LogOut size={14} aria-hidden="true" />
+                  </button>
+                </>
+              ) : (
+                <div className="flex gap-2">
+                  <Link
+                    to="/login"
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white/80 hover:text-white hover:bg-white/5 transition-all no-underline"
+                  >
+                    Ingresar
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-500 hover:bg-indigo-600 transition-all no-underline shadow-lg shadow-indigo-500/20"
+                  >
+                    Registrarse
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile: live badge + hamburger */}
+            <div className="flex items-center gap-2 md:hidden">
+              {liveCount > 0 && (
+                <Link
+                  to="/explorar"
+                  className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-bold no-underline animate-pulse"
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                  {liveCount}
+                </Link>
+              )}
+              <button
+                onClick={() => setMobileOpen(!mobileOpen)}
+                aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
+                className="text-white bg-transparent border-none cursor-pointer p-1"
+              >
+                {mobileOpen ? (
+                  <X size={22} aria-hidden="true" />
+                ) : (
+                  <Menu size={22} aria-hidden="true" />
+                )}
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
 

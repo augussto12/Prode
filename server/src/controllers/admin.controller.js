@@ -110,6 +110,104 @@ export async function syncOutrightOptions(req, res, next) {
   } catch (err) { next(err); }
 }
 
+export async function getScoringDiagnostics(req, res, next) {
+  try {
+    const [pending, calculated, recentCrons, groupCount, activeMembers] = await Promise.all([
+      prisma.prediction.count({ where: { isCalculated: false } }),
+      prisma.prediction.count({ where: { isCalculated: true } }),
+      prisma.cronJobLog.findMany({
+        where: { module: 'Prode' },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }),
+      prisma.group.count(),
+      prisma.groupUser.count({ where: { isBanned: false } }),
+    ]);
+
+    res.json({
+      predictions: { pending, calculated, total: pending + calculated },
+      groups: groupCount,
+      activeMembers,
+      recentCrons,
+    });
+  } catch (err) { next(err); }
+}
+
+export async function getGroups(req, res, next) {
+  try {
+    const groups = await prisma.group.findMany({
+      include: {
+        competition: { select: { id: true, name: true, logo: true } },
+        _count: { select: { groupUsers: { where: { isBanned: false } } } },
+        groupUsers: {
+          where: { isBanned: false },
+          orderBy: { totalPoints: 'desc' },
+          take: 1,
+          include: { user: { select: { displayName: true, username: true } } },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json(groups.map(g => ({
+      id: g.id,
+      name: g.name,
+      competition: g.competition,
+      memberCount: g._count.groupUsers,
+      topScorer: g.groupUsers[0] ? {
+        displayName: g.groupUsers[0].user.displayName,
+        username: g.groupUsers[0].user.username,
+        totalPoints: g.groupUsers[0].totalPoints,
+      } : null,
+      createdAt: g.createdAt,
+    })));
+  } catch (err) { next(err); }
+}
+
+export async function getGroupDetails(req, res, next) {
+  try {
+    const groupId = Number(req.params.id);
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+      include: {
+        competition: { select: { id: true, name: true, logo: true } },
+        groupUsers: {
+          include: { user: { select: { id: true, displayName: true, username: true, avatar: true } } },
+          orderBy: { totalPoints: 'desc' },
+        },
+      },
+    });
+    if (!group) return res.status(404).json({ error: 'Grupo no encontrado' });
+    res.json(group);
+  } catch (err) { next(err); }
+}
+
+export async function adjustMemberPoints(req, res, next) {
+  try {
+    const groupId = Number(req.params.groupId);
+    const userId = Number(req.params.userId);
+    const { totalPoints } = req.body;
+
+    if (typeof totalPoints !== 'number' || totalPoints < 0 || !Number.isInteger(totalPoints)) {
+      return res.status(400).json({ error: 'totalPoints debe ser un entero mayor o igual a 0' });
+    }
+
+    const membership = await prisma.groupUser.findUnique({
+      where: { userId_groupId: { userId, groupId } },
+    });
+    if (!membership) return res.status(404).json({ error: 'El usuario no es miembro de este grupo' });
+
+    const updated = await prisma.groupUser.update({
+      where: { userId_groupId: { userId, groupId } },
+      data: { totalPoints },
+      include: { user: { select: { id: true, displayName: true, username: true } } },
+    });
+
+    console.log(`[Admin] Puntos ajustados manualmente: userId=${userId} groupId=${groupId} pts=${totalPoints} by superadmin=${req.user.id}`);
+    res.json({ success: true, member: updated });
+  } catch (err) { next(err); }
+}
+
 export async function getCronLogs(req, res, next) {
   try {
     const { page = 1, limit = 50, module } = req.query;

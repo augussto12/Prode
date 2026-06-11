@@ -28,6 +28,7 @@ import useCompetitionStore from "../store/competitionStore";
 // import AdminFantasy from "./admin/AdminFantasy";
 import AdminUsers from "./admin/AdminUsers";
 import AdminSystem from "./admin/AdminSystem";
+import AdminGroups from "./admin/AdminGroups";
 // import AdminCrons from "./admin/AdminCrons";
 
 export default function AdminPanel() {
@@ -157,6 +158,7 @@ export default function AdminPanel() {
   const tabs = [
     { id: "users", label: "Usuarios", icon: Users },
     { id: "scoring", label: "Puntuación", icon: Calculator },
+    { id: "groups", label: "Grupos", icon: Trophy },
     // [OCULTADO] GranDT, Sportmonks y Crons — No se usan por ahora
     // { id: "fantasy", label: "GranDT", icon: Trophy },
     { id: "sync", label: "Config. BD", icon: Database },
@@ -243,6 +245,9 @@ export default function AdminPanel() {
       {tab === "users" && (
         <AdminUsers users={users} setUsers={setUsers} currentUser={currentUser} />
       )}
+
+      {/* Groups Tab */}
+      {tab === "groups" && <AdminGroups />}
 
       {/* [OCULTADO] Fantasy Admin Tab y Crons — No se usan por ahora
       {tab === "fantasy" && <AdminFantasy />}

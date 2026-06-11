@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { m, AnimatePresence } from "framer-motion";
-import { Calendar, Star, Filter, ChevronDown } from "lucide-react";
+import { Calendar, Star, ChevronDown, Pencil } from "lucide-react";
 import api from "../services/api";
 import useCompetitionStore from "../store/competitionStore";
+import useAuthStore from "../store/authStore";
 import MatchCard from "../components/matches/MatchCard";
 
 export default function Dashboard() {
+  const user = useAuthStore((s) => s.user);
   const [matches, setMatches] = useState([]);
   const [predictions, setPredictions] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -151,6 +153,19 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Banner: acá se predice */}
+      {user && (
+        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-indigo-500/20 bg-indigo-500/5">
+          <div className="w-7 h-7 rounded-lg bg-indigo-500/20 flex items-center justify-center shrink-0">
+            <Pencil size={13} className="text-indigo-400" />
+          </div>
+          <p className="text-xs sm:text-sm text-white/70">
+            <span className="font-semibold text-white">Cargá tus predicciones acá</span>
+            {" "}— completá el marcador de cada partido antes de que empiece. Tus puntos se suman solos en todos tus grupos.
+          </p>
+        </div>
+      )}
 
       {/* Favorite Team Picker */}
       <AnimatePresence>

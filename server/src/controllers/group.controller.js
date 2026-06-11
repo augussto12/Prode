@@ -125,8 +125,8 @@ export async function getMatchPredictions(req, res, next) {
 export async function resetScores(req, res, next) {
   try {
     const result = await groupService.resetGroupScores(Number(req.params.id), req.user.id);
-    res.json({ 
-      message: `Puntajes reiniciados: ${result.predictionsReset} predicciones y ${result.membersReset} miembros reseteados.`,
+    res.json({
+      message: `Leaderboard recalculado para ${result.membersReset} miembros.`,
       ...result
     });
   } catch (err) { next(err); }

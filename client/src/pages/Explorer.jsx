@@ -14,18 +14,14 @@ import {
   Star,
   Maximize2,
   X,
+  Pencil,
 } from "lucide-react";
 import api from "../services/api";
-// [OCULTADO] Sportmonks - Ya no se usa
-// import { 
-//   SPORTMONKS_LEAGUE_IDS,
-//   AF_LEAGUES_COVERED_BY_SM 
-// } from '../constants/sportmonks.constants.js';
-// import useSportmonksStore from "../store/useSportmonksStore";
 import useAuthStore from "../store/authStore";
 import { tCountry, tRound, tTeamName } from "../utils/translations";
 import { WORLD_CUP_2026_LOGO, getLeagueLogo, getLeagueName } from "../utils/worldCupLogo";
 import { getGroupCardVariant } from "../utils/groupCardVariants";
+import MatchCard from "../components/matches/MatchCard";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -40,11 +36,15 @@ function useDebounce(value, delay) {
 const COUNTRIES_PER_PAGE = 25;
 const LARGE_MATCH_SECTION_THRESHOLD = 10;
 
-// Helper: fecha de hoy en formato YYYY-MM-DD
+// Helper: fecha de hoy en formato YYYY-MM-DD (hora local del browser)
 const getTodayDate = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
+
+// Fecha en timezone Argentina (YYYY-MM-DD), para comparar matchDates que vienen en UTC
+const getArgentinaDate = (date = new Date()) =>
+  date.toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
 
 // [OCULTADO] Sportmonks league IDs - Ya no se usa Sportmonks
 // const SPORTMONKS_LEAGUES_SET = new Set(SPORTMONKS_LEAGUE_IDS);
@@ -54,6 +54,8 @@ export default function Explorer() {
   const [todayMatches, setTodayMatches] = useState(null);
   const [myGroups, setMyGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [wcMatches, setWcMatches] = useState([]);
+  const [wcPredictions, setWcPredictions] = useState([]);
   const liveIntervalRef = useRef(null);
   // [OCULTADO] todayIntervalRef ya no se usa (era para Sportmonks)
   // const todayIntervalRef = useRef(null);
@@ -77,7 +79,8 @@ export default function Explorer() {
     const initLoad = async () => {
       await Promise.all([
         loadData(),
-        loadMatchesByDate(selectedDate), // api-football: fetch date+live, merge, set once
+        loadMatchesByDate(selectedDate),
+        loadWorldCupToday(),
         user ? loadMyGroups() : Promise.resolve(),
         user ? loadLeagueFavorites() : Promise.resolve()
       ]);
@@ -263,6 +266,24 @@ export default function Explorer() {
     }
   };
 
+  const loadWorldCupToday = async () => {
+    try {
+      const todayAR = getArgentinaDate();
+      const [matchRes, predRes] = await Promise.all([
+        api.get("/matches?competitionId=1"),
+        user ? api.get("/predictions/my?competitionId=1") : Promise.resolve({ data: [] }),
+      ]);
+      const todayWcMatches = (matchRes.data || []).filter((m) => {
+        if (!m.matchDate) return false;
+        return getArgentinaDate(new Date(m.matchDate)) === todayAR;
+      });
+      setWcMatches(todayWcMatches);
+      setWcPredictions(predRes.data || []);
+    } catch {
+      /* silent */
+    }
+  };
+
   const toggleLeagueFavorite = async (leagueId) => {
     if (!user) return;
     const isFav = leagueFavorites.has(leagueId);
@@ -330,6 +351,11 @@ export default function Explorer() {
     setVisibleCountries((prev) => prev + COUNTRIES_PER_PAGE);
   }, []);
 
+  const wcPredictionsMap = useMemo(
+    () => new Map(wcPredictions.map((p) => [Number(p.externalFixtureId || p.matchId), p])),
+    [wcPredictions]
+  );
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -358,10 +384,10 @@ export default function Explorer() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Globe size={24} className="text-indigo-400" /> Explorar Ligas
+          <h1 className="text-lg sm:text-2xl font-bold text-white flex items-center gap-2">
+            <Globe size={20} className="text-indigo-400 shrink-0" /> Explorar Ligas
           </h1>
-          <p className="text-white/50 text-sm mt-1">
+          <p className="text-white/50 text-xs sm:text-sm mt-1">
             Navega entre ligas, posiciones, goleadores y partidos en vivo
           </p>
         </div>
@@ -489,56 +515,50 @@ export default function Explorer() {
         </div>
       </div>
 
-      {/* World Cup Banner Hero */}
-      {data.topLeagues.find((l) => Number(l.league?.id) === 1) && (
-        <Link to="/liga/1" className="block no-underline">
-          <m.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative rounded-3xl overflow-hidden group cursor-pointer shadow-[0_10px_30px_#b8860b33] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_48px_#b8860b45] focus-within:ring-2 focus-within:ring-white/30"
-            style={{
-              background: "linear-gradient(135deg, #b8860b, #daa520, #ffd700)",
-            }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
-            <div className="relative z-10 p-4 md:p-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-5">
-              <div className="w-14 h-14 md:w-20 md:h-20 rounded-2xl bg-white/90 backdrop-blur border border-white/40 flex items-center justify-center shrink-0 shadow-xl p-2 transition-transform duration-300 group-hover:scale-[1.04]">
-                <img
-                  src={WORLD_CUP_2026_LOGO}
-                  alt="Copa del Mundo 2026"
-                  className="w-full h-full object-contain"
-                  loading="eager"
-                  decoding="async"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
+      {/* Mundial Hoy — MatchCards interactivas */}
+      {wcMatches.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3 gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-5 h-5 rounded-md bg-white/90 flex items-center justify-center p-0.5 shrink-0">
+                <img src={WORLD_CUP_2026_LOGO} alt="" className="w-full h-full object-contain" />
               </div>
-              <div className="flex-1">
-                <div className="inline-block px-2 py-0.5 bg-white/20 backdrop-blur rounded text-white/90 text-[8px] font-bold uppercase tracking-widest mb-1.5 border border-white/20">
-                  DESTACADO
-                </div>
-                <h2 className="text-xl md:text-3xl font-black text-white tracking-tight drop-shadow-md">
-                  Copa del Mundo 2026
-                </h2>
-                <p className="text-white/80 text-xs md:text-sm mt-1.5 font-medium max-w-xl">
-                  Sumate a predecir el torneo más importante del mundo entero.
-                </p>
-              </div>
-              <div className="hidden md:flex bg-white/10 hover:bg-white/20 backdrop-blur rounded-2xl p-2 transition-all border border-white/20">
-                <ChevronRight size={20} className="text-white" />
-              </div>
+              <h2 className="text-xs sm:text-sm font-bold text-amber-400 uppercase tracking-wide">
+                <span className="sm:hidden">Hoy</span>
+                <span className="hidden sm:inline">Hoy</span>
+              </h2>
             </div>
-          </m.div>
-        </Link>
+            <Link to="/liga/1" className="text-xs text-indigo-400 hover:text-indigo-300 font-medium no-underline flex items-center gap-1 shrink-0">
+              Ver todos <ChevronRight size={12} />
+            </Link>
+          </div>
+          {user && (
+            <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-amber-500/15 bg-amber-500/5 mb-3">
+              <Pencil size={12} className="text-amber-400 shrink-0" />
+              <p className="text-xs text-white/60">
+                <span className="font-semibold text-white/80">Completá el marcador</span> de cada partido antes de que empiece.
+              </p>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {wcMatches.map((match) => (
+              <MatchCard
+                key={match.id}
+                match={match}
+                existingPrediction={wcPredictionsMap.get(Number(match.externalId || match.id))}
+                onPredictionSaved={loadWorldCupToday}
+              />
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Mis Grupos Carousel */}
       {user && myGroups.length > 0 && (
-        <div className="pt-2">
-          <div className="flex items-center justify-between mb-3">
+        <div>
+          <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-bold text-white/50 uppercase tracking-wider flex items-center gap-2">
-              <Users size={16} /> Tus Prodes
+              <Users size={14} /> Tus Prodes
             </h2>
             <Link
               to="/groups"
@@ -547,7 +567,7 @@ export default function Explorer() {
               Ver todos
             </Link>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/10 pt-2">
+          <div className="flex gap-2.5 overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-white/10">
             {myGroups.map((group, index) => {
               const variant = getGroupCardVariant(group, index);
               const competitionName = group.competition
@@ -558,53 +578,37 @@ export default function Explorer() {
                 <Link
                   key={group.id}
                   to={`/groups/${group.id}`}
-                  className="flex-shrink-0 w-[280px] md:w-[320px] rounded-2xl p-5 no-underline transition-all hover:-translate-y-1 relative overflow-hidden group shadow-lg"
+                  className="flex-shrink-0 w-56 sm:w-64 md:w-72 rounded-2xl p-4 no-underline transition-all hover:-translate-y-1 relative overflow-hidden group shadow-lg"
                   style={{
                     background: variant.background,
                     border: `1px solid ${variant.border}`,
                     boxShadow: variant.shadow,
                   }}
                 >
-                  <div
-                    className="absolute inset-x-0 top-0 h-1"
-                    style={{ background: variant.accent }}
-                  />
+                  <div className="absolute inset-x-0 top-0 h-1" style={{ background: variant.accent }} />
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-white">
-                    <Trophy size={60} />
+                    <Trophy size={52} />
                   </div>
                   <div className="relative z-10">
                     <div className="flex items-center gap-3 mb-4">
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center border backdrop-blur"
-                        style={{
-                          background: variant.badge,
-                          borderColor: variant.border,
-                        }}
+                        className="w-9 h-9 rounded-xl flex items-center justify-center border backdrop-blur shrink-0"
+                        style={{ background: variant.badge, borderColor: variant.border }}
                       >
-                        <span className="text-lg font-bold text-white">
+                        <span className="text-base font-bold text-white">
                           {group.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-lg font-bold text-white truncate">
-                          {group.name}
-                        </h3>
-                        <div className="text-xs text-white/65 truncate">
-                          {competitionName}
-                        </div>
+                        <h3 className="text-sm font-bold text-white truncate">{group.name}</h3>
+                        <div className="text-xs text-white/60 truncate">{competitionName}</div>
                       </div>
                     </div>
-                    <div className="pt-4 border-t border-white/15 flex items-center justify-between">
-                      <span
-                        className="text-xs text-white/80 px-2 py-1 rounded"
-                        style={{ background: "rgba(0,0,0,0.22)" }}
-                      >
-                        Tu turno de predecir
+                    <div className="pt-3 border-t border-white/15 flex items-center justify-between">
+                      <span className="text-xs text-white/70 px-2 py-1 rounded" style={{ background: "rgba(0,0,0,0.22)" }}>
+                        Ver posiciones
                       </span>
-                      <ChevronRight
-                        size={16}
-                        className="text-white/70 group-hover:text-white transition-colors"
-                      />
+                      <ChevronRight size={15} className="text-white/60 group-hover:text-white transition-colors" />
                     </div>
                   </div>
                 </Link>
@@ -649,6 +653,7 @@ export default function Explorer() {
             leagueFavorites={leagueFavorites}
             onToggleFavorite={toggleLeagueFavorite}
             user={user}
+            excludeLeagueId={wcMatches.length > 0 ? 1 : null}
           />
         ) : (
           <div className="text-center py-8 text-white/40 text-sm">
@@ -760,7 +765,7 @@ export default function Explorer() {
 }
 
 // ─── Today Matches grouped by league ───
-const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
+const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user, excludeLeagueId = null }) => {
   const [collapsedLeagues, setCollapsedLeagues] = useState({});
   const [liveOnly, setLiveOnly] = useState(false);
   const [expandedLeague, setExpandedLeague] = useState(null);
@@ -768,7 +773,9 @@ const TodayMatchesRow = ({ data, leagueFavorites, onToggleFavorite, user }) => {
   const LIVE_STATUSES = ["1H", "2H", "HT", "ET", "BT", "P"];
   const WORLD_CUP_ID = 1;
 
-  const filteredGrouped = data.grouped || [];
+  const filteredGrouped = (data.grouped || []).filter((g) =>
+    excludeLeagueId ? Number(g.league?.id) !== excludeLeagueId : true
+  );
 
   useEffect(() => {
     if (!expandedLeague) return undefined;
