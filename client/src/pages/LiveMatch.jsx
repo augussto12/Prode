@@ -39,6 +39,20 @@ export default function LiveMatch() {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (!data?.fixture) return;
+
+    const availableTabs = [
+      (data.events || []).length > 0 && "timeline",
+      (data.lineups || []).length >= 2 && "lineups",
+      ((data.statistics || []).length >= 2 || injuries.length > 0) && "stats",
+    ].filter(Boolean);
+
+    if (availableTabs.length > 0 && !availableTabs.includes(activeMatchTab)) {
+      setActiveMatchTab(availableTabs[0]);
+    }
+  }, [data, injuries.length, activeMatchTab]);
+
   const loadMatch = async () => {
     try {
       const [resultRes, injuriesRes] = await Promise.all([
@@ -165,18 +179,25 @@ export default function LiveMatch() {
   const events = data.events || [];
   const statistics = data.statistics || [];
   const lineups = data.lineups || [];
+  const hasTimeline = events.length > 0;
+  const hasLineups = lineups.length >= 2;
+  const hasStatistics = statistics.length >= 2;
+  const hasInjuries = injuries.length > 0;
 
-  const isLive = ["1H", "2H", "HT", "ET", "BT", "P"].includes(
+  const isLive = ["1H", "2H", "HT", "ET", "BT", "P", "LIVE"].includes(
     match?.status?.short,
   );
   const isFinished = ["FT", "AET", "PEN"].includes(match?.status?.short);
 
   const goalEvents = events.filter((e) => e.type === "Goal");
   const matchTabs = [
-    { id: "timeline", label: "Timeline" },
-    { id: "lineups", label: "Alineaciones" },
-    { id: "stats", label: "Estadísticas" },
-  ];
+    hasTimeline && { id: "timeline", label: "Timeline" },
+    hasLineups && { id: "lineups", label: "Alineaciones" },
+    (hasStatistics || hasInjuries) && {
+      id: "stats",
+      label: hasStatistics ? "Estadísticas" : "Bajas",
+    },
+  ].filter(Boolean);
   const oddsMarkets = liveOdds[0]?.odds
     ? liveOdds[0].odds.slice(0, 10)
     : liveOdds[0]?.bookmakers?.[0]?.bets?.slice(0, 10) || [];
@@ -454,25 +475,27 @@ export default function LiveMatch() {
         )}
       </div>
 
-      <div className="flex gap-1 p-1 rounded-xl border border-white/10 bg-white/5 overflow-x-auto">
-        {matchTabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveMatchTab(tab.id)}
-            className={`flex-1 min-w-[118px] rounded-lg px-3 py-2 text-xs sm:text-sm font-bold transition-all cursor-pointer border ${
-              activeMatchTab === tab.id
-                ? "bg-white/15 text-white border-white/10"
-                : "bg-transparent text-white/55 border-transparent hover:text-white hover:bg-white/5"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {matchTabs.length > 0 && (
+        <div className="flex gap-1 p-1 rounded-xl border border-white/10 bg-white/5 overflow-x-auto">
+          {matchTabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveMatchTab(tab.id)}
+              className={`flex-1 min-w-[118px] rounded-lg px-3 py-2 text-xs sm:text-sm font-bold transition-all cursor-pointer border ${
+                activeMatchTab === tab.id
+                  ? "bg-white/15 text-white border-white/10"
+                  : "bg-transparent text-white/55 border-transparent hover:text-white hover:bg-white/5"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Lineup team tabs */}
-      {activeMatchTab === "lineups" && lineups.length >= 2 && (
+      {activeMatchTab === "lineups" && hasLineups && (
         <div className="flex bg-white/5 rounded-xl p-1 mb-2 border border-white/10 max-w-xl mx-auto">
           <button
             onClick={() => setActiveLineupTab("home")}
@@ -494,24 +517,18 @@ export default function LiveMatch() {
         <div
           className="lg:col-span-12 space-y-6 order-2 lg:order-2 mb-6 lg:mb-0"
         >
-          {activeMatchTab === "lineups" && (
-            lineups.length >= 2 ? (
-              <div className="mx-auto max-w-3xl">
-                {activeLineupTab === "home" ? (
-                  <LineupCard lineup={lineups[0]} align="left" navigate={navigate} />
-                ) : (
-                  <LineupCard lineup={lineups[1]} align="right" navigate={navigate} />
-                )}
-              </div>
-            ) : (
-              <div className="glass-card rounded-3xl p-8 text-center text-white/60 border border-white/5">
-                <p>Alineaciones no disponibles.</p>
-              </div>
-            )
+          {activeMatchTab === "lineups" && hasLineups && (
+            <div className="mx-auto max-w-3xl">
+              {activeLineupTab === "home" ? (
+                <LineupCard lineup={lineups[0]} align="left" navigate={navigate} />
+              ) : (
+                <LineupCard lineup={lineups[1]} align="right" navigate={navigate} />
+              )}
+            </div>
           )}
 
           {/* Statistics */}
-          {activeMatchTab === "stats" && statistics.length >= 2 && (
+          {activeMatchTab === "stats" && hasStatistics && (
             <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -585,7 +602,7 @@ export default function LiveMatch() {
           )}
 
           {/* Injuries / Hospital */}
-          {activeMatchTab === "stats" && (injuries.length > 0 ? (
+          {activeMatchTab === "stats" && hasInjuries && (
             <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -645,12 +662,6 @@ export default function LiveMatch() {
                         </div>
                       </div>
                     ))}
-                  {injuries.filter((i) => i.team.id === teams?.home?.id)
-                    .length === 0 && (
-                    <span className="text-[9px] md:text-[10px] text-white/40 italic block">
-                      Plantel a disp.
-                    </span>
-                  )}
                 </div>
                 {/* Away Injuries */}
                 <div className="w-1/2 pl-2 md:pl-4 space-y-3 md:space-y-4">
@@ -700,32 +711,13 @@ export default function LiveMatch() {
                         </div>
                       </div>
                     ))}
-                  {injuries.filter((i) => i.team.id === teams?.away?.id)
-                    .length === 0 && (
-                    <span className="text-[9px] md:text-[10px] text-white/40 italic block text-right">
-                      Plantel a disp.
-                    </span>
-                  )}
                 </div>
               </div>
             </m.div>
-          ) : (
-            <m.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-card rounded-3xl p-6 border border-white/5"
-            >
-              <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
-                <span className="text-white/50">🏥</span> Enfemería / Bajas
-              </h3>
-              <p className="text-center text-xs text-white/60">
-                Todos los jugadores a disposición
-              </p>
-            </m.div>
-          ))}
+          )}
 
           {/* Events Timeline */}
-          {activeMatchTab === "timeline" && events.length > 0 && (
+          {activeMatchTab === "timeline" && hasTimeline && (
             <m.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -857,32 +849,12 @@ export default function LiveMatch() {
             </m.div>
           )}
 
-          {activeMatchTab === "timeline" && events.length === 0 && (
-            <div className="glass-card rounded-3xl p-8 text-center text-white/60 border border-white/5">
-              <p>Todavía no hay eventos para mostrar.</p>
-            </div>
-          )}
-
-          {activeMatchTab === "stats" && statistics.length < 2 && (
-            <div className="glass-card rounded-3xl p-8 text-center text-white/60 border border-white/5">
-              <p>Estadísticas no disponibles.</p>
-            </div>
-          )}
-
-          {/* No data */}
-          {events.length === 0 &&
-            statistics.length === 0 &&
-            lineups.length === 0 &&
-            !isLive && (
-              <div className="glass-card rounded-3xl p-8 text-center text-white/60 border border-white/5">
-                <p>Esperando datos del partido...</p>
-              </div>
-            )}
         </div>
 
       </div>
 
       <div className="space-y-6">
+        {oddsMarkets.length > 0 && (
         <m.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -896,8 +868,7 @@ export default function LiveMatch() {
               : "Cuotas"}
           </h3>
 
-          {oddsMarkets.length > 0 ? (
-            <div className="space-y-4">
+          <div className="space-y-4">
               <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
                 {oddsMarkets.map((market, idx) => (
                   <button
@@ -948,14 +919,11 @@ export default function LiveMatch() {
                   ? `Vía ${liveOdds[0].bookmakers[0]?.name}`
                   : "Live Odds Auto"}
               </div>
-            </div>
-          ) : (
-            <p className="text-center text-sm text-white/55 py-6">
-              No hay cuotas disponibles.
-            </p>
-          )}
+          </div>
         </m.div>
+        )}
 
+        {h2hMatches.length > 0 && (
         <m.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -972,8 +940,7 @@ export default function LiveMatch() {
             )}
           </div>
 
-          {h2hMatches.length > 0 ? (
-            <div className="space-y-2">
+          <div className="space-y-2">
               {h2hMatches.map((m) => {
                 const hG = m.goals?.home ?? "-";
                 const aG = m.goals?.away ?? "-";
@@ -1060,13 +1027,9 @@ export default function LiveMatch() {
                   </div>
                 );
               })}
-            </div>
-          ) : (
-            <p className="text-center text-xs text-white/60">
-              No hay historial previo entre estos equipos.
-            </p>
-          )}
+          </div>
         </m.div>
+        )}
       </div>
     </div>
   );

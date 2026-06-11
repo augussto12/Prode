@@ -1,9 +1,29 @@
 import cron from 'node-cron';
-import { scorePendingPredictions, reverifyRecentResults } from '../services/scoring.service.js';
+import {
+  scoreFinishedCompetitionFixtures,
+  scorePendingPredictions,
+  reverifyRecentResults,
+} from '../services/scoring.service.js';
 import { calculateReadyOutrightScores } from '../services/outrights.service.js';
 import { logCronJob } from '../utils/cronLogger.js';
 
 const PRODE_CRON_OPTIONS = { timezone: 'America/Argentina/Buenos_Aires' };
+
+function numberFromEnv(keys, fallback) {
+  for (const key of keys) {
+    const value = process.env[key];
+    if (!value) continue;
+
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+    console.warn(`[Cron Prode] ${key} invalido: ${value}. Se usa ${fallback}.`);
+  }
+
+  return fallback;
+}
+
+const WORLD_CUP_LEAGUE_ID = numberFromEnv(['PRODE_AUTO_SCORING_LEAGUE_ID', 'FOOTBALL_LEAGUE_ID'], 1);
+const WORLD_CUP_SEASON = numberFromEnv(['PRODE_AUTO_SCORING_SEASON', 'FOOTBALL_SEASON'], 2026);
 let scoringRunning = false;
 let reverifyRunning = false;
 let outrightsRunning = false;
@@ -53,6 +73,44 @@ async function runScoringJob() {
   }
 }
 
+async function runWorldCupFinishedScoringJob() {
+  const jobName = 'scoreFinishedWorldCupFixtures';
+  if (scoringRunning) {
+    await logCronJob(
+      'Prode',
+      jobName,
+      'warning',
+      0,
+      'Auto-scoring omitido: ya habia una ejecucion de scoring en curso',
+    );
+    return;
+  }
+
+  scoringRunning = true;
+  const start = Date.now();
+
+  try {
+    const result = await scoreFinishedCompetitionFixtures({
+      leagueId: WORLD_CUP_LEAGUE_ID,
+      season: WORLD_CUP_SEASON,
+    });
+    await logCronJob('Prode', jobName, 'success', Date.now() - start, result.message, {
+      leagueId: WORLD_CUP_LEAGUE_ID,
+      season: WORLD_CUP_SEASON,
+      checked: result.checked,
+      finished: result.finished,
+      scorableFinished: result.scorableFinished,
+      fixturesProcessed: result.fixturesProcessed,
+      predictionsCalculated: result.predictionsCalculated,
+    });
+  } catch (err) {
+    await logCronJob('Prode', jobName, 'error', Date.now() - start, err.message);
+    console.error('[Cron Prode Auto-scoring] Error:', err.message);
+  } finally {
+    scoringRunning = false;
+  }
+}
+
 async function runOutrightsJob() {
   if (outrightsRunning) {
     await logCronJob('Prode', 'calculateReadyOutrights', 'warning', 0, 'Premios finales omitidos: ya habia una ejecucion en curso');
@@ -86,12 +144,16 @@ export function setupCronJobs() {
     await runOutrightsJob();
   }, PRODE_CRON_OPTIONS);
 
-  cron.schedule('0 17,19,22,2 * * *', async () => {
+  cron.schedule('0 2,7,10,13,16,17,19,22 * * *', async () => {
     await runScoringJob();
     await runOutrightsJob();
   }, PRODE_CRON_OPTIONS);
 
+  cron.schedule('5-59/10 * * * *', async () => {
+    await runWorldCupFinishedScoringJob();
+  }, PRODE_CRON_OPTIONS);
+
   console.log(
-    'Cron Prode configurado - timezone America/Argentina/Buenos_Aires; scoring a las 17, 19, 22, 01 y 02hs (01hs incluye reverificacion)',
+    'Cron Prode configurado - timezone America/Argentina/Buenos_Aires; auto-scoring Mundial cada 10 min; respaldo a las 01, 02, 07, 10, 13, 16, 17, 19 y 22hs (01hs incluye reverificacion)',
   );
 }

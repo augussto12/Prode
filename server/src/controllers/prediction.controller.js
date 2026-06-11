@@ -46,6 +46,10 @@ export async function getScoringConfig(req, res, next) {
     res.json({
       exactScore: config.exactScore,
       correctWinner: config.correctWinner,
+      champion: config.champion,
+      runnerUp: config.runnerUp,
+      topScorer: config.topScorer,
+      goldenGlove: config.goldenGlove,
     });
   } catch (err) { next(err); }
 }

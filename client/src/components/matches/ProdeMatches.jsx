@@ -200,20 +200,41 @@ export default function ProdeMatches({
           </div>
 
           <div className="rounded-xl border border-white/10 bg-white/[0.035] px-4 py-3">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-white/45 shrink-0">
-                Puntaje por partido
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-white/45 shrink-0">
+                  Puntaje por partido
+                </div>
+                <div className="flex flex-wrap gap-1.5 text-[11px] text-white/70">
+                  <span className="rounded-md bg-white/10 px-2 py-1">
+                    Exacto: <strong className="text-white">{scoringConfig?.exactScore ?? "-"} pts</strong>
+                  </span>
+                  <span className="rounded-md bg-white/10 px-2 py-1">
+                    Ganador/empate: <strong className="text-white">{scoringConfig?.correctWinner ?? "-"} pts</strong>
+                  </span>
+                  <span className="rounded-md bg-white/10 px-2 py-1">
+                    Sin acierto: <strong className="text-white">0 pts</strong>
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-1.5 text-[11px] text-white/70">
-                <span className="rounded-md bg-white/10 px-2 py-1">
-                  Exacto: <strong className="text-white">{scoringConfig?.exactScore ?? "—"} pts</strong>
-                </span>
-                <span className="rounded-md bg-white/10 px-2 py-1">
-                  Ganador/empate: <strong className="text-white">{scoringConfig?.correctWinner ?? "—"} pts</strong>
-                </span>
-                <span className="rounded-md bg-white/10 px-2 py-1">
-                  Sin acierto: <strong className="text-white">0 pts</strong>
-                </span>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-white/45 shrink-0">
+                  Predicciones finales
+                </div>
+                <div className="flex flex-wrap gap-1.5 text-[11px] text-white/70">
+                  <span className="rounded-md bg-white/10 px-2 py-1">
+                    Campeon: <strong className="text-white">{scoringConfig?.champion ?? "-"} pts</strong>
+                  </span>
+                  <span className="rounded-md bg-white/10 px-2 py-1">
+                    Subcampeon: <strong className="text-white">{scoringConfig?.runnerUp ?? "-"} pts</strong>
+                  </span>
+                  <span className="rounded-md bg-white/10 px-2 py-1">
+                    Goleador: <strong className="text-white">{scoringConfig?.topScorer ?? "-"} pts</strong>
+                  </span>
+                  <span className="rounded-md bg-white/10 px-2 py-1">
+                    Guante de oro: <strong className="text-white">{scoringConfig?.goldenGlove ?? "-"} pts</strong>
+                  </span>
+                </div>
               </div>
             </div>
           </div>

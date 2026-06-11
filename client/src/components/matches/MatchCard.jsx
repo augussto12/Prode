@@ -33,7 +33,6 @@ export default memo(function MatchCard({
   const lockoutDate = new Date(matchDate);
   lockoutDate.setMinutes(lockoutDate.getMinutes() - 5);
   const minutesUntilLockout = Math.floor((lockoutDate - new Date()) / 60000);
-  const lockoutTimeStr = lockoutDate.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
   const hasPhaseRule = Boolean(match.predictionWindow?.phaseRule);
   const phaseLocked = hasPhaseRule && match.predictionWindow?.canPredict === false;
   const isPast =
@@ -42,6 +41,8 @@ export default memo(function MatchCard({
     (!hasPhaseRule && new Date() >= lockoutDate);
   const isLive = match.status === "LIVE";
   const isFinished = match.status === "FINISHED";
+  const detailFixtureId = match.externalId || match.id;
+  const canOpenMatchDetail = Boolean(detailFixtureId && (isLive || isFinished));
   const canToggleJoker =
     !isPast &&
     (prediction.isJoker || existingPrediction?.isJoker || jokerRemaining > 0);
@@ -165,12 +166,49 @@ export default memo(function MatchCard({
     e.target.src = "/placeholder-team.svg";
   };
 
+  const openMatchDetail = () => {
+    if (canOpenMatchDetail) {
+      navigate(`/partido/${detailFixtureId}`);
+    }
+  };
+
+  const handleCardKeyDown = (event) => {
+    if (!canOpenMatchDetail) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openMatchDetail();
+    }
+  };
+
+  const handleTeamClick = (event, teamId) => {
+    event.stopPropagation();
+    if (teamId) navigate(`/equipo/${teamId}`);
+  };
+
+  const handleTeamKeyDown = (event, teamId) => {
+    if (!teamId) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      event.stopPropagation();
+      navigate(`/equipo/${teamId}`);
+    }
+  };
+
   return (
     <m.div
       layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`glass-card rounded-xl sm:rounded-2xl overflow-hidden transition-all hover:shadow-[0_0_20px_color-mix(in_srgb,var(--color-secondary)_20%,transparent)] ${isFavorite ? "ring-1 ring-amber-400/30" : ""}`}
+      onClick={canOpenMatchDetail ? openMatchDetail : undefined}
+      onKeyDown={handleCardKeyDown}
+      role={canOpenMatchDetail ? "button" : undefined}
+      tabIndex={canOpenMatchDetail ? 0 : undefined}
+      aria-label={
+        canOpenMatchDetail
+          ? `Ver detalle de ${tTeamName(match.homeTeam)} vs ${tTeamName(match.awayTeam)}`
+          : undefined
+      }
+      className={`glass-card rounded-xl sm:rounded-2xl overflow-hidden transition-all hover:shadow-[0_0_20px_color-mix(in_srgb,var(--color-secondary)_20%,transparent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400/70 ${canOpenMatchDetail ? "cursor-pointer" : ""} ${isFavorite ? "ring-1 ring-amber-400/30" : ""}`}
     >
       <div className="p-3 sm:p-4">
         <div className="flex items-center justify-between mb-2 sm:mb-3 gap-2">
@@ -198,10 +236,11 @@ export default memo(function MatchCard({
             )}
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {user && (
+            {user && !isPast && (
               <button
                 type="button"
-                onClick={() => {
+                onClick={(event) => {
+                  event.stopPropagation();
                   if (!canToggleJoker) {
                     addToast({
                       type: "info",
@@ -232,7 +271,11 @@ export default memo(function MatchCard({
         <div className="flex items-center justify-between">
           <div
             className={`flex-1 text-center min-w-0 ${match.homeTeamId ? "cursor-pointer group" : ""}`}
-            onClick={() => match.homeTeamId && navigate(`/equipo/${match.homeTeamId}`)}
+            onClick={(event) => handleTeamClick(event, match.homeTeamId)}
+            onKeyDown={(event) => handleTeamKeyDown(event, match.homeTeamId)}
+            role={match.homeTeamId ? "button" : undefined}
+            tabIndex={match.homeTeamId ? 0 : undefined}
+            aria-label={match.homeTeamId ? `Ver detalle de ${tTeamName(match.homeTeam)}` : undefined}
           >
             {match.homeTeamLogo ? (
               <img
@@ -264,7 +307,8 @@ export default memo(function MatchCard({
               </div>
             ) : !user ? (
               <button
-                onClick={() => {
+                onClick={(event) => {
+                  event.stopPropagation();
                   addToast({
                     type: "warning",
                     message: "Inicia sesion para hacer predicciones",
@@ -296,6 +340,7 @@ export default memo(function MatchCard({
                   max="20"
                   value={prediction.homeGoals}
                   onChange={(e) => setPrediction({ ...prediction, homeGoals: e.target.value })}
+                  onClick={(event) => event.stopPropagation()}
                   disabled={isPast}
                   placeholder="-"
                   className="w-7 h-8 sm:w-9 sm:h-9 text-center bg-white/10 border border-white/20 rounded-lg text-white font-bold text-sm sm:text-base focus:outline-none focus:border-indigo-500 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -307,6 +352,7 @@ export default memo(function MatchCard({
                   max="20"
                   value={prediction.awayGoals}
                   onChange={(e) => setPrediction({ ...prediction, awayGoals: e.target.value })}
+                  onClick={(event) => event.stopPropagation()}
                   disabled={isPast}
                   placeholder="-"
                   className="w-7 h-8 sm:w-9 sm:h-9 text-center bg-white/10 border border-white/20 rounded-lg text-white font-bold text-sm sm:text-base focus:outline-none focus:border-indigo-500 disabled:opacity-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -317,7 +363,11 @@ export default memo(function MatchCard({
 
           <div
             className={`flex-1 text-center min-w-0 ${match.awayTeamId ? "cursor-pointer group" : ""}`}
-            onClick={() => match.awayTeamId && navigate(`/equipo/${match.awayTeamId}`)}
+            onClick={(event) => handleTeamClick(event, match.awayTeamId)}
+            onKeyDown={(event) => handleTeamKeyDown(event, match.awayTeamId)}
+            role={match.awayTeamId ? "button" : undefined}
+            tabIndex={match.awayTeamId ? 0 : undefined}
+            aria-label={match.awayTeamId ? `Ver detalle de ${tTeamName(match.awayTeam)}` : undefined}
           >
             {match.awayTeamLogo ? (
               <img
@@ -391,7 +441,10 @@ export default memo(function MatchCard({
           <m.button
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            onClick={handleSave}
+            onClick={(event) => {
+              event.stopPropagation();
+              handleSave();
+            }}
             disabled={saving}
             className="w-full py-1.5 sm:py-2 rounded-xl text-white font-medium text-[11px] sm:text-xs transition-all hover:opacity-90 disabled:opacity-50 cursor-pointer border-none"
             style={{

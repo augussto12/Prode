@@ -1,6 +1,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { calculatePredictionPoints } from '../src/services/scoring.service.js';
+import {
+  calculatePredictionPoints,
+  hasFinalFixtureScore,
+  isFinishedFixture,
+} from '../src/services/scoring.service.js';
 
 const config = {
   exactScore: 10,
@@ -76,5 +80,32 @@ describe('calculatePredictionPoints', () => {
 
     assert.equal(result.points, 0);
     assert.equal(result.basePoints, 0);
+  });
+
+  it('does not score when final goals are undefined', () => {
+    const result = calculatePredictionPoints(
+      { homeGoals: 0, awayGoals: 0, isJoker: false },
+      { goals: {} },
+      config,
+    );
+
+    assert.equal(result.points, 0);
+    assert.equal(result.basePoints, 0);
+  });
+});
+
+describe('fixture scoring guards', () => {
+  it('accepts only API-Football finished statuses used for scoring', () => {
+    assert.equal(isFinishedFixture({ fixture: { status: { short: 'FT' } } }), true);
+    assert.equal(isFinishedFixture({ fixture: { status: { short: 'AET' } } }), true);
+    assert.equal(isFinishedFixture({ fixture: { status: { short: 'PEN' } } }), true);
+    assert.equal(isFinishedFixture({ fixture: { status: { short: 'LIVE' } } }), false);
+    assert.equal(isFinishedFixture({ fixture: { status: { short: 'NS' } } }), false);
+  });
+
+  it('requires both final goals before a fixture can be scored', () => {
+    assert.equal(hasFinalFixtureScore(fixture(0, 0)), true);
+    assert.equal(hasFinalFixtureScore(fixture(null, 0)), false);
+    assert.equal(hasFinalFixtureScore({ goals: { home: 1 } }), false);
   });
 });

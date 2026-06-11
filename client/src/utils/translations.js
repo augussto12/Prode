@@ -261,8 +261,17 @@ export function tEvent(type) {
 export function tRound(round) {
   if (!round) return "";
   const roundText = String(round);
-  const groupMatch = roundText.match(/^Group\s+([A-Z0-9]+)$/i);
+
+  const groupMatch = roundText.match(
+    /^(?:(?:Group Stage|Fase de Grupos)\s*[-:]?\s*)?(?:Group|Grupo)\s+([A-Z]|\d{1,2})$/i,
+  );
   if (groupMatch) return `Grupo ${groupMatch[1].toUpperCase()}`;
+
+  const nestedGroupMatch = roundText.match(
+    /(?:Group Stage|Fase de Grupos)\s*[-:]?\s*(?:Group|Grupo)\s+([A-Z]|\d{1,2})$/i,
+  );
+  if (nestedGroupMatch) return `Grupo ${nestedGroupMatch[1].toUpperCase()}`;
+
   if (/^Ranking of third[-\s]+placed teams/i.test(roundText)) {
     return "Ranking de terceros";
   }

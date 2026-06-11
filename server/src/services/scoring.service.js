@@ -2,6 +2,24 @@ import prisma from '../config/database.js';
 import * as footballApi from '../services/football-api.service.js';
 import { cachedApiCall } from '../services/cache.service.js';
 
+const API_FOOTBALL_SOURCE = 'api-football';
+const FINISHED_STATUS_SHORTS = new Set(['FT', 'AET', 'PEN']);
+
+export function isFinishedFixture(fixtureData) {
+  return FINISHED_STATUS_SHORTS.has(fixtureData?.fixture?.status?.short);
+}
+
+export function hasFinalFixtureScore(fixtureData) {
+  const homeGoals = fixtureData?.goals?.home;
+  const awayGoals = fixtureData?.goals?.away;
+  return (
+    homeGoals !== null &&
+    homeGoals !== undefined &&
+    awayGoals !== null &&
+    awayGoals !== undefined
+  );
+}
+
 function getMatchResult(homeGoals, awayGoals) {
   if (homeGoals > awayGoals) return 'HOME';
   if (homeGoals < awayGoals) return 'AWAY';
@@ -22,11 +40,21 @@ export function calculatePredictionPoints(prediction, fixtureData, config) {
   const actualHomeGoals = fixtureData.goals.home;
   const actualAwayGoals = fixtureData.goals.away;
 
-  if (actualHomeGoals === null || actualAwayGoals === null) {
+  if (
+    actualHomeGoals === null ||
+    actualHomeGoals === undefined ||
+    actualAwayGoals === null ||
+    actualAwayGoals === undefined
+  ) {
     return { points: 0, basePoints: 0, ...legacyHitFields };
   }
 
-  if (prediction.homeGoals === null || prediction.awayGoals === null) {
+  if (
+    prediction.homeGoals === null ||
+    prediction.homeGoals === undefined ||
+    prediction.awayGoals === null ||
+    prediction.awayGoals === undefined
+  ) {
     return { points: 0, basePoints: 0, ...legacyHitFields };
   }
 
@@ -64,6 +92,39 @@ async function getFixtureFromApi(fixtureId, { fresh = false } = {}) {
   return cachedApiCall(`api-football:fixture:raw:${fixtureId}`, 30, fetchFixture);
 }
 
+async function scoreFixturePredictions(externalFixtureId, fixtureData, config, filters = {}) {
+  if (!hasFinalFixtureScore(fixtureData)) return 0;
+
+  const where = {
+    externalFixtureId,
+    isCalculated: false,
+  };
+
+  if (filters.competitionId) where.competitionId = filters.competitionId;
+  if (filters.source) where.source = filters.source;
+
+  const fixturePredictions = await prisma.prediction.findMany({ where });
+  if (fixturePredictions.length === 0) return 0;
+
+  await prisma.$transaction(
+    fixturePredictions.map((prediction) => {
+      const result = calculatePredictionPoints(prediction, fixtureData, config);
+
+      return prisma.prediction.update({
+        where: { id: prediction.id },
+        data: {
+          pointsEarned: result.points,
+          basePoints: result.basePoints,
+          ...legacyHitFields,
+          isCalculated: true,
+        },
+      });
+    }),
+  );
+
+  return fixturePredictions.length;
+}
+
 /**
  * Main batch scoring function.
  * 1. Finds all pending predictions
@@ -93,31 +154,16 @@ export async function scorePendingPredictions() {
     const fixtureData = await getFixtureFromApi(externalFixtureId, { fresh: true });
     if (!fixtureData) continue;
 
-    const statusShort = fixtureData.fixture?.status?.short;
-    const isFinished = ['FT', 'AET', 'PEN'].includes(statusShort);
+    const isFinished = isFinishedFixture(fixtureData);
     if (!isFinished) continue;
+    if (!hasFinalFixtureScore(fixtureData)) {
+      console.warn(`[Scoring] Fixture ${externalFixtureId} finalizado sin goles publicados; se reintentara en el proximo ciclo`);
+      continue;
+    }
 
     console.log(`[Scoring] ${fixtureData.teams?.home?.name} ${fixtureData.goals?.home}-${fixtureData.goals?.away} ${fixtureData.teams?.away?.name}`);
 
-    const fixturePredictions = await prisma.prediction.findMany({
-      where: { externalFixtureId, isCalculated: false },
-    });
-
-    for (const prediction of fixturePredictions) {
-      const result = calculatePredictionPoints(prediction, fixtureData, config);
-
-      await prisma.prediction.update({
-        where: { id: prediction.id },
-        data: {
-          pointsEarned: result.points,
-          basePoints: result.basePoints,
-          ...legacyHitFields,
-          isCalculated: true,
-        },
-      });
-      totalCalculated++;
-    }
-
+    totalCalculated += await scoreFixturePredictions(externalFixtureId, fixtureData, config);
     finishedFixtures.push(externalFixtureId);
   }
 
@@ -128,6 +174,121 @@ export async function scorePendingPredictions() {
   return {
     message: `Puntajes calculados para ${finishedFixtures.length} partidos.`,
     fixturesProcessed: finishedFixtures.length,
+    predictionsCalculated: totalCalculated,
+  };
+}
+
+/**
+ * Lightweight World Cup watcher.
+ * Fetches the competition fixture list once, scores only finished fixtures
+ * that still have pending predictions, then rebuilds leaderboards.
+ */
+export async function scoreFinishedCompetitionFixtures({ leagueId = 1, season = 2026 } = {}) {
+  const numericLeagueId = Number(leagueId);
+  const numericSeason = Number(season);
+
+  if (!Number.isFinite(numericLeagueId) || !Number.isFinite(numericSeason)) {
+    throw new Error(
+      `League/season invalidos para scoring automatico: league=${leagueId}, season=${season}`,
+    );
+  }
+
+  const competition = await prisma.competition.findUnique({
+    where: {
+      externalId_season: {
+        externalId: numericLeagueId,
+        season: numericSeason,
+      },
+    },
+  });
+
+  if (!competition) {
+    return {
+      message: `No existe una competencia local para liga ${numericLeagueId}, temporada ${numericSeason}.`,
+      checked: 0,
+      finished: 0,
+      scorableFinished: 0,
+      fixturesProcessed: 0,
+      predictionsCalculated: 0,
+    };
+  }
+
+  const result = await footballApi.fetchFixtures(numericLeagueId, numericSeason);
+  const fixtures = result.response || [];
+  const finishedFixtures = fixtures.filter(isFinishedFixture);
+  const scorableFinishedFixtures = finishedFixtures.filter(hasFinalFixtureScore);
+  const fixtureIds = scorableFinishedFixtures
+    .map((fixture) => String(fixture.fixture?.id || ''))
+    .filter(Boolean);
+
+  if (fixtureIds.length === 0) {
+    return {
+      message: `No hay partidos terminados con resultado para ${competition.name}.`,
+      checked: fixtures.length,
+      finished: finishedFixtures.length,
+      scorableFinished: 0,
+      fixturesProcessed: 0,
+      predictionsCalculated: 0,
+    };
+  }
+
+  const pendingFixtures = await prisma.prediction.findMany({
+    where: {
+      competitionId: competition.id,
+      source: API_FOOTBALL_SOURCE,
+      isCalculated: false,
+      externalFixtureId: { in: fixtureIds },
+    },
+    select: { externalFixtureId: true },
+    distinct: ['externalFixtureId'],
+  });
+
+  if (pendingFixtures.length === 0) {
+    return {
+      message: `No hay predicciones pendientes para partidos terminados de ${competition.name}.`,
+      checked: fixtures.length,
+      finished: finishedFixtures.length,
+      scorableFinished: scorableFinishedFixtures.length,
+      fixturesProcessed: 0,
+      predictionsCalculated: 0,
+    };
+  }
+
+  const config = await getScoringConfig();
+  const fixturesById = new Map(
+    scorableFinishedFixtures.map((fixture) => [String(fixture.fixture?.id), fixture]),
+  );
+  let totalCalculated = 0;
+  let fixturesProcessed = 0;
+
+  for (const { externalFixtureId } of pendingFixtures) {
+    const fixtureData = fixturesById.get(String(externalFixtureId));
+    if (!fixtureData) continue;
+
+    const calculated = await scoreFixturePredictions(externalFixtureId, fixtureData, config, {
+      competitionId: competition.id,
+      source: API_FOOTBALL_SOURCE,
+    });
+
+    if (calculated > 0) {
+      fixturesProcessed++;
+      totalCalculated += calculated;
+      console.log(
+        `[Auto scoring] ${fixtureData.teams?.home?.name} ${fixtureData.goals?.home}-${fixtureData.goals?.away} ${fixtureData.teams?.away?.name}: ${calculated} predicciones`,
+      );
+    }
+  }
+
+  if (totalCalculated > 0) {
+    await recalculateAllLeaderboards();
+  }
+
+  return {
+    message: `Auto-scoring ${competition.name}: ${fixturesProcessed} partidos, ${totalCalculated} predicciones calculadas.`,
+    checked: fixtures.length,
+    finished: finishedFixtures.length,
+    scorableFinished: scorableFinishedFixtures.length,
+    fixturesProcessed,
     predictionsCalculated: totalCalculated,
   };
 }
@@ -190,7 +351,7 @@ export async function reverifyRecentResults() {
       if (!fixtureData) continue;
 
       const statusShort = fixtureData.fixture?.status?.short;
-      const isFinished = ['FT', 'AET', 'PEN'].includes(statusShort);
+      const isFinished = isFinishedFixture(fixtureData);
 
       if (!isFinished) {
         const resetResult = await prisma.prediction.updateMany({
@@ -204,6 +365,11 @@ export async function reverifyRecentResults() {
         });
         reset++;
         console.log(`[Reverify] Fixture ${externalFixtureId} reseteado; status actual: ${statusShort}, ${resetResult.count} predicciones afectadas`);
+        continue;
+      }
+
+      if (!hasFinalFixtureScore(fixtureData)) {
+        console.warn(`[Reverify] Fixture ${externalFixtureId} finalizado sin goles publicados; se mantiene el calculo anterior`);
         continue;
       }
 
