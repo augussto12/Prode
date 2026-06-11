@@ -356,6 +356,13 @@ export default function Explorer() {
     [wcPredictions]
   );
 
+  const WC_JOKER_LIMIT = 3;
+  const wcJokersUsed = useMemo(
+    () => wcPredictions.filter((p) => p.isJoker).length,
+    [wcPredictions]
+  );
+  const wcJokersRemaining = Math.max(0, WC_JOKER_LIMIT - wcJokersUsed);
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -547,6 +554,8 @@ export default function Explorer() {
                 match={match}
                 existingPrediction={wcPredictionsMap.get(Number(match.externalId || match.id))}
                 onPredictionSaved={loadWorldCupToday}
+                jokerRemaining={wcJokersRemaining}
+                jokerLimit={WC_JOKER_LIMIT}
               />
             ))}
           </div>
