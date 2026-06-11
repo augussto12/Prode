@@ -22,8 +22,8 @@ function numberFromEnv(keys, fallback) {
   return fallback;
 }
 
-const WORLD_CUP_LEAGUE_ID = numberFromEnv(['PRODE_AUTO_SCORING_LEAGUE_ID', 'FOOTBALL_LEAGUE_ID'], 1);
-const WORLD_CUP_SEASON = numberFromEnv(['PRODE_AUTO_SCORING_SEASON', 'FOOTBALL_SEASON'], 2026);
+const WORLD_CUP_LEAGUE_ID = numberFromEnv(['PRODE_AUTO_SCORING_LEAGUE_ID'], 1);
+const WORLD_CUP_SEASON = numberFromEnv(['PRODE_AUTO_SCORING_SEASON'], 2026);
 let scoringRunning = false;
 let reverifyRunning = false;
 let outrightsRunning = false;
