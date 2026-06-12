@@ -66,12 +66,41 @@ export async function getMyGroups(userId) {
     orderBy: { joinedAt: 'desc' },
   });
 
-  return memberships.map((m) => ({
-    ...m.group,
-    memberCount: m.group._count.groupUsers,
-    isAdmin: m.isAdmin,
-    totalPoints: m.totalPoints,
-  }));
+  const groupIds = memberships.map((m) => m.groupId);
+  const membersByGroup = new Map();
+
+  if (groupIds.length > 0) {
+    const groupMembers = await prisma.groupUser.findMany({
+      where: { groupId: { in: groupIds }, isBanned: false },
+      select: { groupId: true, userId: true, totalPoints: true, joinedAt: true },
+      orderBy: [
+        { groupId: 'asc' },
+        { totalPoints: 'desc' },
+        { joinedAt: 'asc' },
+        { userId: 'asc' },
+      ],
+    });
+
+    for (const member of groupMembers) {
+      const members = membersByGroup.get(member.groupId) || [];
+      members.push(member);
+      membersByGroup.set(member.groupId, members);
+    }
+  }
+
+  return memberships.map((m) => {
+    const groupRank = (membersByGroup.get(m.groupId) || []).findIndex(
+      (member) => member.userId === userId,
+    );
+
+    return {
+      ...m.group,
+      memberCount: m.group._count.groupUsers,
+      isAdmin: m.isAdmin,
+      totalPoints: m.totalPoints,
+      rank: groupRank >= 0 ? groupRank + 1 : null,
+    };
+  });
 }
 
 export async function getGroupById(groupId, userId) {
@@ -199,7 +228,11 @@ export async function getLeaderboard(groupId) {
     include: {
       user: { select: { id: true, username: true, displayName: true, avatar: true } },
     },
-    orderBy: { totalPoints: 'desc' },
+    orderBy: [
+      { totalPoints: 'desc' },
+      { joinedAt: 'asc' },
+      { userId: 'asc' },
+    ],
   });
 
   return members.map((m, index) => ({

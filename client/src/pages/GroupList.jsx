@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { m } from "framer-motion";
-import { Plus, Users, LogIn, Copy, Check, Globe, Loader2 } from "lucide-react";
+import { Plus, Users, LogIn, Copy, Check, Globe, Loader2, Trophy } from "lucide-react";
 import api from "../services/api";
 import useToastStore from "../store/toastStore";
 import useCompetitionStore from "../store/competitionStore";
@@ -270,6 +270,8 @@ export default function GroupList() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {myGroups.map((group, i) => {
           const variant = getGroupCardVariant(group, i);
+          const rank = Number(group.rank);
+          const hasRank = Number.isFinite(rank) && rank > 0;
 
           return (
           <m.div
@@ -327,8 +329,22 @@ export default function GroupList() {
                 <span className="flex items-center gap-1">
                   <Users size={12} /> {group.memberCount} miembros
                 </span>
-                <span className="font-semibold text-amber-400">
-                  {group.totalPoints} pts
+                <span
+                  className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-black text-white shadow-sm"
+                  title="Tu posicion en el grupo"
+                  style={{
+                    background: `linear-gradient(135deg, color-mix(in srgb, ${variant.accent} 24%, transparent), rgba(255,255,255,0.04))`,
+                    borderColor: variant.border,
+                    boxShadow: `0 0 18px color-mix(in srgb, ${variant.accent} 18%, transparent)`,
+                  }}
+                >
+                  <Trophy size={12} style={{ color: variant.accent }} />
+                  <span>{hasRank ? `#${rank}` : "-"}</span>
+                  {hasRank && (
+                    <span className="font-semibold text-white/45">
+                      / {group.memberCount}
+                    </span>
+                  )}
                 </span>
               </div>
               {group.competition && (
