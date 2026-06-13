@@ -12,6 +12,39 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Prode Mundial 2026" />
     <meta name="description" content="Prode Mundial 2026 - Plataforma de pronósticos deportivos para el Mundial. Competí con amigos." />
+    <script>
+      (function () {
+        var reloadKey = "prode:stale-asset-reload";
+        var staleAssetPattern =
+          /bad-precaching-response|Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk|\/assets\/.*\.(js|css)/i;
+
+        function reloadOnce() {
+          try {
+            if (sessionStorage.getItem(reloadKey) === "1") return;
+            sessionStorage.setItem(reloadKey, "1");
+          } catch (_) {
+            return;
+          }
+          window.location.reload();
+        }
+
+        window.addEventListener(
+          "error",
+          function (event) {
+            var target = event.target;
+            var url = (target && (target.src || target.href)) || event.message || "";
+            if (staleAssetPattern.test(String(url))) reloadOnce();
+          },
+          true,
+        );
+
+        window.addEventListener("unhandledrejection", function (event) {
+          var reason = event.reason;
+          var message = (reason && (reason.message || reason.toString())) || "";
+          if (staleAssetPattern.test(message)) reloadOnce();
+        });
+      })();
+    </script>
     <title>Prode Mundial 2026</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

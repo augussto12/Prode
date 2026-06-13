@@ -1,8 +1,73 @@
 import { useState, useEffect } from "react";
 import { m, AnimatePresence } from "framer-motion";
-import { Calendar, Trophy, ChevronDown, Users, Loader2, X } from "lucide-react";
+import { Calendar, Trophy, Users, Loader2, X } from "lucide-react";
 import api from "../../services/api";
 import { tRound, tTeamName } from "../../utils/translations";
+
+const LOCKOUT_MINUTES = 5;
+const NOT_STARTED_STATUS_SHORTS = new Set(["NS", "TBD", "PST"]);
+
+function getMatchTimestamp(match) {
+  const raw = match?.matchDate || match?.date;
+  if (!raw) return null;
+  const timestamp = new Date(raw).getTime();
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function isMatchStarted(match, now = new Date()) {
+  const status = String(match?.status || "").toUpperCase();
+  if (status === "LIVE" || status === "FINISHED") return true;
+
+  const statusShort = String(match?.statusShort || "").toUpperCase();
+  if (statusShort && !NOT_STARTED_STATUS_SHORTS.has(statusShort)) return true;
+
+  const timestamp = getMatchTimestamp(match);
+  return timestamp !== null && now.getTime() >= timestamp;
+}
+
+function getPredictionVisibilityCutoff(match) {
+  const window = match?.predictionWindow;
+  if (window?.phaseRule && window.closesAt) {
+    const timestamp = new Date(window.closesAt).getTime();
+    return Number.isNaN(timestamp) ? null : timestamp;
+  }
+
+  const timestamp = getMatchTimestamp(match);
+  if (timestamp === null) return null;
+  return timestamp - LOCKOUT_MINUTES * 60 * 1000;
+}
+
+function canViewGroupPredictions(match, now = new Date()) {
+  if (!match) return false;
+  if (isMatchStarted(match, now)) return true;
+
+  const cutoff = getPredictionVisibilityCutoff(match);
+  if (cutoff === null || now.getTime() < cutoff) return false;
+
+  const window = match.predictionWindow;
+  if (window?.phaseRule) {
+    if (window.previousFinished === false) return false;
+    if (window.canPredict === false && !window.closesAt) return false;
+  }
+
+  return true;
+}
+
+function getGroupPredictionsAvailabilityLabel(match, now = new Date()) {
+  if (!canViewGroupPredictions(match, now)) {
+    return "Disponible al empezar";
+  }
+
+  if (String(match?.status || "").toUpperCase() === "FINISHED") {
+    return "Ver resultados del grupo";
+  }
+
+  if (isMatchStarted(match, now)) {
+    return "Ver predicciones en vivo";
+  }
+
+  return "Predicciones cerradas";
+}
 
 export default function GroupMatches({ groupId, competitionId }) {
   const [matches, setMatches] = useState([]);
@@ -16,44 +81,29 @@ export default function GroupMatches({ groupId, competitionId }) {
   }, [competitionId]);
 
   const loadMatches = async () => {
+    setLoading(true);
     try {
-      const { data: comp } = await api.get(`/competitions/${competitionId}`);
-      const leagueId = comp.externalId;
-      const season = comp.season;
-
       const { data: fixtures } = await api.get(
-        `/explorer/leagues/${leagueId}/fixtures?season=${season}`
+        `/matches?competitionId=${competitionId}`,
       );
 
-      const statusMap = {
-        NS: "SCHEDULED",
-        TBD: "SCHEDULED",
-        "1H": "LIVE",
-        "2H": "LIVE",
-        HT: "LIVE",
-        ET: "LIVE",
-        P: "LIVE",
-        BT: "LIVE",
-        LIVE: "LIVE",
-        FT: "FINISHED",
-        AET: "FINISHED",
-        PEN: "FINISHED",
-      };
-
-      const normalized = fixtures.map((f) => ({
-        id: f.fixture.id,
-        homeTeam: f.teams.home.name,
-        awayTeam: f.teams.away.name,
-        homeLogo: f.teams.home.logo,
-        awayLogo: f.teams.away.logo,
-        homeGoals: f.goals.home,
-        awayGoals: f.goals.away,
-        status: statusMap[f.fixture.status?.short] || "SCHEDULED",
-        statusShort: f.fixture.status?.short,
-        elapsed: f.fixture.status?.elapsed,
-        date: f.fixture.date,
-        round: f.league.round || "",
-        venue: f.fixture.venue?.name || "",
+      const normalized = fixtures.map((match) => ({
+        id: match.externalId || match.id,
+        externalId: match.externalId || match.id,
+        homeTeam: match.homeTeam,
+        awayTeam: match.awayTeam,
+        homeLogo: match.homeTeamLogo,
+        awayLogo: match.awayTeamLogo,
+        homeGoals: match.homeGoals,
+        awayGoals: match.awayGoals,
+        status: match.status,
+        statusShort: match.statusShort,
+        elapsed: match.elapsed,
+        date: match.matchDate,
+        matchDate: match.matchDate,
+        round: match.round || match.stage || "",
+        venue: match.venue || "",
+        predictionWindow: match.predictionWindow,
       }));
 
       // Ordenar por fecha
@@ -128,12 +178,16 @@ export default function GroupMatches({ groupId, competitionId }) {
           <div className="space-y-2">
               {dateMatches.map((match) => {
                 const finished = isFinished(match);
+                const canViewPredictions = canViewGroupPredictions(match);
+                const availabilityLabel =
+                  getGroupPredictionsAvailabilityLabel(match);
                 return (
               <button
                 key={match.id}
-                onClick={() => finished && loadPredictions(match)}
+                onClick={() => canViewPredictions && loadPredictions(match)}
+                disabled={!canViewPredictions}
                 className={`w-full text-left glass-card rounded-xl p-3 sm:p-4 transition-all border border-white/5 ${
-                  finished
+                  canViewPredictions
                     ? "hover:bg-white/[0.08] hover:border-white/15 cursor-pointer"
                     : "opacity-70 cursor-not-allowed"
                 }`}
@@ -189,9 +243,9 @@ export default function GroupMatches({ groupId, competitionId }) {
                   <span className="text-[10px] text-white/40">
                     {tRound(match.round)}
                   </span>
-                  <div className={`flex items-center gap-1 text-[10px] ${finished ? "text-indigo-400" : "text-white/25"}`}>
+                  <div className={`flex items-center gap-1 text-[10px] ${canViewPredictions ? "text-indigo-400" : "text-white/25"}`}>
                     <Users size={10} />
-                    {finished ? "Ver predicciones del grupo" : "Disponible al finalizar"}
+                    {availabilityLabel}
                   </div>
                 </div>
               </button>

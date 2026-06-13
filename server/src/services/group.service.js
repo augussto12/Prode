@@ -3,6 +3,10 @@ import { BadRequestError, NotFoundError, ForbiddenError } from '../utils/errors.
 import { recalculateAllLeaderboards } from './scoring.service.js';
 import { cachedApiCall } from './cache.service.js';
 import * as footballApi from './football-api.service.js';
+import { getFixturePredictionWindow } from './phase-window.service.js';
+
+const GROUP_PREDICTION_LOCKOUT_MINUTES = 5;
+const NOT_STARTED_FIXTURE_STATUSES = new Set(['NS', 'TBD', 'PST']);
 
 function normalizeUsername(username) {
   return String(username || '').trim().toLowerCase();
@@ -13,6 +17,49 @@ async function getFixtureFromApi(fixtureId) {
     const result = await footballApi.fetchFixtureById(fixtureId);
     return result.response?.[0] || null;
   });
+}
+
+function getFixtureDate(fixture) {
+  const raw = fixture?.fixture?.date;
+  if (!raw) return null;
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function hasFixtureStarted(fixture, now = new Date()) {
+  const statusShort = fixture?.fixture?.status?.short;
+  if (statusShort && !NOT_STARTED_FIXTURE_STATUSES.has(statusShort)) return true;
+
+  const fixtureDate = getFixtureDate(fixture);
+  return Boolean(fixtureDate && now >= fixtureDate);
+}
+
+function getGroupPredictionVisibilityCutoff(fixture, predictionWindow = null) {
+  if (predictionWindow?.phaseRule && predictionWindow.closesAt) {
+    const closesAt = new Date(predictionWindow.closesAt);
+    return Number.isNaN(closesAt.getTime()) ? null : closesAt;
+  }
+
+  const fixtureDate = getFixtureDate(fixture);
+  if (!fixtureDate) return null;
+
+  const cutoff = new Date(fixtureDate);
+  cutoff.setMinutes(cutoff.getMinutes() - GROUP_PREDICTION_LOCKOUT_MINUTES);
+  return cutoff;
+}
+
+function canRevealGroupMatchPredictions(fixture, predictionWindow = null, now = new Date()) {
+  if (hasFixtureStarted(fixture, now)) return true;
+
+  const cutoff = getGroupPredictionVisibilityCutoff(fixture, predictionWindow);
+  if (!cutoff || now < cutoff) return false;
+
+  if (predictionWindow?.phaseRule) {
+    if (predictionWindow.previousFinished === false) return false;
+    if (predictionWindow.canPredict === false && !predictionWindow.closesAt) return false;
+  }
+
+  return true;
 }
 
 export async function createGroup(userId, data) {
@@ -436,14 +483,19 @@ export async function unbanMember(groupId, userIdToUnban, requestingUserId) {
 
 // --- PREDICTIONS ---
 export async function getMatchPredictions(groupId, externalFixtureId, requestingUserId) {
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    include: { competition: true },
+  });
+  if (!group) throw new NotFoundError('Grupo no encontrado');
+
   const fixture = await getFixtureFromApi(externalFixtureId);
   if (!fixture) throw new NotFoundError('Partido no encontrado en la API');
 
-  const statusShort = fixture.fixture?.status?.short;
-  const fixtureDate = fixture.fixture?.date ? new Date(fixture.fixture.date) : null;
-  const hasStarted =
-    !['NS', 'TBD', 'PST'].includes(statusShort) ||
-    (fixtureDate && Date.now() >= fixtureDate.getTime());
+  const predictionWindow = group.competition
+    ? await getFixturePredictionWindow(group.competition, fixture)
+    : null;
+  const canReveal = canRevealGroupMatchPredictions(fixture, predictionWindow);
 
   // Obtener los miembros del grupo
   const members = await prisma.groupUser.findMany({
@@ -451,7 +503,7 @@ export async function getMatchPredictions(groupId, externalFixtureId, requesting
     select: { userId: true, user: { select: { displayName: true, avatar: true } }, totalPoints: true }
   });
 
-  const visibleMembers = hasStarted
+  const visibleMembers = canReveal
     ? members
     : members.filter(m => m.userId === requestingUserId);
   const visibleUserIds = visibleMembers.map(m => m.userId);
