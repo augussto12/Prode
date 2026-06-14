@@ -346,9 +346,16 @@ export default function GroupMatches({ groupId, competitionId }) {
                       </div>
                       <div className="text-right">
                         {entry.prediction ? (
-                          <div className="text-sm font-bold text-white">
-                            {entry.prediction.homeGoals ?? "-"} -{" "}
-                            {entry.prediction.awayGoals ?? "-"}
+                          <div className="inline-flex items-center justify-end gap-1.5 text-sm font-bold text-white">
+                            <span>
+                              {entry.prediction.homeGoals ?? "-"} -{" "}
+                              {entry.prediction.awayGoals ?? "-"}
+                            </span>
+                            {entry.prediction.isJoker && (
+                              <span className="rounded border border-amber-500/30 bg-amber-500/15 px-1 py-0.5 text-[9px] font-black leading-none text-amber-300">
+                                x2
+                              </span>
+                            )}
                           </div>
                         ) : (
                           <span className="text-xs text-white/30">
