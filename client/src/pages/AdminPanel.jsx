@@ -157,6 +157,7 @@ export default function AdminPanel() {
 
   const tabs = [
     { id: "users", label: "Usuarios", icon: Users },
+    { id: "jokers", label: "Comodines x2", icon: Zap },
     { id: "scoring", label: "Puntuación", icon: Calculator },
     { id: "groups", label: "Grupos", icon: Trophy },
     // [OCULTADO] GranDT, Sportmonks y Crons — No se usan por ahora

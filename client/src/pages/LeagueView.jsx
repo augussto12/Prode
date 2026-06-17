@@ -36,6 +36,53 @@ const ALL_TABS = [
 
 const TABS = ALL_TABS; // legacy alias
 
+function isBestThirdsGroup(group, index, groups) {
+  const rawLabel = String(group?.[0]?.group || "").toLowerCase();
+  if (rawLabel.includes("third placed") || rawLabel.includes("tercer")) return true;
+  return groups?.length >= 9 && index === groups.length - 1 && (group?.length || 0) > 4;
+}
+
+function getStandingsGroupLabel(group, index, groups) {
+  if (isBestThirdsGroup(group, index, groups)) return "Mejores terceros";
+  return tRound(group?.[0]?.group) || `Grupo ${index + 1}`;
+}
+
+function getStandingsIndicatorColor(row, { isWorldCup, isBestThirds }) {
+  const desc = String(row.description || "").toLowerCase();
+  const rank = Number(row.rank);
+
+  if (
+    desc.includes("1/8-finals") ||
+    desc.includes("1/16-finals") ||
+    desc.includes("promotion") ||
+    desc.includes("champions league") ||
+    desc.includes("libertadores") ||
+    desc.includes("playoffs") ||
+    desc.includes("play-off")
+  ) {
+    return "border-l-emerald-500";
+  }
+  if (desc.includes("relegation")) return "border-l-red-500";
+  if (
+    desc.includes("qualifiers") ||
+    desc.includes("europa") ||
+    desc.includes("sudamericana") ||
+    desc.includes("knockout")
+  ) {
+    return "border-l-amber-500";
+  }
+
+  if (isWorldCup && isBestThirds) {
+    return rank >= 1 && rank <= 8 ? "border-l-emerald-500" : "border-l-transparent";
+  }
+  if (isWorldCup) {
+    if (rank >= 1 && rank <= 2) return "border-l-emerald-500";
+    if (rank === 3) return "border-l-amber-500";
+  }
+
+  return "border-l-transparent";
+}
+
 export default function LeagueView() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -506,7 +553,7 @@ export default function LeagueView() {
                             : "bg-transparent text-white/60 border-transparent hover:bg-white/5 hover:text-white/80"
                             }`}
                         >
-                          {tRound(g[0]?.group) || `Grupo ${i + 1}`}
+                          {getStandingsGroupLabel(g, i, standings.league.standings)}
                         </button>
                       ))}
                     </div>
@@ -514,7 +561,10 @@ export default function LeagueView() {
 
                   {standings.league?.standings?.[activeGroupIndex] &&
                     (() => {
-                      const group = standings.league.standings[activeGroupIndex];
+                      const groups = standings.league.standings;
+                      const group = groups[activeGroupIndex];
+                      const isWorldCup = Number(id) === WORLD_CUP_ID;
+                      const isBestThirds = isBestThirdsGroup(group, activeGroupIndex, groups);
                       return (
                         <m.div
                           initial={{ opacity: 0, y: 10 }}
@@ -570,32 +620,10 @@ export default function LeagueView() {
                               </thead>
                               <tbody>
                                 {group.map((row) => {
-                                  const desc = (
-                                    row.description || ""
-                                  ).toLowerCase();
-                                  let indicatorColor = "border-l-transparent";
-                                  if (desc.includes("1/8-finals")) {
-                                    indicatorColor = "border-l-emerald-500";
-                                  } else if (desc.includes("1/16-finals")) {
-                                    indicatorColor = "border-l-blue-400";
-                                  } else if (
-                                    desc.includes("promotion") ||
-                                    desc.includes("champions league") ||
-                                    desc.includes("libertadores") ||
-                                    desc.includes("playoffs") ||
-                                    desc.includes("play-off")
-                                  ) {
-                                    indicatorColor = "border-l-emerald-500";
-                                  } else if (desc.includes("relegation")) {
-                                    indicatorColor = "border-l-red-500";
-                                  } else if (
-                                    desc.includes("qualifiers") ||
-                                    desc.includes("europa") ||
-                                    desc.includes("sudamericana") ||
-                                    desc.includes("knockout")
-                                  ) {
-                                    indicatorColor = "border-l-amber-500";
-                                  }
+                                  const indicatorColor = getStandingsIndicatorColor(row, {
+                                    isWorldCup,
+                                    isBestThirds,
+                                  });
 
                                   return (
                                     <tr
@@ -603,7 +631,7 @@ export default function LeagueView() {
                                       className="border-t border-white/5 hover:bg-white/[0.02]"
                                     >
                                       <td
-                                        className={`px-2.5 py-2.5 sticky-col backdrop-blur-md border-r border-l-[3px] border-white/5 ${indicatorColor}`}
+                                        className={`px-2.5 py-2.5 sticky-col backdrop-blur-md border-r border-r-white/5 border-l-[3px] ${indicatorColor}`}
                                       >
                                         <div
                                           className="flex items-center gap-1 cursor-pointer group"

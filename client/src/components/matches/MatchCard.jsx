@@ -16,6 +16,7 @@ export default memo(function MatchCard({
   priority = false,
   jokerRemaining = 0,
   jokerLimit = 3,
+  jokerScopeLabel = "esta competencia",
 }) {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
@@ -244,7 +245,7 @@ export default memo(function MatchCard({
                   if (!canToggleJoker) {
                     addToast({
                       type: "info",
-                      message: `Ya usaste los ${jokerLimit} comodines x2 de esta competencia`,
+                      message: `Ya usaste los ${jokerLimit} comodines x2 de ${jokerScopeLabel}`,
                     });
                     return;
                   }
@@ -258,7 +259,7 @@ export default memo(function MatchCard({
                       ? "bg-white/5 border-white/10 text-white/50 hover:bg-white/10"
                       : "bg-white/[0.02] border-white/5 text-white/25"
                 } disabled:opacity-40 disabled:cursor-not-allowed`}
-                title={`Comodin x2: maximo ${jokerLimit} partidos por competencia`}
+                title={`Comodin x2: maximo ${jokerLimit} partidos en ${jokerScopeLabel}`}
               >
                 x2
               </button>

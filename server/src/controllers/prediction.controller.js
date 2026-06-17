@@ -1,6 +1,7 @@
 import * as predictionService from '../services/prediction.service.js';
 import * as scoringService from '../services/scoring.service.js';
 import * as phaseWindowService from '../services/phase-window.service.js';
+import * as jokerService from '../services/joker.service.js';
 
 export async function upsert(req, res, next) {
   try {
@@ -68,5 +69,23 @@ export async function getPhaseWindows(req, res, next) {
 
     if (!windows) return res.status(404).json({ error: 'Competicion no encontrada' });
     res.json(windows);
+  } catch (err) { next(err); }
+}
+
+export async function getJokerStatus(req, res, next) {
+  try {
+    const { competitionId } = req.query;
+    if (!competitionId) {
+      return res.status(400).json({ error: 'competitionId es requerido' });
+    }
+    const status = await jokerService.getUserJokerStatus(req.user.id, Number(competitionId));
+    res.json(status);
+  } catch (err) { next(err); }
+}
+
+export async function markJokerGrantSeen(req, res, next) {
+  try {
+    const seen = await jokerService.markJokerGrantSeen(req.user.id, Number(req.params.grantId));
+    res.json({ success: true, seen });
   } catch (err) { next(err); }
 }

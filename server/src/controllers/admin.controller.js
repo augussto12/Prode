@@ -1,5 +1,6 @@
 import * as scoringService from '../services/scoring.service.js';
 import * as outrightsService from '../services/outrights.service.js';
+import * as jokerService from '../services/joker.service.js';
 import prisma from '../config/database.js';
 
 export async function calculateScores(req, res, next) {
@@ -67,6 +68,41 @@ export async function updateScoringConfig(req, res, next) {
   try {
     const config = await scoringService.updateScoringConfig(req.body);
     res.json(config);
+  } catch (err) { next(err); }
+}
+
+export async function getJokerState(req, res, next) {
+  try {
+    const { competitionId } = req.query;
+    if (!competitionId) {
+      return res.status(400).json({ error: 'competitionId es requerido' });
+    }
+    const state = await jokerService.getAdminJokerState(Number(competitionId));
+    res.json(state);
+  } catch (err) { next(err); }
+}
+
+export async function updateJokerConfig(req, res, next) {
+  try {
+    const config = await jokerService.updateJokerConfig(req.user.id, req.body);
+    res.json(config);
+  } catch (err) { next(err); }
+}
+
+export async function createJokerGrant(req, res, next) {
+  try {
+    const grant = await jokerService.createJokerGrant(req.user.id, req.body);
+    res.status(201).json(grant);
+  } catch (err) { next(err); }
+}
+
+export async function updateJokerGrant(req, res, next) {
+  try {
+    const grant = await jokerService.setJokerGrantActive(
+      Number(req.params.id),
+      req.body.isActive,
+    );
+    res.json(grant);
   } catch (err) { next(err); }
 }
 

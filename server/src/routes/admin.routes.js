@@ -4,7 +4,14 @@ import * as smSyncCtrl from '../controllers/sportmonksSync.controller.js';
 import { authenticate } from '../middleware/auth.js';
 import { isAdmin, isSuperAdmin } from '../middleware/roles.js';
 import { validate } from '../middleware/validate.js';
-import { scoringConfigSchema, roleUpdateSchema, outrightResultSchema } from '../validators/schemas.js';
+import {
+  scoringConfigSchema,
+  roleUpdateSchema,
+  outrightResultSchema,
+  jokerConfigSchema,
+  jokerGrantSchema,
+  jokerGrantUpdateSchema,
+} from '../validators/schemas.js';
 import * as fantasyAdminCtrl from '../controllers/fantasyAdmin.controller.js';
 import { sportmonksRateLimit } from '../services/sportmonks/sportmonksClient.js';
 import { afRateLimit } from '../services/football-api.service.js';
@@ -34,6 +41,12 @@ router.post('/scoring/recalculate-leaderboards', authenticate, isAdmin, ctrl.rec
 // Scoring config (SUPERADMIN only to edit, ADMIN can view)
 router.get('/scoring/config', authenticate, isAdmin, ctrl.getScoringConfig);
 router.put('/scoring/config', authenticate, isSuperAdmin, validate(scoringConfigSchema), ctrl.updateScoringConfig);
+
+// Prode x2 grants (SUPERADMIN edits, ADMIN can inspect)
+router.get('/jokers', authenticate, isAdmin, ctrl.getJokerState);
+router.put('/jokers/config', authenticate, isSuperAdmin, validate(jokerConfigSchema), ctrl.updateJokerConfig);
+router.post('/jokers/grants', authenticate, isSuperAdmin, validate(jokerGrantSchema), ctrl.createJokerGrant);
+router.patch('/jokers/grants/:id', authenticate, isSuperAdmin, validate(jokerGrantUpdateSchema), ctrl.updateJokerGrant);
 
 // Final tournament awards (SUPERADMIN edits, ADMIN can inspect)
 router.get('/outrights/result', authenticate, isAdmin, ctrl.getOutrightResult);

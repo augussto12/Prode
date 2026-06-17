@@ -3,6 +3,7 @@ import { BadRequestError, ForbiddenError, NotFoundError } from '../utils/errors.
 import { cachedApiCall } from '../services/cache.service.js';
 import * as footballApi from '../services/football-api.service.js';
 import { getFixturePredictionWindow } from './phase-window.service.js';
+import { assertCanUseJoker } from './joker.service.js';
 
 /**
  * Fetch fixture data from Explorer API (cached).
@@ -55,20 +56,9 @@ export async function upsertPrediction(userId, externalFixtureId, competitionId,
     }
   }
 
-  if (data.isJoker) {
-    const usedJokers = await prisma.prediction.count({
-      where: {
-        userId,
-        competitionId,
-        isJoker: true,
-        NOT: { externalFixtureId },
-      },
-    });
-
-    if (usedJokers >= 3) {
-      throw new BadRequestError('Ya usaste los 3 comodines x2 de esta competencia');
-    }
-  }
+  const jokerAllowance = data.isJoker
+    ? await assertCanUseJoker(userId, competitionId, externalFixtureId, fixture)
+    : null;
 
   const resultOnlyData = {
     homeGoals: data.homeGoals,
@@ -85,6 +75,12 @@ export async function upsertPrediction(userId, externalFixtureId, competitionId,
     moreOffsides: null,
     moreSaves: null,
     isJoker: data.isJoker ?? false,
+    jokerPhaseKey: data.isJoker && jokerAllowance?.mode === 'phase_grant'
+      ? jokerAllowance.phase.phaseKey
+      : null,
+    jokerGrantId: data.isJoker && jokerAllowance?.mode === 'phase_grant'
+      ? jokerAllowance.grantId
+      : null,
   };
 
   return prisma.prediction.upsert({

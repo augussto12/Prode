@@ -7,7 +7,7 @@ const FIXTURE_CACHE_TTL_SECONDS = 60;
 const FINAL_STATUSES = new Set(['FT', 'AET', 'PEN', 'AWD', 'WO']);
 const NON_PLAYED_STATUSES = new Set(['CANC', 'ABD']);
 
-const PHASE_LABELS = {
+export const PHASE_LABELS = {
   group: 'Fase de grupos',
   round32: '16avos de final',
   round16: 'Octavos de final',

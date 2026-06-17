@@ -112,6 +112,25 @@ export const scoringConfigSchema = z.object({
   goldenGlove: z.number().int().min(0).max(100).optional(),
 });
 
+const jokerPhaseKeySchema = z.enum(['group', 'round32', 'round16', 'quarter', 'semi', 'thirdPlace', 'final']);
+
+export const jokerConfigSchema = z.object({
+  competitionId: z.number().int().positive('competitionId es requerido'),
+  phaseMode: z.enum(['AUTO_WITH_MANUAL_FALLBACK', 'FORCE_MANUAL']),
+  manualPhaseKey: jokerPhaseKeySchema.optional().nullable(),
+});
+
+export const jokerGrantSchema = z.object({
+  competitionId: z.number().int().positive('competitionId es requerido'),
+  phaseKey: jokerPhaseKeySchema,
+  amount: z.number().int().min(1).max(20),
+  message: z.string().max(240).optional().nullable(),
+});
+
+export const jokerGrantUpdateSchema = z.object({
+  isActive: z.boolean(),
+});
+
 // --- ROLE UPDATE ---
 export const roleUpdateSchema = z.object({
   role: z.enum(['PLAYER', 'ADMIN', 'SUPERADMIN']),

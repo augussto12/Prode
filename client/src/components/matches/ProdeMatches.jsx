@@ -8,6 +8,28 @@ import useAuthStore from "../../store/authStore";
 import { tRound, tTeamName } from "../../utils/translations";
 
 const JOKER_LIMIT = 3;
+const PHASE_LABELS = {
+  group: "Fase de grupos",
+  round32: "16avos de final",
+  round16: "Octavos de final",
+  quarter: "Cuartos de final",
+  semi: "Semifinales",
+  thirdPlace: "Tercer puesto",
+  final: "Final",
+};
+
+function normalizePhaseFromRound(round) {
+  const value = String(round || "").trim().toLowerCase();
+  if (!value) return null;
+  if (value.includes("group stage") || /^group\s+[a-z0-9]+/i.test(String(round))) return "group";
+  if (value.includes("round of 32") || value.includes("16avos")) return "round32";
+  if (value.includes("round of 16") || value.includes("octavos") || value.includes("1/8")) return "round16";
+  if (value.includes("quarter")) return "quarter";
+  if (value.includes("semi")) return "semi";
+  if (value.includes("3rd place") || value.includes("third place") || value.includes("tercer puesto")) return "thirdPlace";
+  if (value === "final" || /^final\s*-?\s*\d*$/i.test(String(round).trim())) return "final";
+  return null;
+}
 
 export default function ProdeMatches({
   competitionId,
@@ -27,6 +49,7 @@ export default function ProdeMatches({
   const [activeTab, setActiveTab] = useState(initialTab); // 'matches', 'history'
   const [scoringConfig, setScoringConfig] = useState(null);
   const [phaseWindows, setPhaseWindows] = useState(null);
+  const [jokerStatus, setJokerStatus] = useState(null);
   const user = useAuthStore((state) => state.user);
 
   // Sincronizar tab cuando Competition cambia entre tabs matches/predictions
@@ -38,7 +61,7 @@ export default function ProdeMatches({
     if (competitionId) {
       loadData();
     }
-  }, [competitionId]);
+  }, [competitionId, user?.id]);
 
   useEffect(() => {
     api
@@ -51,11 +74,14 @@ export default function ProdeMatches({
     try {
       const compParam = `?competitionId=${competitionId}`;
 
-      const [matchesRes, favRes, predRes, windowsRes] = await Promise.all([
+      const [matchesRes, favRes, predRes, windowsRes, jokerStatusRes] = await Promise.all([
         api.get(`/matches${compParam}`),
         api.get("/auth/me/favorites").catch(() => ({ data: [] })),
         api.get("/predictions/my").catch(() => ({ data: [] })),
         api.get(`/predictions/phase-windows${compParam}`).catch(() => ({ data: null })),
+        user
+          ? api.get(`/predictions/joker-status${compParam}`).catch(() => ({ data: null }))
+          : Promise.resolve({ data: null }),
       ]);
 
       const matches = matchesRes.data || [];
@@ -98,6 +124,7 @@ export default function ProdeMatches({
       setFavorites(favRes.data?.map((f) => f.teamName) || []);
       setPredictions(userPreds);
       setPhaseWindows(windowsRes.data || null);
+      setJokerStatus(jokerStatusRes.data || null);
     } catch (err) {
       console.error("Error loading matches/predictions:", err);
     } finally {
@@ -115,7 +142,63 @@ export default function ProdeMatches({
   const usedJokers = predictions.filter(
     (p) => p.isJoker && Number(p.competitionId) === Number(competitionId),
   ).length;
-  const remainingJokers = Math.max(0, JOKER_LIMIT - usedJokers);
+  const legacyJokerLimit = jokerStatus?.legacy?.limit ?? JOKER_LIMIT;
+  const legacyRemainingJokers = jokerStatus?.legacy?.remaining ?? Math.max(0, JOKER_LIMIT - usedJokers);
+
+  const getMatchJokerPhaseKey = (match) => {
+    const manualPhaseKey = jokerStatus?.config?.manualPhaseKey || null;
+    const apiPhaseKey = match.predictionWindow?.phaseKey || normalizePhaseFromRound(match.round || match.stage);
+
+    if (jokerStatus?.config?.phaseMode === "FORCE_MANUAL" && manualPhaseKey) {
+      return manualPhaseKey;
+    }
+
+    return apiPhaseKey || manualPhaseKey || null;
+  };
+
+  const getJokerAllowanceForMatch = (match) => {
+    const phaseKey = getMatchJokerPhaseKey(match);
+    const phaseStatus = phaseKey ? jokerStatus?.phaseStatuses?.[phaseKey] : null;
+
+    if (phaseStatus?.hasGrant) {
+      return {
+        limit: phaseStatus.limit,
+        remaining: phaseStatus.remaining,
+        label: phaseStatus.label || PHASE_LABELS[phaseKey] || "esta fase",
+        mode: "phase",
+      };
+    }
+
+    return {
+      limit: legacyJokerLimit,
+      remaining: legacyRemainingJokers,
+      label: "esta competencia",
+      mode: "legacy",
+    };
+  };
+
+  const visiblePhaseAllowance = matches
+    .filter((m) => !["FINISHED", "AET", "PEN", "FT"].includes(m.status))
+    .map((match) => getJokerAllowanceForMatch(match))
+    .find((allowance) => allowance.mode === "phase");
+  const visibleJokerAllowance = visiblePhaseAllowance || {
+    limit: legacyJokerLimit,
+    remaining: legacyRemainingJokers,
+    label: "esta competencia",
+    mode: "legacy",
+  };
+
+  const markJokerGrantSeen = async (grantId) => {
+    try {
+      await api.post(`/predictions/joker-grants/${grantId}/seen`);
+      setJokerStatus((prev) => ({
+        ...prev,
+        unseenGrants: (prev?.unseenGrants || []).filter((grant) => grant.id !== grantId),
+      }));
+    } catch (err) {
+      console.error("Error marking joker grant as seen:", err);
+    }
+  };
 
   const toggleFavorite = async (teamName) => {
     const updated = favorites.includes(teamName)
@@ -191,13 +274,38 @@ export default function ProdeMatches({
             <div>
               <div className="text-sm font-bold text-amber-200">Comodines x2</div>
               <div className="text-xs text-amber-100/70">
-                Tenés 3 partidos por competencia. Podés moverlos hasta 5 minutos antes del inicio.
+                {visibleJokerAllowance.mode === "phase"
+                  ? `Tenes ${visibleJokerAllowance.limit} x2 para ${visibleJokerAllowance.label}.`
+                  : "Tenes 3 partidos por competencia. Podes moverlos hasta que cierre la prediccion."}
               </div>
             </div>
             <div className="shrink-0 rounded-lg bg-black/20 border border-amber-500/20 px-3 py-1.5 text-sm font-black text-amber-200">
-              {remainingJokers}/{JOKER_LIMIT} disponibles
+              {visibleJokerAllowance.remaining}/{visibleJokerAllowance.limit} disponibles
             </div>
           </div>
+
+          {(jokerStatus?.unseenGrants || []).map((grant) => (
+            <div
+              key={grant.id}
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3"
+            >
+              <div>
+                <div className="text-sm font-bold text-emerald-100">
+                  Nueva fase: {grant.label || PHASE_LABELS[grant.phaseKey] || "fase nueva"}
+                </div>
+                <div className="text-xs text-emerald-100/70">
+                  {grant.message || `Se te otorgaron ${grant.amount} comodines x2 para esta fase.`}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => markJokerGrantSeen(grant.id)}
+                className="shrink-0 rounded-lg bg-emerald-500/20 border border-emerald-400/30 px-3 py-1.5 text-xs font-bold text-emerald-100 hover:bg-emerald-500/30 cursor-pointer"
+              >
+                Entendido
+              </button>
+            </div>
+          ))}
 
           <div className="rounded-xl border border-white/10 bg-white/[0.035] px-4 py-3">
             <div className="flex flex-col gap-2">
@@ -425,22 +533,26 @@ export default function ProdeMatches({
                       </span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                      {stageMatches.map((match) => (
-                        <MatchCard
-                          key={match.id}
-                          match={match}
-                          isFavorite={
-                            favorites.includes(match.homeTeam) ||
-                            favorites.includes(match.awayTeam)
-                          }
-                          existingPrediction={predictionsMap.get(match.id)}
-                          onPredictionSaved={loadData}
-                          hideStage={true}
-                          groupSettings={groupSettings}
-                          jokerRemaining={remainingJokers}
-                          jokerLimit={JOKER_LIMIT}
-                        />
-                      ))}
+                      {stageMatches.map((match) => {
+                        const allowance = getJokerAllowanceForMatch(match);
+                        return (
+                          <MatchCard
+                            key={match.id}
+                            match={match}
+                            isFavorite={
+                              favorites.includes(match.homeTeam) ||
+                              favorites.includes(match.awayTeam)
+                            }
+                            existingPrediction={predictionsMap.get(match.id)}
+                            onPredictionSaved={loadData}
+                            hideStage={true}
+                            groupSettings={groupSettings}
+                            jokerRemaining={allowance.remaining}
+                            jokerLimit={allowance.limit}
+                            jokerScopeLabel={allowance.label}
+                          />
+                        );
+                      })}
                     </div>
                   </div>
                 ))}

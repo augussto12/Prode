@@ -15,6 +15,7 @@ export default function AdminSystem({ tab, scoringConfig, onConfigUpdate, fetchC
           <OutrightResultAdmin />
         </div>
       )}
+      {tab === "jokers" && <JokerGrantAdmin />}
       {tab === "sync" && (
         <SyncPanel onSyncComplete={() => { onConfigUpdate(); fetchCompetitions(); }} />
       )}
@@ -22,6 +23,351 @@ export default function AdminSystem({ tab, scoringConfig, onConfigUpdate, fetchC
       {tab === "sportmonks" && <SportmonksPanel />}
       */}
     </>
+  );
+}
+
+function JokerGrantAdmin() {
+  const activeCompetition = useCompetitionStore((state) => state.activeCompetition);
+  const [state, setState] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [releasing, setReleasing] = useState(false);
+  const [configForm, setConfigForm] = useState({
+    phaseMode: "AUTO_WITH_MANUAL_FALLBACK",
+    manualPhaseKey: "round32",
+  });
+  const [grantForm, setGrantForm] = useState({
+    phaseKey: "round32",
+    amount: 3,
+    message: "",
+  });
+
+  const competitionId = activeCompetition?.id;
+
+  const loadState = useCallback(async () => {
+    if (!competitionId) return;
+    setLoading(true);
+    try {
+      const { data } = await api.get(`/admin/jokers?competitionId=${competitionId}`);
+      setState(data);
+      setConfigForm({
+        phaseMode: data.config?.phaseMode || "AUTO_WITH_MANUAL_FALLBACK",
+        manualPhaseKey: data.config?.manualPhaseKey || "round32",
+      });
+    } catch (err) {
+      useToastStore.getState().addToast({
+        type: "error",
+        message: err.response?.data?.error || "Error al cargar comodines x2",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [competitionId]);
+
+  useEffect(() => {
+    loadState();
+  }, [loadState]);
+
+  const phases = state?.phases || [
+    { key: "group", label: "Fase de grupos" },
+    { key: "round32", label: "16avos de final" },
+    { key: "round16", label: "Octavos de final" },
+    { key: "quarter", label: "Cuartos de final" },
+    { key: "semi", label: "Semifinales" },
+    { key: "thirdPlace", label: "Tercer puesto" },
+    { key: "final", label: "Final" },
+  ];
+
+  const saveConfig = async () => {
+    if (!competitionId) return;
+    setSavingConfig(true);
+    try {
+      await api.put("/admin/jokers/config", {
+        competitionId,
+        phaseMode: configForm.phaseMode,
+        manualPhaseKey: configForm.manualPhaseKey,
+      });
+      useToastStore.getState().addToast({
+        type: "success",
+        message: "Configuracion x2 guardada",
+      });
+      loadState();
+    } catch (err) {
+      useToastStore.getState().addToast({
+        type: "error",
+        message: err.response?.data?.error || "Error al guardar configuracion x2",
+      });
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
+  const releaseGrant = async () => {
+    if (!competitionId) return;
+    setReleasing(true);
+    try {
+      await api.post("/admin/jokers/grants", {
+        competitionId,
+        phaseKey: grantForm.phaseKey,
+        amount: Number(grantForm.amount),
+        message: grantForm.message || null,
+      });
+      useToastStore.getState().addToast({
+        type: "success",
+        message: `Tanda de ${grantForm.amount} x2 liberada`,
+      });
+      setGrantForm((prev) => ({ ...prev, message: "" }));
+      loadState();
+    } catch (err) {
+      useToastStore.getState().addToast({
+        type: "error",
+        message: err.response?.data?.error || "Error al liberar x2",
+      });
+    } finally {
+      setReleasing(false);
+    }
+  };
+
+  const toggleGrant = async (grant) => {
+    try {
+      await api.patch(`/admin/jokers/grants/${grant.id}`, {
+        isActive: !grant.isActive,
+      });
+      loadState();
+    } catch (err) {
+      useToastStore.getState().addToast({
+        type: "error",
+        message: err.response?.data?.error || "Error al actualizar tanda",
+      });
+    }
+  };
+
+  const formatDate = (value) => {
+    if (!value) return "-";
+    return new Date(value).toLocaleString("es-AR", {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  if (!competitionId) {
+    return (
+      <div className="glass-card rounded-xl p-5 text-sm text-white/60">
+        Elegi una competencia activa para administrar comodines x2.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-amber-500/20">
+        <div className="flex items-start gap-3">
+          <Zap size={18} className="text-amber-300 shrink-0 mt-0.5" />
+          <div className="space-y-2">
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-white">
+                Comodines x2 del Mundial
+              </h2>
+              <p className="text-xs sm:text-sm text-white/55">
+                Mientras no liberes una tanda nueva, sigue el limite actual de 3 x2 por competencia.
+              </p>
+            </div>
+            <div className="grid gap-2 text-xs text-white/65 sm:grid-cols-4">
+              <div className="rounded-lg bg-white/[0.04] p-3">
+                <strong className="text-white">1. Elegi fase</strong>
+                <p className="mt-1">Usa auto con fallback, o fuerza manual si la API viene rara.</p>
+              </div>
+              <div className="rounded-lg bg-white/[0.04] p-3">
+                <strong className="text-white">2. Guarda modo</strong>
+                <p className="mt-1">Esto define contra que fase se cuentan los nuevos x2.</p>
+              </div>
+              <div className="rounded-lg bg-white/[0.04] p-3">
+                <strong className="text-white">3. Libera tanda</strong>
+                <p className="mt-1">Pone la cantidad y toca liberar cuando arranque esa fase.</p>
+              </div>
+              <div className="rounded-lg bg-white/[0.04] p-3">
+                <strong className="text-white">4. Usuarios</strong>
+                <p className="mt-1">Ven un cartel y pueden usar hasta esa cantidad en esa fase.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center gap-2 text-white/50 text-sm">
+          <Loader2 size={16} className="animate-spin" /> Cargando...
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-white">Fase manual / fallback</h3>
+                <p className="text-xs text-white/45 mt-1">
+                  Recomendado: auto con fallback. Forzar manual solo si queres controlar todo vos.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="space-y-1.5">
+                  <span className="text-xs font-medium text-white/60">Modo</span>
+                  <select
+                    value={configForm.phaseMode}
+                    onChange={(e) => setConfigForm((prev) => ({ ...prev, phaseMode: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400/60"
+                  >
+                    <option value="AUTO_WITH_MANUAL_FALLBACK">Auto + fallback manual</option>
+                    <option value="FORCE_MANUAL">Forzar fase manual</option>
+                  </select>
+                </label>
+
+                <label className="space-y-1.5">
+                  <span className="text-xs font-medium text-white/60">Fase manual</span>
+                  <select
+                    value={configForm.manualPhaseKey}
+                    onChange={(e) => setConfigForm((prev) => ({ ...prev, manualPhaseKey: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400/60"
+                  >
+                    {phases.map((phase) => (
+                      <option key={phase.key} value={phase.key}>{phase.label}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <button
+                onClick={saveConfig}
+                disabled={savingConfig}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold cursor-pointer border-none disabled:opacity-50"
+              >
+                {savingConfig ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+                Guardar modo
+              </button>
+            </div>
+
+            <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-white">Liberar nueva tanda</h3>
+                <p className="text-xs text-white/45 mt-1">
+                  La cantidad es por usuario y por fase. Si liberas otra tanda en la misma fase, suma cupo.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_110px] gap-3">
+                <label className="space-y-1.5">
+                  <span className="text-xs font-medium text-white/60">Fase</span>
+                  <select
+                    value={grantForm.phaseKey}
+                    onChange={(e) => setGrantForm((prev) => ({ ...prev, phaseKey: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-400/60"
+                  >
+                    {phases.map((phase) => (
+                      <option key={phase.key} value={phase.key}>{phase.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="space-y-1.5">
+                  <span className="text-xs font-medium text-white/60">Cantidad</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={grantForm.amount}
+                    onChange={(e) => setGrantForm((prev) => ({ ...prev, amount: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-400/60"
+                  />
+                </label>
+              </div>
+
+              <label className="space-y-1.5 block">
+                <span className="text-xs font-medium text-white/60">Mensaje del cartel</span>
+                <input
+                  type="text"
+                  maxLength={240}
+                  value={grantForm.message}
+                  onChange={(e) => setGrantForm((prev) => ({ ...prev, message: e.target.value }))}
+                  placeholder="Ej: Se te otorgaron 3 comodines x2 para 16avos."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-emerald-400/60"
+                />
+              </label>
+
+              <button
+                onClick={releaseGrant}
+                disabled={releasing}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold cursor-pointer border-none disabled:opacity-50"
+              >
+                {releasing ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} />}
+                Liberar x2 a todos
+              </button>
+            </div>
+          </div>
+
+          <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <h3 className="text-sm font-bold text-white">Tandas liberadas</h3>
+                <p className="text-xs text-white/45">
+                  Usuarios totales: {state?.totalUsers ?? "-"} · limite legacy: {state?.legacyLimit ?? 3}
+                </p>
+              </div>
+              <button
+                onClick={loadState}
+                className="inline-flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 cursor-pointer"
+              >
+                <RefreshCw size={12} /> Actualizar
+              </button>
+            </div>
+
+            {state?.grants?.length ? (
+              <div className="space-y-2">
+                {state.grants.map((grant) => (
+                  <div
+                    key={grant.id}
+                    className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border p-3 ${
+                      grant.isActive
+                        ? "border-emerald-500/20 bg-emerald-500/10"
+                        : "border-white/10 bg-white/[0.03] opacity-70"
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-bold text-white">{grant.label}</span>
+                        <span className="rounded-md bg-black/20 px-2 py-0.5 text-xs text-amber-200">
+                          {grant.amount} x2 por usuario
+                        </span>
+                        <span className={`text-[10px] font-bold ${grant.isActive ? "text-emerald-300" : "text-white/35"}`}>
+                          {grant.isActive ? "ACTIVA" : "PAUSADA"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-white/45 mt-1">
+                        Liberada {formatDate(grant.releasedAt)}
+                        {state?.usageByPhase?.[grant.phaseKey] ? ` · usados en fase: ${state.usageByPhase[grant.phaseKey]}` : ""}
+                      </p>
+                      {grant.message && (
+                        <p className="text-xs text-white/60 mt-1 truncate">{grant.message}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => toggleGrant(grant)}
+                      className="shrink-0 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-xs font-bold text-white/70 cursor-pointer"
+                    >
+                      {grant.isActive ? "Pausar" : "Reactivar"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-6 text-center text-sm text-white/45">
+                Todavia no liberaste tandas extra. El sistema sigue con los 3 x2 actuales por competencia.
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 

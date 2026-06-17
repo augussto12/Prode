@@ -251,6 +251,8 @@ model Prediction {
   moreSaves       String?   // HOME, AWAY, EQUAL
 
   isJoker         Boolean   @default(false)
+  jokerPhaseKey   String?
+  jokerGrantId    Int?
   
   basePoints      Int       @default(0)
   pointsEarned    Int       @default(0)
@@ -272,6 +274,47 @@ model Prediction {
   @@index([externalFixtureId])
   @@index([userId])
   @@index([competitionId])
+  @@index([jokerPhaseKey])
+  @@index([jokerGrantId])
+}
+
+model ProdeJokerConfig {
+  id             Int      @id @default(autoincrement())
+  competitionId  Int
+  phaseMode      String   @default("AUTO_WITH_MANUAL_FALLBACK")
+  manualPhaseKey String?
+  updatedById    Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([competitionId])
+  @@index([manualPhaseKey])
+}
+
+model ProdeJokerGrant {
+  id             Int      @id @default(autoincrement())
+  competitionId  Int
+  phaseKey       String
+  amount         Int
+  message        String?
+  isActive       Boolean  @default(true)
+  releasedById   Int?
+  releasedAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([competitionId, phaseKey, isActive])
+  @@index([releasedAt])
+}
+
+model ProdeJokerGrantSeen {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  grantId   Int
+  seenAt    DateTime @default(now())
+
+  @@unique([userId, grantId])
+  @@index([grantId])
 }
 
 model Message {

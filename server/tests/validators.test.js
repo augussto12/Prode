@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {
   groupCreateSchema,
   groupThemeSchema,
+  jokerConfigSchema,
+  jokerGrantSchema,
   predictionSchema,
   scoringConfigSchema,
 } from '../src/validators/schemas.js';
@@ -61,6 +63,42 @@ describe('scoringConfigSchema', () => {
       exactScore: 10,
       correctWinner: 3,
     });
+  });
+});
+
+describe('joker admin schemas', () => {
+  it('accepts manual phase fallback config', () => {
+    const parsed = jokerConfigSchema.parse({
+      competitionId: 1,
+      phaseMode: 'AUTO_WITH_MANUAL_FALLBACK',
+      manualPhaseKey: 'round32',
+    });
+
+    assert.deepEqual(parsed, {
+      competitionId: 1,
+      phaseMode: 'AUTO_WITH_MANUAL_FALLBACK',
+      manualPhaseKey: 'round32',
+    });
+  });
+
+  it('accepts a phase grant amount and message', () => {
+    const parsed = jokerGrantSchema.parse({
+      competitionId: 1,
+      phaseKey: 'round16',
+      amount: 2,
+      message: 'Nueva fase: 2 x2 para octavos',
+    });
+
+    assert.equal(parsed.phaseKey, 'round16');
+    assert.equal(parsed.amount, 2);
+  });
+
+  it('rejects invalid grant amounts', () => {
+    assert.throws(() => jokerGrantSchema.parse({
+      competitionId: 1,
+      phaseKey: 'quarter',
+      amount: 0,
+    }));
   });
 });
 
