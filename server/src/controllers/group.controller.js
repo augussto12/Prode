@@ -51,6 +51,13 @@ export async function getLeaderboard(req, res, next) {
   } catch (err) { next(err); }
 }
 
+export async function getActivity(req, res, next) {
+  try {
+    const activity = await groupService.getActivity(Number(req.params.id));
+    res.json(activity);
+  } catch (err) { next(err); }
+}
+
 export async function updateTheme(req, res, next) {
   try {
     const group = await groupService.updateGroupTheme(Number(req.params.id), req.user.id, req.body);
