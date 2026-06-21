@@ -59,7 +59,14 @@ const frontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(
 // CORS restrictivo — solo nuestro frontend
 const allowedOrigins = [
   // Orígenes de desarrollo solo si NO estamos en producción
-  ...(!isProduction ? ['http://localhost:3000', 'http://localhost:5173'] : []),
+  ...(!isProduction
+    ? [
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:5173',
+      ]
+    : []),
   frontendUrl,
 ].filter(Boolean);
 

@@ -355,6 +355,10 @@ export default function Explorer() {
     () => new Map(wcPredictions.map((p) => [Number(p.externalFixtureId || p.matchId), p])),
     [wcPredictions]
   );
+  const wcGroupPredictionGroups = useMemo(
+    () => myGroups.filter((group) => Number(group.competitionId) === 1),
+    [myGroups],
+  );
 
   const WC_JOKER_LIMIT = 3;
   const wcJokersUsed = useMemo(
@@ -556,6 +560,7 @@ export default function Explorer() {
                 onPredictionSaved={loadWorldCupToday}
                 jokerRemaining={wcJokersRemaining}
                 jokerLimit={WC_JOKER_LIMIT}
+                groupPredictionGroups={wcGroupPredictionGroups}
               />
             ))}
           </div>

@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { m } from "framer-motion";
-import { Star, Check, Lock, Clock } from "lucide-react";
+import { Star, Check, Lock, Clock, Users } from "lucide-react";
 import api from "../../services/api";
 import useAuthStore from "../../store/authStore";
 import useToastStore from "../../store/toastStore";
+import GroupPredictionsModal from "./GroupPredictionsModal";
 import { tRound, tTeamName } from "../../utils/translations";
+import { canViewGroupPredictions } from "../../utils/groupPredictionVisibility";
+
+const LOCKOUT_MINUTES = 5;
 
 export default memo(function MatchCard({
   match,
@@ -17,6 +21,7 @@ export default memo(function MatchCard({
   jokerRemaining = 0,
   jokerLimit = 3,
   jokerScopeLabel = "esta competencia",
+  groupPredictionGroups = [],
 }) {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
@@ -28,22 +33,39 @@ export default memo(function MatchCard({
   });
   const [saving, setSaving] = useState(false);
   const [existingPrediction, setExistingPrediction] = useState(existingProp || null);
+  const [showGroupPredictions, setShowGroupPredictions] = useState(false);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const isSavingRef = useRef(false);
 
   const matchDate = new Date(match.matchDate);
   const lockoutDate = new Date(matchDate);
-  lockoutDate.setMinutes(lockoutDate.getMinutes() - 5);
-  const minutesUntilLockout = Math.floor((lockoutDate - new Date()) / 60000);
+  lockoutDate.setMinutes(lockoutDate.getMinutes() - LOCKOUT_MINUTES);
+  const nowDate = useMemo(() => new Date(nowMs), [nowMs]);
+  const minutesUntilLockout = Math.floor((lockoutDate - nowDate) / 60000);
   const hasPhaseRule = Boolean(match.predictionWindow?.phaseRule);
   const phaseLocked = hasPhaseRule && match.predictionWindow?.canPredict === false;
   const isPast =
     match.status !== "SCHEDULED" ||
     phaseLocked ||
-    (!hasPhaseRule && new Date() >= lockoutDate);
+    (!hasPhaseRule && nowDate >= lockoutDate);
   const isLive = match.status === "LIVE";
   const isFinished = match.status === "FINISHED";
   const detailFixtureId = match.externalId || match.id;
   const canOpenMatchDetail = Boolean(detailFixtureId && (isLive || isFinished));
+  const availableGroupPredictionGroups = useMemo(() => {
+    if (!Array.isArray(groupPredictionGroups)) return [];
+
+    return groupPredictionGroups.filter((group) => {
+      if (!group?.id) return false;
+      if (Number(group.id) === 1) return false;
+      if (!group.competitionId || !match.competitionId) return true;
+      return Number(group.competitionId) === Number(match.competitionId);
+    });
+  }, [groupPredictionGroups, match.competitionId]);
+  const canOpenGroupPredictions =
+    Boolean(user) &&
+    availableGroupPredictionGroups.length > 0 &&
+    canViewGroupPredictions(match, nowDate);
   const canToggleJoker =
     !isPast &&
     (prediction.isJoker || existingPrediction?.isJoker || jokerRemaining > 0);
@@ -62,6 +84,29 @@ export default memo(function MatchCard({
       });
     }
   }, [existingProp]);
+
+  useEffect(() => {
+    if (isFinished || isLive || !match.matchDate) return undefined;
+
+    const lockAt = new Date(match.matchDate).getTime() - LOCKOUT_MINUTES * 60 * 1000;
+    if (Number.isNaN(lockAt)) return undefined;
+
+    const msUntilLock = lockAt - Date.now();
+    const timeoutId = window.setTimeout(
+      () => setNowMs(Date.now()),
+      Math.max(0, msUntilLock + 250),
+    );
+
+    let intervalId = null;
+    if (msUntilLock <= 24 * 60 * 60 * 1000) {
+      intervalId = window.setInterval(() => setNowMs(Date.now()), 30000);
+    }
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      if (intervalId) window.clearInterval(intervalId);
+    };
+  }, [isFinished, isLive, match.matchDate]);
 
   const hasChanges = useMemo(() => {
     if (!existingPrediction) {
@@ -430,6 +475,21 @@ export default memo(function MatchCard({
           </div>
         )}
 
+        {canOpenGroupPredictions && (
+          <div className="mt-3 pt-3 border-t border-white/5 flex justify-center">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                setShowGroupPredictions(true);
+              }}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-semibold text-indigo-200 bg-indigo-500/10 hover:bg-indigo-500/20 transition-all border border-indigo-500/20 cursor-pointer"
+            >
+              <Users size={12} /> Ver predicciones de grupos
+            </button>
+          </div>
+        )}
+
         {user && phaseLocked && match.predictionWindow?.reason && (
           <div className="mt-2 rounded-lg border border-sky-400/15 bg-sky-400/10 px-2.5 py-2 text-center text-[10px] sm:text-xs text-sky-100/75">
             {match.predictionWindow.reason}
@@ -458,6 +518,13 @@ export default memo(function MatchCard({
           </m.button>
         </div>
       )}
+
+      <GroupPredictionsModal
+        isOpen={showGroupPredictions}
+        onClose={() => setShowGroupPredictions(false)}
+        groups={availableGroupPredictionGroups}
+        match={match}
+      />
     </m.div>
   );
 });

@@ -50,6 +50,7 @@ export default function ProdeMatches({
   const [scoringConfig, setScoringConfig] = useState(null);
   const [phaseWindows, setPhaseWindows] = useState(null);
   const [jokerStatus, setJokerStatus] = useState(null);
+  const [myGroups, setMyGroups] = useState([]);
   const user = useAuthStore((state) => state.user);
 
   // Sincronizar tab cuando Competition cambia entre tabs matches/predictions
@@ -74,7 +75,7 @@ export default function ProdeMatches({
     try {
       const compParam = `?competitionId=${competitionId}`;
 
-      const [matchesRes, favRes, predRes, windowsRes, jokerStatusRes] = await Promise.all([
+      const [matchesRes, favRes, predRes, windowsRes, jokerStatusRes, groupsRes] = await Promise.all([
         api.get(`/matches${compParam}`),
         api.get("/auth/me/favorites").catch(() => ({ data: [] })),
         api.get("/predictions/my").catch(() => ({ data: [] })),
@@ -82,6 +83,9 @@ export default function ProdeMatches({
         user
           ? api.get(`/predictions/joker-status${compParam}`).catch(() => ({ data: null }))
           : Promise.resolve({ data: null }),
+        user
+          ? api.get("/groups").catch(() => ({ data: [] }))
+          : Promise.resolve({ data: [] }),
       ]);
 
       const matches = matchesRes.data || [];
@@ -125,6 +129,11 @@ export default function ProdeMatches({
       setPredictions(userPreds);
       setPhaseWindows(windowsRes.data || null);
       setJokerStatus(jokerStatusRes.data || null);
+      setMyGroups(
+        (groupsRes.data || []).filter(
+          (group) => Number(group.competitionId) === Number(competitionId),
+        ),
+      );
     } catch (err) {
       console.error("Error loading matches/predictions:", err);
     } finally {
@@ -550,6 +559,7 @@ export default function ProdeMatches({
                             jokerRemaining={allowance.remaining}
                             jokerLimit={allowance.limit}
                             jokerScopeLabel={allowance.label}
+                            groupPredictionGroups={myGroups}
                           />
                         );
                       })}

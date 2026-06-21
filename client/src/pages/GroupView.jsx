@@ -825,6 +825,7 @@ export default function GroupView() {
 
                 <GroupMatches
                   groupId={group.id}
+                  groupName={group.name}
                   competitionId={group.competitionId}
                 />
               </m.div>
