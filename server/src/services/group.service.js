@@ -1,6 +1,6 @@
 import prisma from '../config/database.js';
 import { BadRequestError, NotFoundError, ForbiddenError } from '../utils/errors.js';
-import { recalculateAllLeaderboards } from './scoring.service.js';
+import { getScoringConfig, recalculateAllLeaderboards } from './scoring.service.js';
 import { cachedApiCall } from './cache.service.js';
 import * as footballApi from './football-api.service.js';
 import { getFixturePredictionWindow } from './phase-window.service.js';
@@ -269,28 +269,332 @@ export async function deleteGroup(userId, groupId) {
   });
 }
 
+function getExactHits(exactHitsByUserId, userId) {
+  return exactHitsByUserId.get(userId) || 0;
+}
+
+export function buildLeaderboard(members, exactHitsByUserId = new Map(), rankMovementByUserId = new Map()) {
+  return [...members]
+    .sort((a, b) => {
+      const pointsDiff = b.totalPoints - a.totalPoints;
+      if (pointsDiff !== 0) return pointsDiff;
+
+      const exactHitsDiff =
+        getExactHits(exactHitsByUserId, b.userId) - getExactHits(exactHitsByUserId, a.userId);
+      if (exactHitsDiff !== 0) return exactHitsDiff;
+
+      const joinedA = new Date(a.joinedAt).getTime();
+      const joinedB = new Date(b.joinedAt).getTime();
+      if (Number.isFinite(joinedA) && Number.isFinite(joinedB) && joinedA !== joinedB) {
+        return joinedA - joinedB;
+      }
+
+      if (a.userId !== b.userId) return a.userId - b.userId;
+
+      return String(a.user?.displayName || a.user?.username || '').localeCompare(
+        String(b.user?.displayName || b.user?.username || ''),
+        'es',
+      );
+    })
+    .map((m, index) => ({
+      rank: index + 1,
+      userId: m.user.id,
+      username: m.user.username,
+      displayName: m.user.displayName,
+      avatar: m.user.avatar,
+      totalPoints: m.totalPoints,
+      exactHits: getExactHits(exactHitsByUserId, m.userId),
+      rankMovement: rankMovementByUserId.get(m.userId) || 0,
+      isAdmin: m.isAdmin,
+    }));
+}
+
+async function getExactHitsByUserId(userIds, competitionId, scoringConfig = null) {
+  if (userIds.length === 0) return new Map();
+
+  const config = scoringConfig || await getScoringConfig();
+  if (config.exactScore <= 0 || config.exactScore === config.correctWinner) return new Map();
+
+  const exactRows = await prisma.prediction.groupBy({
+    by: ['userId'],
+    where: {
+      userId: { in: userIds },
+      competitionId,
+      isCalculated: true,
+      basePoints: config.exactScore,
+    },
+    _count: { _all: true },
+  });
+
+  return new Map(exactRows.map((row) => [row.userId, row._count._all]));
+}
+
+async function getCalculatedTotalsByUserId(userIds, competitionId) {
+  if (userIds.length === 0) return new Map();
+
+  const [matchRows, outrightRows] = await Promise.all([
+    prisma.prediction.groupBy({
+      by: ['userId'],
+      where: {
+        userId: { in: userIds },
+        competitionId,
+        isCalculated: true,
+      },
+      _sum: { pointsEarned: true },
+    }),
+    prisma.outrightPrediction.groupBy({
+      by: ['userId'],
+      where: {
+        userId: { in: userIds },
+        competitionId,
+        isCalculated: true,
+      },
+      _sum: { pointsEarned: true },
+    }),
+  ]);
+
+  const totalsByUserId = new Map(userIds.map((userId) => [userId, 0]));
+
+  for (const row of matchRows) {
+    totalsByUserId.set(row.userId, (totalsByUserId.get(row.userId) || 0) + (row._sum.pointsEarned || 0));
+  }
+
+  for (const row of outrightRows) {
+    totalsByUserId.set(row.userId, (totalsByUserId.get(row.userId) || 0) + (row._sum.pointsEarned || 0));
+  }
+
+  return totalsByUserId;
+}
+
+async function getRankMovementByUserId({ members, exactHitsByUserId, competitionId, config }) {
+  if (members.length === 0) return new Map();
+
+  const userIds = members.map((m) => m.userId);
+  const latestScoredPrediction = await prisma.prediction.findFirst({
+    where: {
+      userId: { in: userIds },
+      competitionId,
+      isCalculated: true,
+    },
+    select: { externalFixtureId: true },
+    orderBy: { updatedAt: 'desc' },
+  });
+
+  if (!latestScoredPrediction?.externalFixtureId) return new Map();
+
+  const latestFixturePredictions = await prisma.prediction.findMany({
+    where: {
+      userId: { in: userIds },
+      competitionId,
+      externalFixtureId: latestScoredPrediction.externalFixtureId,
+      isCalculated: true,
+    },
+    select: {
+      userId: true,
+      pointsEarned: true,
+      basePoints: true,
+    },
+  });
+
+  if (latestFixturePredictions.length === 0) return new Map();
+
+  const pointsByUserId = new Map(
+    latestFixturePredictions.map((prediction) => [prediction.userId, prediction.pointsEarned || 0]),
+  );
+  const canDetectExact = config.exactScore > 0 && config.exactScore !== config.correctWinner;
+  const previousExactHitsByUserId = new Map(exactHitsByUserId);
+
+  if (canDetectExact) {
+    for (const prediction of latestFixturePredictions) {
+      if (prediction.basePoints === config.exactScore) {
+        previousExactHitsByUserId.set(
+          prediction.userId,
+          Math.max(getExactHits(previousExactHitsByUserId, prediction.userId) - 1, 0),
+        );
+      }
+    }
+  }
+
+  const previousMembers = members.map((member) => ({
+    ...member,
+    totalPoints: member.totalPoints - (pointsByUserId.get(member.userId) || 0),
+  }));
+
+  const currentLeaderboard = buildLeaderboard(members, exactHitsByUserId);
+  const previousLeaderboard = buildLeaderboard(previousMembers, previousExactHitsByUserId);
+  const previousRankByUserId = new Map(previousLeaderboard.map((entry) => [entry.userId, entry.rank]));
+
+  return new Map(
+    currentLeaderboard.map((entry) => [
+      entry.userId,
+      (previousRankByUserId.get(entry.userId) || entry.rank) - entry.rank,
+    ]),
+  );
+}
+
 export async function getLeaderboard(groupId) {
-  const members = await prisma.groupUser.findMany({
-    where: { groupId, isBanned: false },
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    select: {
+      competitionId: true,
+      groupUsers: {
+        where: { isBanned: false },
+        include: {
+          user: { select: { id: true, username: true, displayName: true, avatar: true } },
+        },
+      },
+    },
+  });
+
+  if (!group) throw new NotFoundError('Grupo no encontrado');
+
+  const userIds = group.groupUsers.map((m) => m.userId);
+  const config = await getScoringConfig();
+  const exactHitsByUserId = await getExactHitsByUserId(userIds, group.competitionId, config);
+  const calculatedTotalsByUserId = await getCalculatedTotalsByUserId(userIds, group.competitionId);
+  const leaderboardMembers = group.groupUsers.map((member) => ({
+    ...member,
+    totalPoints: calculatedTotalsByUserId.get(member.userId) || 0,
+  }));
+  const isLeaderboardSyncing = group.groupUsers.some(
+    (member) => (member.totalPoints || 0) !== (calculatedTotalsByUserId.get(member.userId) || 0),
+  );
+  const rankMovementByUserId = isLeaderboardSyncing
+    ? new Map()
+    : await getRankMovementByUserId({
+        members: leaderboardMembers,
+        exactHitsByUserId,
+        competitionId: group.competitionId,
+        config,
+      });
+
+  return buildLeaderboard(leaderboardMembers, exactHitsByUserId, rankMovementByUserId).map((entry) => ({
+    ...entry,
+    leaderboardPending: isLeaderboardSyncing,
+  }));
+}
+
+function getFixtureSummary(fixture, prediction) {
+  const homeName = fixture?.teams?.home?.name || 'Local';
+  const awayName = fixture?.teams?.away?.name || 'Visitante';
+  const homeGoals = fixture?.goals?.home;
+  const awayGoals = fixture?.goals?.away;
+  const hasScore = homeGoals !== null && homeGoals !== undefined && awayGoals !== null && awayGoals !== undefined;
+
+  return {
+    fixtureId: prediction.externalFixtureId,
+    homeName,
+    awayName,
+    score: hasScore ? `${homeGoals}-${awayGoals}` : null,
+    label: hasScore
+      ? `${homeName} ${homeGoals}-${awayGoals} ${awayName}`
+      : `${homeName} vs ${awayName}`,
+  };
+}
+
+async function getCompetitionFixturesById(competition) {
+  if (!competition?.externalId || !competition?.season) return new Map();
+
+  const fixtures = await cachedApiCall(
+    `api-football:fixtures:competition:${competition.externalId}:${competition.season}`,
+    300,
+    async () => {
+      const result = await footballApi.fetchFixtures(competition.externalId, competition.season);
+      return result.response || [];
+    },
+  );
+
+  return new Map(fixtures.map((fixture) => [String(fixture.fixture?.id), fixture]));
+}
+
+function getActivityTitle({ isExact, isSignHit, isJoker, pointsEarned }) {
+  if (isExact && isJoker) return 'clavo exacto con comodin';
+  if (isExact) return 'clavo exacto';
+  if (isSignHit && isJoker) return 'le pego al ganador/empate con comodin';
+  if (isSignHit) return 'le pego al ganador/empate';
+  if (isJoker) return 'uso comodin';
+  if (pointsEarned > 0) return 'sumo puntos';
+  return 'no sumo';
+}
+
+function getActivityType({ isExact, isSignHit, isJoker, pointsEarned }) {
+  if (isExact && isJoker) return 'exact-joker';
+  if (isExact) return 'exact';
+  if (isSignHit && isJoker) return 'sign-joker';
+  if (isSignHit) return 'sign';
+  if (pointsEarned > 0) return 'points';
+  if (isJoker) return 'joker';
+  return 'miss';
+}
+
+export async function getActivity(groupId) {
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    select: {
+      competitionId: true,
+      competition: { select: { externalId: true, season: true } },
+      groupUsers: {
+        where: { isBanned: false },
+        select: { userId: true },
+      },
+    },
+  });
+
+  if (!group) throw new NotFoundError('Grupo no encontrado');
+
+  const userIds = group.groupUsers.map((m) => m.userId);
+  if (userIds.length === 0) return [];
+
+  const config = await getScoringConfig();
+  const canDetectExact = config.exactScore > 0 && config.exactScore !== config.correctWinner;
+
+  const predictions = await prisma.prediction.findMany({
+    where: {
+      userId: { in: userIds },
+      competitionId: group.competitionId,
+      isCalculated: true,
+    },
     include: {
       user: { select: { id: true, username: true, displayName: true, avatar: true } },
     },
-    orderBy: [
-      { totalPoints: 'desc' },
-      { joinedAt: 'asc' },
-      { userId: 'asc' },
-    ],
+    orderBy: { updatedAt: 'desc' },
   });
 
-  return members.map((m, index) => ({
-    rank: index + 1,
-    userId: m.user.id,
-    username: m.user.username,
-    displayName: m.user.displayName,
-    avatar: m.user.avatar,
-    totalPoints: m.totalPoints,
-    isAdmin: m.isAdmin,
-  }));
+  let fixturesById = new Map();
+  try {
+    fixturesById = await getCompetitionFixturesById(group.competition);
+  } catch (err) {
+    console.warn(`[Group Activity] No se pudieron cargar fixtures de competencia ${group.competitionId}: ${err.message}`);
+  }
+
+  return predictions.map((prediction) => {
+    const isExact = canDetectExact && prediction.basePoints === config.exactScore;
+    const isSignHit =
+      prediction.basePoints > 0 &&
+      (!canDetectExact || prediction.basePoints !== config.exactScore);
+    const isJoker = Boolean(prediction.isJoker);
+    const fixture = fixturesById.get(String(prediction.externalFixtureId)) || null;
+
+    return {
+      id: `prediction-${prediction.id}`,
+      type: getActivityType({
+        isExact,
+        isSignHit,
+        isJoker,
+        pointsEarned: prediction.pointsEarned,
+      }),
+      title: getActivityTitle({
+        isExact,
+        isSignHit,
+        isJoker,
+        pointsEarned: prediction.pointsEarned,
+      }),
+      user: prediction.user,
+      fixture: getFixtureSummary(fixture, prediction),
+      pointsEarned: prediction.pointsEarned,
+      createdAt: prediction.updatedAt,
+    };
+  });
 }
 
 export async function updateGroupTheme(groupId, userId, themeData) {

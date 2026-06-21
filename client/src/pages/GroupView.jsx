@@ -17,6 +17,11 @@ import {
   Calendar,
   RotateCcw,
   UserPlus,
+  Activity,
+  AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  Zap,
 } from "lucide-react";
 import useAuthStore from "../store/authStore";
 
@@ -26,6 +31,191 @@ import GroupChat from "../components/chat/GroupChat";
 import GroupMatches from "../components/matches/GroupMatches";
 import { getLeagueLogo, getLeagueName } from "../utils/worldCupLogo";
 
+function formatActivityTime(createdAt) {
+  if (!createdAt) return "";
+  return new Date(createdAt)
+    .toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    })
+    .toLowerCase();
+}
+
+function getActivityDayKey(createdAt) {
+  const date = new Date(createdAt);
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function formatActivityDay(createdAt) {
+  const date = new Date(createdAt);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  const dayKey = getActivityDayKey(createdAt);
+  if (dayKey === getActivityDayKey(today)) return "Hoy";
+  if (dayKey === getActivityDayKey(yesterday)) return "Ayer";
+
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+function groupActivityByDay(activity) {
+  const groups = [];
+  const groupsByKey = new Map();
+
+  activity.forEach((item) => {
+    if (!item.createdAt) return;
+
+    const dayKey = getActivityDayKey(item.createdAt);
+    if (!groupsByKey.has(dayKey)) {
+      const group = {
+        key: dayKey,
+        label: formatActivityDay(item.createdAt),
+        items: [],
+      };
+      groupsByKey.set(dayKey, group);
+      groups.push(group);
+    }
+
+    groupsByKey.get(dayKey).items.push(item);
+  });
+
+  return groups;
+}
+
+function RankMovement({ value }) {
+  if (!value) return null;
+
+  const isUp = value > 0;
+  const Icon = isUp ? ArrowUp : ArrowDown;
+
+  return (
+    <span
+      className="inline-flex items-center justify-center"
+      style={{ color: isUp ? "#6ee7b7" : "#f87171" }}
+      title={isUp ? "Subio en la tabla" : "Bajo en la tabla"}
+      aria-label={isUp ? "Subio en la tabla" : "Bajo en la tabla"}
+    >
+      <Icon size={12} strokeWidth={3} />
+    </span>
+  );
+}
+
+function GroupActivityFeed({ activity }) {
+  const [activityFilter, setActivityFilter] = useState("all");
+  const filteredActivity = activity.filter((item) => {
+    if (activityFilter === "exact") return item.type?.includes("exact");
+    if (activityFilter === "joker") return item.type?.includes("joker");
+    return true;
+  });
+  const activityGroups = groupActivityByDay(filteredActivity);
+  const filters = [
+    { id: "all", label: "Todo", icon: Activity },
+    { id: "exact", label: "Exactos", icon: Check },
+    { id: "joker", label: "Comodin", icon: Zap },
+  ];
+
+  return (
+    <m.div
+      key="activity"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="space-y-4"
+    >
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        {filters.map((filter) => {
+          const Icon = filter.icon;
+          const isActive = activityFilter === filter.id;
+
+          return (
+            <button
+              key={filter.id}
+              type="button"
+              onClick={() => setActivityFilter(filter.id)}
+              className={`flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold transition-all ${
+                isActive
+                  ? "border-emerald-400/30 bg-emerald-500/15 text-emerald-200"
+                  : "border-white/10 bg-white/[0.03] text-white/55 hover:text-white/80"
+              }`}
+            >
+              <Icon size={13} />
+              {filter.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {activityGroups.length === 0 ? (
+        <div className="py-12 text-center text-white/60 glass-card rounded-xl">
+          <Activity size={36} className="mx-auto mb-3 opacity-30" />
+          <p className="text-sm">
+            {activity.length === 0
+              ? "Todavia no hay actividad calculada"
+              : "No hay actividad para este filtro"}
+          </p>
+        </div>
+      ) : (
+        activityGroups.map((group) => (
+          <div key={group.key} className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="h-px flex-1 bg-white/10" />
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/45">
+                {group.label}
+              </span>
+              <div className="h-px flex-1 bg-white/10" />
+            </div>
+
+            <div className="space-y-2">
+              {group.items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-start gap-2 rounded-xl bg-white/[0.03] px-3 py-2.5 border border-white/5"
+                >
+                  <div className="mt-0.5 w-7 h-7 rounded-full bg-emerald-500/10 text-emerald-300 flex items-center justify-center shrink-0">
+                    <Zap size={13} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm text-white/85 leading-snug">
+                      <span className="font-bold text-white">{item.user.displayName}</span>{" "}
+                      {item.title} en{" "}
+                      <span className="font-semibold text-white/90">{item.fixture.label}</span>
+                      {item.pointsEarned > 0 && (
+                        <span className="text-emerald-300 font-bold"> +{item.pointsEarned} pts</span>
+                      )}
+                    </p>
+                    <div className="text-[10px] text-white/40 mt-0.5">
+                      {formatActivityTime(item.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      )}
+    </m.div>
+  );
+}
+
+function getRankColor(rank, totalEntries) {
+  if (totalEntries > 1 && rank === totalEntries) return "#f87171";
+  if (rank === 1) return "#fbbf24";
+  if (rank === 2) return "#e5e7eb";
+  return "rgba(255, 255, 255, 0.52)";
+}
+
+function getActivityTabLabel(activity) {
+  if (activity.length === 0) return "Actividad";
+  return `Actividad (${activity.length})`;
+}
+
 export default function GroupView() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -33,13 +223,14 @@ export default function GroupView() {
 
   const [group, setGroup] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [activity, setActivity] = useState([]);
   const [bannedList, setBannedList] = useState([]);
   const [inviteList, setInviteList] = useState([]);
   const [inviteUsername, setInviteUsername] = useState("");
   const [isAddingInvite, setIsAddingInvite] = useState(false);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState("leaderboard"); // 'leaderboard' | 'banned'
+  const [activeTab, setActiveTab] = useState("leaderboard");
   const [showEditModal, setShowEditModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -56,9 +247,12 @@ export default function GroupView() {
     try {
       const { data: gData } = await api.get(`/groups/${id}`);
       setGroup(gData);
-
-      const { data: lbData } = await api.get(`/groups/${id}/leaderboard`);
+      const [{ data: lbData }, activityRes] = await Promise.all([
+        api.get(`/groups/${id}/leaderboard`),
+        api.get(`/groups/${id}/activity`).catch(() => ({ data: [] })),
+      ]);
       setLeaderboard(lbData);
+      setActivity(activityRes.data || []);
 
       // Load banned list if admin
       if (gData.isAdmin) {
@@ -339,6 +533,7 @@ export default function GroupView() {
   const competitionLogo = group.competition
     ? getLeagueLogo(group.competition)
     : null;
+  const leaderboardPending = leaderboard.some((entry) => entry.leaderboardPending);
 
   return (
     <div className="w-full space-y-4 sm:space-y-6">
@@ -495,6 +690,21 @@ export default function GroupView() {
               <Trophy size={14} /> Posiciones
             </button>
             <button
+              onClick={() => setActiveTab("activity")}
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
+                activeTab === "activity"
+                  ? "bg-emerald-500/20 text-emerald-300 shadow-sm"
+                  : "bg-transparent text-white/60 hover:text-white/60"
+              }`}
+              style={
+                activeTab === "activity"
+                  ? { borderBottom: "2px solid var(--color-secondary)" }
+                  : {}
+              }
+            >
+              <Activity size={14} /> {getActivityTabLabel(activity)}
+            </button>
+            <button
               onClick={() => setActiveTab("matches")}
               className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === "matches"
@@ -546,6 +756,15 @@ export default function GroupView() {
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-2 sm:space-y-3"
               >
+                {leaderboardPending && (
+                  <div className="flex items-start gap-2 rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2.5 text-amber-100">
+                    <AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-300" />
+                    <p className="text-[11px] sm:text-xs leading-snug text-amber-100/85">
+                      Puntos calculados, tabla actualizandose. Las flechas aparecen cuando el ranking termina de sincronizar.
+                    </p>
+                  </div>
+                )}
+
                 {leaderboard.map((entry) => {
                   const isMe = entry.userId === user.id;
                   return (
@@ -561,22 +780,14 @@ export default function GroupView() {
                     >
                       {/* Rank */}
                       <div
-                        className={`w-7 sm:w-8 text-center font-bold text-base sm:text-lg shrink-0 ${
-                          entry.rank === 1
-                            ? "text-amber-400"
-                            : entry.rank === 2
-                              ? "text-slate-300"
-                              : entry.rank === 3
-                                ? "text-amber-700"
-                                : ""
-                        }`}
-                        style={
-                          entry.rank > 3
-                            ? { color: "var(--color-secondary)" }
-                            : {}
-                        }
+                        className="w-10 sm:w-12 text-center font-bold text-base sm:text-lg shrink-0 flex items-center justify-center gap-0.5"
                       >
-                        #{entry.rank}
+                        <span
+                          style={{ color: getRankColor(entry.rank, leaderboard.length) }}
+                        >
+                          #{entry.rank}
+                        </span>
+                        <RankMovement value={entry.rankMovement} />
                       </div>
 
                       {/* Avatar */}
@@ -610,6 +821,15 @@ export default function GroupView() {
 
                       {/* Score & Actions */}
                       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                        <div className="text-center min-w-[48px]">
+                          <div className="text-sm sm:text-base font-bold text-emerald-300">
+                            {entry.exactHits ?? 0}
+                          </div>
+                          <div className="text-[8px] sm:text-[10px] text-white/60 uppercase tracking-wider">
+                            exactos
+                          </div>
+                        </div>
+
                         <div className="text-right">
                           <div
                             className="text-base sm:text-lg font-bold"
@@ -644,6 +864,10 @@ export default function GroupView() {
                   </div>
                 )}
               </m.div>
+            )}
+
+            {activeTab === "activity" && (
+              <GroupActivityFeed activity={activity} />
             )}
 
             {activeTab === "invites" && group.isAdmin && (

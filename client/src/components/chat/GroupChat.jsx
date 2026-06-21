@@ -1,8 +1,75 @@
-import { useState, useEffect, useRef, useTransition } from "react";
+import { useState, useEffect, useMemo, useRef, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { Send, X } from "lucide-react";
 import { getSocket } from "../../lib/socket";
 import useAuthStore from "../../store/authStore";
+
+function parseMessageDate(createdAt) {
+  if (!createdAt) return null;
+  const date = new Date(createdAt);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getDateKey(date) {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function formatDateSeparator(date, now = new Date()) {
+  const messageKey = getDateKey(date);
+  const todayKey = getDateKey(now);
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
+  if (messageKey === todayKey) return "Hoy";
+  if (messageKey === getDateKey(yesterday)) return "Ayer";
+
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+function buildMessageItems(messages) {
+  const items = [];
+  let lastDateKey = null;
+
+  messages.forEach((message, index) => {
+    const date = parseMessageDate(message.createdAt);
+    const dateKey = date ? getDateKey(date) : null;
+
+    if (date && dateKey !== lastDateKey) {
+      items.push({
+        type: "date",
+        key: `date-${dateKey}-${index}`,
+        label: formatDateSeparator(date),
+      });
+      lastDateKey = dateKey;
+    }
+
+    items.push({
+      type: "message",
+      key: message.id ? `message-${message.id}` : `message-${index}`,
+      message,
+    });
+  });
+
+  return items;
+}
+
+function DateSeparator({ label }) {
+  return (
+    <div className="flex items-center gap-2 py-1 my-1">
+      <div className="h-px flex-1 bg-white/10" />
+      <span className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/45">
+        {label}
+      </span>
+      <div className="h-px flex-1 bg-white/10" />
+    </div>
+  );
+}
 
 export default function GroupChat({ groupId, initialMessages = [] }) {
   const user = useAuthStore((state) => state.user);
@@ -15,6 +82,7 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
 
   const socketRef = useRef(null);
   const chatContainerRef = useRef(null);
+  const messageItems = useMemo(() => buildMessageItems(messages), [messages]);
 
   useEffect(() => {
     setMessages(initialMessages);
@@ -170,11 +238,16 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
               </p>
             </div>
           ) : (
-            messages.map((m, idx) => {
+            messageItems.map((item) => {
+              if (item.type === "date") {
+                return <DateSeparator key={item.key} label={item.label} />;
+              }
+
+              const m = item.message;
               const isMe = m.user.id === user.id;
               return (
                 <div
-                  key={idx}
+                  key={item.key}
                   className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
                 >
                   <span className="text-[10px] text-white/50 mb-1 ml-1">
@@ -244,7 +317,7 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
       {/* CHAT WINDOW (Mobile modal via Portal) */}
       {isOpen &&
         createPortal(
-          <div className="fixed inset-0 z-[100] flex flex-col sm:hidden" style={{ background: 'var(--bg-start-color, #0a0f1c)' }}>
+          <div className="fixed inset-0 z-[100] flex flex-col lg:hidden" style={{ background: 'var(--bg-start-color, #0a0f1c)' }}>
             {/* Header */}
             <div className="px-4 py-3 border-b border-indigo-500/20 bg-black/40 flex items-center justify-between shrink-0 shadow-md">
               <div className="flex items-center gap-2">
@@ -286,11 +359,16 @@ export default function GroupChat({ groupId, initialMessages = [] }) {
                   </p>
                 </div>
               ) : (
-                messages.map((m, idx) => {
+                messageItems.map((item) => {
+                  if (item.type === "date") {
+                    return <DateSeparator key={item.key} label={item.label} />;
+                  }
+
+                  const m = item.message;
                   const isMe = m.user.id === user.id;
                   return (
                     <div
-                      key={idx}
+                      key={item.key}
                       className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
                     >
                       <span className="text-[10px] text-white/60 mb-1 ml-1">
