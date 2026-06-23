@@ -81,6 +81,37 @@ export default function GroupPredictionsModal({
   const matchId = getMatchId(match);
 
   useEffect(() => {
+    if (!isOpen || typeof window === "undefined") return;
+
+    const scrollY = window.scrollY;
+    const originalBodyStyles = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
+      paddingRight: document.body.style.paddingRight,
+    };
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    return () => {
+      document.body.style.overflow = originalBodyStyles.overflow;
+      document.body.style.position = originalBodyStyles.position;
+      document.body.style.top = originalBodyStyles.top;
+      document.body.style.width = originalBodyStyles.width;
+      document.body.style.paddingRight = originalBodyStyles.paddingRight;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
     if (!isOpen) return;
 
     const requestedIndex = groupId
@@ -137,7 +168,7 @@ export default function GroupPredictionsModal({
   return createPortal(
     <AnimatePresence>
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] flex items-center justify-center p-2.5 sm:p-4"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] flex items-center justify-center p-2.5 sm:p-4 overscroll-contain"
         onClick={(event) => {
           event.stopPropagation();
           if (event.target === event.currentTarget) onClose?.();
@@ -147,7 +178,7 @@ export default function GroupPredictionsModal({
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="glass-card rounded-xl sm:rounded-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[88vh] border border-white/10"
+          className="glass-card rounded-xl sm:rounded-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[88vh] border border-white/10 overscroll-contain"
           onClick={(event) => event.stopPropagation()}
         >
           <div className="p-3 sm:p-4 border-b border-white/10 bg-white/5 shrink-0">
@@ -265,7 +296,7 @@ export default function GroupPredictionsModal({
             </div>
           </div>
 
-          <div className="p-2.5 sm:p-4 overflow-y-auto flex-1 space-y-2">
+          <div className="p-2.5 sm:p-4 overflow-y-auto overscroll-contain flex-1 space-y-2">
             {modalGroups.length === 0 ? (
               <div className="text-center p-6 text-white/60 text-sm">
                 No hay grupos para este partido.

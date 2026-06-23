@@ -15,6 +15,7 @@ import {
   Maximize2,
   X,
   Pencil,
+  CalendarDays,
 } from "lucide-react";
 import api from "../services/api";
 import useAuthStore from "../store/authStore";
@@ -46,6 +47,40 @@ const getTodayDate = () => {
 const getArgentinaDate = (date = new Date()) =>
   date.toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
 
+const getDateFromKey = (dateKey) => {
+  const [year, month, day] = String(dateKey || "").split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day, 12, 0, 0);
+};
+
+const formatWorldCupDateLabel = (dateKey) => {
+  const date = getDateFromKey(dateKey);
+  if (!date) return "Partidos";
+
+  const todayKey = getArgentinaDate();
+  const tomorrowKey = getArgentinaDate(new Date(Date.now() + 24 * 60 * 60 * 1000));
+
+  if (dateKey === todayKey) return "Hoy";
+  if (dateKey === tomorrowKey) return "Mañana";
+
+  return date.toLocaleDateString("es-AR", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+};
+
+const formatWorldCupDateValue = (dateKey) => {
+  const date = getDateFromKey(dateKey);
+  if (!date) return "";
+
+  return date.toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
 // [OCULTADO] Sportmonks league IDs - Ya no se usa Sportmonks
 // const SPORTMONKS_LEAGUES_SET = new Set(SPORTMONKS_LEAGUE_IDS);
 
@@ -56,7 +91,9 @@ export default function Explorer() {
   const [loading, setLoading] = useState(true);
   const [wcMatches, setWcMatches] = useState([]);
   const [wcPredictions, setWcPredictions] = useState([]);
+  const [wcSelectedDate, setWcSelectedDate] = useState(getArgentinaDate());
   const liveIntervalRef = useRef(null);
+  const wcDateInputRef = useRef(null);
   // [OCULTADO] todayIntervalRef ya no se usa (era para Sportmonks)
   // const todayIntervalRef = useRef(null);
 
@@ -69,6 +106,21 @@ export default function Explorer() {
 
   const debouncedSearch = useDebounce(search, 250);
 
+  const openWorldCupDatePicker = () => {
+    const input = wcDateInputRef.current;
+    if (!input) return;
+
+    try {
+      if (typeof input.showPicker === "function") {
+        input.showPicker();
+      } else {
+        input.focus();
+      }
+    } catch {
+      input.focus();
+    }
+  };
+
   // [OCULTADO] Sportmonks store — endpoint unificado
   // const smFixtures = useSportmonksStore((s) => s.smFixtures);
   // const smReady = useSportmonksStore((s) => s.ready);
@@ -80,7 +132,7 @@ export default function Explorer() {
       await Promise.all([
         loadData(),
         loadMatchesByDate(selectedDate),
-        loadWorldCupToday(),
+        loadWorldCupMatchesByDate(wcSelectedDate),
         user ? loadMyGroups() : Promise.resolve(),
         user ? loadLeagueFavorites() : Promise.resolve()
       ]);
@@ -266,18 +318,23 @@ export default function Explorer() {
     }
   };
 
-  const loadWorldCupToday = async () => {
+  useEffect(() => {
+    if (!loading) {
+      loadWorldCupMatchesByDate(wcSelectedDate);
+    }
+  }, [wcSelectedDate]);
+
+  const loadWorldCupMatchesByDate = async (date = wcSelectedDate) => {
     try {
-      const todayAR = getArgentinaDate();
       const [matchRes, predRes] = await Promise.all([
         api.get("/matches?competitionId=1"),
         user ? api.get("/predictions/my?competitionId=1") : Promise.resolve({ data: [] }),
       ]);
-      const todayWcMatches = (matchRes.data || []).filter((m) => {
+      const selectedWcMatches = (matchRes.data || []).filter((m) => {
         if (!m.matchDate) return false;
-        return getArgentinaDate(new Date(m.matchDate)) === todayAR;
+        return getArgentinaDate(new Date(m.matchDate)) === date;
       });
-      setWcMatches(todayWcMatches);
+      setWcMatches(selectedWcMatches);
       setWcPredictions(predRes.data || []);
     } catch {
       /* silent */
@@ -527,21 +584,53 @@ export default function Explorer() {
       </div>
 
       {/* Mundial Hoy — MatchCards interactivas */}
-      {wcMatches.length > 0 && (
+      {(
         <div>
-          <div className="flex items-center justify-between mb-3 gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-5 h-5 rounded-md bg-white/90 flex items-center justify-center p-0.5 shrink-0">
-                <img src={WORLD_CUP_2026_LOGO} alt="" className="w-full h-full object-contain" />
+          <div className="mb-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-5 h-5 rounded-md bg-white/90 flex items-center justify-center p-0.5 shrink-0">
+                  <img src={WORLD_CUP_2026_LOGO} alt="" className="w-full h-full object-contain" />
+                </div>
+                <h2 className="text-xs sm:text-sm font-bold text-amber-400 uppercase tracking-wide truncate">
+                  {formatWorldCupDateLabel(wcSelectedDate)}
+                </h2>
               </div>
-              <h2 className="text-xs sm:text-sm font-bold text-amber-400 uppercase tracking-wide">
-                <span className="sm:hidden">Hoy</span>
-                <span className="hidden sm:inline">Hoy</span>
-              </h2>
+              <Link to="/liga/1" className="text-xs text-indigo-400 hover:text-indigo-300 font-medium no-underline flex items-center gap-1 shrink-0">
+                Ver mas <ChevronRight size={12} />
+              </Link>
             </div>
-            <Link to="/liga/1" className="text-xs text-indigo-400 hover:text-indigo-300 font-medium no-underline flex items-center gap-1 shrink-0">
-              Ver mas <ChevronRight size={12} />
-            </Link>
+
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <div className="relative min-w-0">
+                <div className="flex h-9 min-w-0 items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-xs font-semibold text-white/80 transition-colors hover:bg-white/10">
+                  <span className="min-w-0 truncate">
+                    {formatWorldCupDateValue(wcSelectedDate)}
+                  </span>
+                  <CalendarDays size={14} className="shrink-0 text-white/55" />
+                </div>
+                <input
+                  ref={wcDateInputRef}
+                  type="date"
+                  value={wcSelectedDate}
+                  onChange={(event) => setWcSelectedDate(event.target.value)}
+                  onClick={openWorldCupDatePicker}
+                  aria-label="Elegir fecha"
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setWcSelectedDate(getArgentinaDate())}
+                className={`h-9 rounded-lg border px-3 text-xs font-bold transition-colors cursor-pointer ${
+                  wcSelectedDate === getArgentinaDate()
+                    ? "border-amber-400/40 bg-amber-400/15 text-amber-100"
+                    : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                Hoy
+              </button>
+            </div>
           </div>
           {user && (
             <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-amber-500/15 bg-amber-500/5 mb-3">
@@ -551,19 +640,25 @@ export default function Explorer() {
               </p>
             </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {wcMatches.map((match) => (
-              <MatchCard
-                key={match.id}
-                match={match}
-                existingPrediction={wcPredictionsMap.get(Number(match.externalId || match.id))}
-                onPredictionSaved={loadWorldCupToday}
-                jokerRemaining={wcJokersRemaining}
-                jokerLimit={WC_JOKER_LIMIT}
-                groupPredictionGroups={wcGroupPredictionGroups}
-              />
-            ))}
-          </div>
+          {wcMatches.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {wcMatches.map((match) => (
+                <MatchCard
+                  key={match.id}
+                  match={match}
+                  existingPrediction={wcPredictionsMap.get(Number(match.externalId || match.id))}
+                  onPredictionSaved={() => loadWorldCupMatchesByDate(wcSelectedDate)}
+                  jokerRemaining={wcJokersRemaining}
+                  jokerLimit={WC_JOKER_LIMIT}
+                  groupPredictionGroups={wcGroupPredictionGroups}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-white/8 bg-white/[0.03] px-4 py-6 text-center text-sm text-white/55">
+              No hay partidos del Mundial para esta fecha.
+            </div>
+          )}
         </div>
       )}
 
