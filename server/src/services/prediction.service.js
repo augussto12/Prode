@@ -34,10 +34,10 @@ export async function upsertPrediction(userId, externalFixtureId, competitionId,
   }
 
   const statusShort = fixture.fixture?.status?.short;
-  const isStarted = !['NS', 'TBD', 'PST'].includes(statusShort);
+  const isStarted = !['NS', 'TBD'].includes(statusShort);
 
   if (isStarted) {
-    throw new BadRequestError('No se puede predecir despues de que el partido empezo');
+    throw new BadRequestError('No se puede modificar la prediccion de un partido iniciado, interrumpido o postergado');
   }
 
   const predictionWindow = await getFixturePredictionWindow(competition, fixture);

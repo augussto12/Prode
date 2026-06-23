@@ -846,7 +846,7 @@ export default function LeagueView() {
           {tab === "scorers" && (
             <div className="glass-card rounded-2xl overflow-hidden border border-white/5">
               <div className="overflow-x-auto hide-scrollbar">
-                <table className="w-full min-w-[500px] md:min-w-full text-sm">
+                <table className="w-full min-w-[420px] md:min-w-full text-sm">
                   <thead>
                     <tr className="text-white/50 text-[10px] md:text-xs border-b border-white/5 uppercase tracking-wider">
                       <th className="text-left px-3 md:px-4 py-3 font-bold sticky-col backdrop-blur-md">
@@ -854,9 +854,6 @@ export default function LeagueView() {
                           #
                         </span>{" "}
                         Jugador
-                      </th>
-                      <th className="text-left px-2 py-3 font-bold whitespace-nowrap">
-                        Equipo
                       </th>
                       <th className="px-2 py-3 font-bold text-center whitespace-nowrap">
                         ⚽ Goles
@@ -911,28 +908,6 @@ export default function LeagueView() {
                                   {tCountry(player.nationality)}
                                 </div>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-2 py-2">
-                            <div className="flex items-center gap-1.5 md:gap-2">
-                              {stats?.team?.logo && (
-                                <img
-                                  src={stats.team.logo}
-                                  alt=""
-                                  width={16}
-                                  height={16}
-                                  className="w-4 h-4 md:w-5 md:h-5 object-contain"
-                                  loading="lazy"
-                                  decoding="async"
-
-                                  onError={(e) => {
-                                    e.target.src = "/placeholder-team.svg";
-                                  }}
-                                />
-                              )}
-                              <span className="text-[10px] md:text-xs text-white/60 truncate max-w-[80px] sm:max-w-[120px]">
-                                {tTeamName(stats?.team?.name)}
-                              </span>
                             </div>
                           </td>
                           <td className="px-2 py-2 text-center text-emerald-400 font-black text-sm md:text-base">
