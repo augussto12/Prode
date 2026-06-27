@@ -47,23 +47,23 @@ export default function MatchCard({ matchup, index = 0, onSelect }) {
 
   const Row = ({ team, goals, isWinner, isLoser }) => (
     <div
-      className={`flex items-center gap-1.5 px-2 py-[5px] transition-all ${isWinner ? "bg-emerald-500/[0.06]" : ""}`}
+      className={`flex items-center gap-1 px-1.5 py-[4px] transition-all ${isWinner ? "bg-emerald-500/[0.06]" : ""}`}
     >
       {hasLogo(team) ? (
         <img           src={team.logo}
           alt=""
-          className="w-4 h-4 object-contain shrink-0"
+          className="w-3.5 h-3.5 object-contain shrink-0"
           loading="lazy"
-          decoding="async" width={16} height={16}
+          decoding="async" width={14} height={14}
   onError={(e) => {
             e.target.src = "/placeholder-team.svg";
           }}
         />
       ) : (
-        <span className="w-4 h-4 shrink-0" />
+        <span className="w-3.5 h-3.5 shrink-0" />
       )}
       <span
-        className={`flex-1 text-[11px] font-semibold truncate cursor-default ${isWinner ? "text-white" : isLoser ? "text-slate-400" : "text-white/80"}`}
+        className={`flex-1 text-[10px] font-semibold truncate cursor-default ${isWinner ? "text-white" : isLoser ? "text-slate-400" : "text-white/80"}`}
         style={{
           whiteSpace: "nowrap",
           overflow: "hidden",
@@ -73,7 +73,7 @@ export default function MatchCard({ matchup, index = 0, onSelect }) {
         {tTeamName(team.name)}
       </span>
       <span
-        className={`text-[11px] font-bold font-mono min-w-[14px] text-right shrink-0 ${
+        className={`text-[10px] font-bold font-mono min-w-[12px] text-right shrink-0 ${
           isWinner
             ? "text-emerald-300"
             : isLoser
@@ -108,9 +108,9 @@ export default function MatchCard({ matchup, index = 0, onSelect }) {
       style={{ transformStyle: "preserve-3d" }}
     >
       {/* Status / date bar */}
-      <div className="flex items-center justify-between px-2 py-[2px] bg-slate-800/30">
+      <div className="flex items-center justify-between px-1.5 py-[1px] bg-slate-800/30">
         {/* Date or minute */}
-        <span className="text-[8px] text-slate-500 font-medium">
+        <span className="text-[7px] text-slate-500 font-medium">
           {isLive && liveMinute
             ? ""
             : isFinished
@@ -118,7 +118,7 @@ export default function MatchCard({ matchup, index = 0, onSelect }) {
               : formatDate(matchDate) || ""}
         </span>
         <span
-          className={`text-[8px] font-bold uppercase tracking-wider flex items-center gap-0.5 ${
+          className={`text-[7px] font-bold uppercase tracking-wider flex items-center gap-0.5 ${
             isLive
               ? "text-red-500"
               : isFinished

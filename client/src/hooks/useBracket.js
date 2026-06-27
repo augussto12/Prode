@@ -10,11 +10,25 @@ const PHASE_ORDER = [
   "3rd Place Final",
   "Final",
 ];
+const MAIN_PHASES = PHASE_ORDER.filter((p) => p !== "3rd Place Final");
+const WORLD_CUP_2026_PHASE_MATCHUPS = {
+  "Round of 32": 16,
+  "Round of 16": 8,
+  "Quarter-finals": 4,
+  "Semi-finals": 2,
+  Final: 1,
+};
 
 function normalizePhase(round) {
   if (!round) return null;
   const r = round.toLowerCase();
-  if (r.includes("round of 32")) return "Round of 32";
+  if (
+    r.includes("round of 32") ||
+    r.includes("1/16") ||
+    r.includes("16-finals") ||
+    r.includes("16avos")
+  )
+    return "Round of 32";
   if (r.includes("round of 16") || r.includes("1/8")) return "Round of 16";
   if (r.includes("quarter") || r.includes("1/4")) return "Quarter-finals";
   if (r.includes("semi") || r.includes("1/2")) return "Semi-finals";
@@ -25,13 +39,105 @@ function normalizePhase(round) {
   return null;
 }
 
+function buildPhaseMap(fixtures) {
+  const phaseMap = {};
+  fixtures.forEach((f) => {
+    const round = f.league?.round || "";
+    const phase = normalizePhase(round);
+    if (phase) {
+      if (!phaseMap[phase]) phaseMap[phase] = [];
+      phaseMap[phase].push(f);
+    }
+  });
+  return phaseMap;
+}
+
+function mergeFixturesById(...fixtureLists) {
+  const merged = new Map();
+  fixtureLists.flat().forEach((fixture) => {
+    const id = fixture?.fixture?.id;
+    if (id == null) return;
+    merged.set(id, fixture);
+  });
+  return [...merged.values()].sort(
+    (a, b) => new Date(a.fixture.date) - new Date(b.fixture.date),
+  );
+}
+
+function placeholderTeam(phase, matchupIndex, side) {
+  const phaseIndex = MAIN_PHASES.indexOf(phase) + 1;
+  const numericId = phaseIndex * 1000 + matchupIndex * 2 + side;
+  return {
+    id: -numericId,
+    name: "Por definir",
+    logo: "",
+  };
+}
+
+function makePlaceholderMatchup(phase, matchupIndex) {
+  return {
+    id: `placeholder-${phase}-${matchupIndex}`,
+    teamA: placeholderTeam(phase, matchupIndex, 1),
+    teamB: placeholderTeam(phase, matchupIndex, 2),
+    aggA: null,
+    aggB: null,
+    legs: [],
+    winnerId: null,
+    isFinished: false,
+    isLive: false,
+    isAggregate: false,
+    startTime: null,
+    _nextMatchIndex: -1,
+    nextMatchId: null,
+  };
+}
+
+function completeWorldCup2026Bracket(columns) {
+  const byPhase = new Map(columns.map((column) => [column.phase, column]));
+  const firstPhaseIndex = MAIN_PHASES.findIndex((phase) => byPhase.has(phase));
+  if (firstPhaseIndex === -1) return columns;
+
+  return MAIN_PHASES.slice(firstPhaseIndex).map((phase, colIndex) => {
+    const existingMatchups = byPhase.get(phase)?.matchups || [];
+    const expectedCount =
+      WORLD_CUP_2026_PHASE_MATCHUPS[phase] || existingMatchups.length;
+    const matchups = [...existingMatchups];
+
+    while (matchups.length < expectedCount) {
+      matchups.push(makePlaceholderMatchup(phase, matchups.length));
+    }
+
+    return { phase, colIndex, matchups };
+  });
+}
+
+function findNextMatchIndex(matchup, matchupIndex, nextCol) {
+  const tAid = matchup.teamA.id;
+  const tBid = matchup.teamB.id;
+
+  const teamMatchIndex = nextCol.matchups.findIndex(
+    (nm) =>
+      nm.teamA.id === tAid ||
+      nm.teamA.id === tBid ||
+      nm.teamB.id === tAid ||
+      nm.teamB.id === tBid,
+  );
+
+  if (teamMatchIndex !== -1) return teamMatchIndex;
+  if (!nextCol.matchups.length) return -1;
+  return Math.min(Math.floor(matchupIndex / 2), nextCol.matchups.length - 1);
+}
+
 // Group fixtures into matchups (ida/vuelta by team pairing)
 function groupMatchups(fixtures) {
   const map = {};
   fixtures.forEach((f) => {
     const homeId = f.teams.home.id;
     const awayId = f.teams.away.id;
-    const key = [Math.min(homeId, awayId), Math.max(homeId, awayId)].join("-");
+    const hasTeamPair = Number(homeId) > 0 && Number(awayId) > 0;
+    const key = hasTeamPair
+      ? [Math.min(homeId, awayId), Math.max(homeId, awayId)].join("-")
+      : `fixture-${f.fixture.id}`;
     if (!map[key]) map[key] = [];
     map[key].push(f);
   });
@@ -40,8 +146,18 @@ function groupMatchups(fixtures) {
     legs.sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
     const leg1 = legs[0];
     const leg2 = legs[1] || null;
-    const teamA = { ...leg1.teams.home, logo: leg1.teams.home.logo };
-    const teamB = { ...leg1.teams.away, logo: leg1.teams.away.logo };
+    const teamA = {
+      ...leg1.teams.home,
+      id: leg1.teams.home.id ?? -Number(`${leg1.fixture.id}1`),
+      name: leg1.teams.home.name || "Por definir",
+      logo: leg1.teams.home.logo,
+    };
+    const teamB = {
+      ...leg1.teams.away,
+      id: leg1.teams.away.id ?? -Number(`${leg1.fixture.id}2`),
+      name: leg1.teams.away.name || "Por definir",
+      logo: leg1.teams.away.logo,
+    };
 
     let aggA = leg1.goals?.home ?? null;
     let aggB = leg1.goals?.away ?? null;
@@ -114,24 +230,48 @@ export function useBracket(leagueId, season) {
     setError(null);
 
     try {
-      const { data: fixtures } = await api.get(
+      const { data: seasonFixtures = [] } = await api.get(
         `/explorer/leagues/${leagueId}/fixtures?season=${season}`,
       );
 
+      let fixtures = Array.isArray(seasonFixtures) ? seasonFixtures : [];
+
+      try {
+        const { data: roundsData } = await api.get(
+          `/explorer/leagues/${leagueId}/rounds?season=${season}`,
+        );
+        const knockoutRounds = [
+          ...new Set(
+            (roundsData?.rounds || []).filter((round) =>
+              PHASE_ORDER.includes(normalizePhase(round)),
+            ),
+          ),
+        ];
+
+        const roundFixtures = await Promise.all(
+          knockoutRounds.map((round) =>
+            api
+              .get(`/explorer/leagues/${leagueId}/fixtures`, {
+                params: { season, round },
+              })
+              .then((response) => response.data || [])
+              .catch((roundErr) => {
+                console.warn(`Error fetching bracket round ${round}:`, roundErr);
+                return [];
+              }),
+          ),
+        );
+
+        fixtures = mergeFixturesById(fixtures, ...roundFixtures);
+      } catch (roundsErr) {
+        console.warn("Error fetching bracket rounds:", roundsErr);
+      }
+
       // Group fixtures by normalized phase
-      const phaseMap = {};
-      fixtures.forEach((f) => {
-        const round = f.league?.round || "";
-        const phase = normalizePhase(round);
-        if (phase) {
-          if (!phaseMap[phase]) phaseMap[phase] = [];
-          phaseMap[phase].push(f);
-        }
-      });
+      const phaseMap = buildPhaseMap(fixtures);
 
       // Filter 3rd place out of main bracket chain (rendered separately)
-      const mainPhases = PHASE_ORDER.filter((p) => p !== "3rd Place Final");
-      const orderedPhases = mainPhases.filter((p) => phaseMap[p]);
+      const orderedPhases = MAIN_PHASES.filter((p) => phaseMap[p]);
       const thirdPlace = phaseMap["3rd Place Final"]
         ? {
             phase: "3rd Place Final",
@@ -140,11 +280,15 @@ export function useBracket(leagueId, season) {
         : null;
 
       // Build bracket columns
-      const columns = orderedPhases.map((phase, colIndex) => ({
+      let columns = orderedPhases.map((phase, colIndex) => ({
         phase,
         colIndex,
         matchups: groupMatchups(phaseMap[phase]),
       }));
+
+      if (Number(leagueId) === 1 && Number(season) === 2026) {
+        columns = completeWorldCup2026Bracket(columns);
+      }
 
       // ─── Connect rounds by team ID matching + reorder ───
       // Work backwards from the last round to the first so that
@@ -155,17 +299,8 @@ export function useBracket(leagueId, season) {
 
         // For each matchup in current round, find which next-round matchup
         // contains either of its teams (i.e. the advancing team)
-        currentCol.matchups.forEach((matchup) => {
-          const tAid = matchup.teamA.id;
-          const tBid = matchup.teamB.id;
-
-          const nextIdx = nextCol.matchups.findIndex(
-            (nm) =>
-              nm.teamA.id === tAid ||
-              nm.teamA.id === tBid ||
-              nm.teamB.id === tAid ||
-              nm.teamB.id === tBid,
-          );
+        currentCol.matchups.forEach((matchup, matchupIndex) => {
+          const nextIdx = findNextMatchIndex(matchup, matchupIndex, nextCol);
 
           if (nextIdx !== -1) {
             matchup.nextMatchId = nextCol.matchups[nextIdx].id;
@@ -203,16 +338,8 @@ export function useBracket(leagueId, season) {
         currentCol.matchups = reordered;
 
         // Recalculate _nextMatchIndex after reorder
-        currentCol.matchups.forEach((matchup) => {
-          const tAid = matchup.teamA.id;
-          const tBid = matchup.teamB.id;
-          const nextIdx = nextCol.matchups.findIndex(
-            (nm) =>
-              nm.teamA.id === tAid ||
-              nm.teamA.id === tBid ||
-              nm.teamB.id === tAid ||
-              nm.teamB.id === tBid,
-          );
+        currentCol.matchups.forEach((matchup, matchupIndex) => {
+          const nextIdx = findNextMatchIndex(matchup, matchupIndex, nextCol);
           matchup._nextMatchIndex = nextIdx;
         });
       }

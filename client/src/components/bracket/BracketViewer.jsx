@@ -7,13 +7,13 @@ import MatchDetailPanel from "./MatchDetailPanel";
 import { tRound, tTeamName } from "../../utils/translations";
 
 // ─── Desktop layout constants ───
-const CARD_W = 160;
-const CARD_H = 88;
-const MIN_COL_GAP = 24;
-const ROW_GAP = 20;
-const PADDING_X = 12;
-const PADDING_TOP = 34;
-const PADDING_BOTTOM = 16;
+const CARD_W = 136;
+const CARD_H = 76;
+const MIN_COL_GAP = 12;
+const ROW_GAP = 14;
+const PADDING_X = 8;
+const PADDING_TOP = 30;
+const PADDING_BOTTOM = 12;
 const MOBILE_BREAKPOINT = 768;
 
 // ─── Mobile vertical layout constants ───
@@ -1046,6 +1046,7 @@ export default function BracketViewer({
   const hasR32 = columns?.some((c) => c.phase === "Round of 32");
   const hasMainBracket = columns?.some((c) => c.phase !== "Round of 32");
   const [viewMode, setViewMode] = useState("bracket");
+  const [mobileSection, setMobileSection] = useState("final");
   const playoffMatchups = useMemo(
     () =>
       (columns || [])
@@ -1053,7 +1054,11 @@ export default function BracketViewer({
         .flatMap((c) => c.matchups),
     [columns],
   );
-  const bracketColumns = useMemo(
+  const allBracketColumns = useMemo(
+    () => columns || [],
+    [columns],
+  );
+  const finalPhaseColumns = useMemo(
     () => (columns || []).filter((c) => c.phase !== "Round of 32"),
     [columns],
   );
@@ -1075,7 +1080,17 @@ export default function BracketViewer({
   }, [viewMode]);
 
   const isMobile = containerWidth > 0 && containerWidth < MOBILE_BREAKPOINT;
+  const shouldSplitMobileBracket = isMobile && hasR32 && hasMainBracket;
+  const bracketColumns = shouldSplitMobileBracket
+    ? finalPhaseColumns
+    : allBracketColumns;
   const useMirrored = bracketColumns.length >= 3 && !isMobile;
+
+  useEffect(() => {
+    if (isMobile && viewMode === "playoffs") {
+      setViewMode("bracket");
+    }
+  }, [isMobile, viewMode]);
 
   // Desktop layout
   const desktopLayout = useMemo(() => {
@@ -1118,13 +1133,14 @@ export default function BracketViewer({
 
   return (
     <m.div
+      ref={measureRef}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
       className="space-y-3"
     >
       {/* View toggle */}
-      {hasR32 && hasMainBracket && (
+      {hasR32 && hasMainBracket && !isMobile && (
         <div className="flex items-center gap-2">
           <button
             onClick={() => setViewMode("bracket")}
@@ -1162,103 +1178,170 @@ export default function BracketViewer({
 
       {/* BRACKET VIEW */}
       {viewMode === "bracket" && (
-        <div
-          ref={measureRef}
-          className="rounded-xl border border-slate-800/50 overflow-hidden"
-          style={{ background: isFullPage ? "#0a0e1a" : "#0d1220" }}
-        >
-          {containerWidth > 0 && (
-            <div
-              className="relative"
-              style={{
-                width: `${width}px`,
-                height: `${height}px`,
-                minWidth: "100%",
-              }}
+        <div className="space-y-4">
+          {shouldSplitMobileBracket && (
+            <div className="grid grid-cols-2 gap-2 rounded-xl bg-slate-950/45 border border-slate-800/60 p-1">
+              <button
+                onClick={() => setMobileSection("round32")}
+                className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all border-none cursor-pointer ${
+                  mobileSection === "round32"
+                    ? "bg-slate-700 text-white"
+                    : "bg-transparent text-slate-400"
+                }`}
+              >
+                <List size={14} /> 16avos
+              </button>
+              <button
+                onClick={() => setMobileSection("final")}
+                className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all border-none cursor-pointer ${
+                  mobileSection === "final"
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                    : "bg-transparent text-slate-400"
+                }`}
+              >
+                <GitBranch size={14} /> Fase final
+              </button>
+            </div>
+          )}
+
+          {shouldSplitMobileBracket &&
+            mobileSection === "round32" &&
+            playoffMatchups.length > 0 && (
+            <section
+              className="rounded-xl border border-slate-800/50 bg-slate-950/35 p-3 space-y-3"
+              aria-label="16avos de final"
             >
-              {/* Phase headers */}
-              {!isMobile &&
-                phaseHeaders?.map((ph, i) => (
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-slate-800/80 border border-slate-700/50 text-[10px] font-bold uppercase tracking-wider text-slate-300">
+                  {tRound("Round of 32")}
+                </span>
+                <div className="flex-1 h-px bg-slate-700/30" />
+                <span className="text-[10px] text-slate-600">
+                  {playoffMatchups.length} cruces
+                </span>
+              </div>
+              <PlayoffsList
+                matchups={playoffMatchups}
+                onSelect={setSelectedMatchup}
+                isMobile={isMobile}
+              />
+            </section>
+          )}
+
+          {bracketColumns.length > 0 &&
+            (!shouldSplitMobileBracket || mobileSection === "final") && (
+            <section
+              className={shouldSplitMobileBracket ? "space-y-2" : undefined}
+              aria-label={shouldSplitMobileBracket ? "Fase final" : undefined}
+            >
+              {shouldSplitMobileBracket && (
+                <div className="flex items-center gap-2 px-1">
+                  <span className="px-2.5 py-0.5 rounded-full bg-blue-600/20 border border-blue-500/30 text-[10px] font-bold uppercase tracking-wider text-blue-200">
+                    Fase final
+                  </span>
+                  <div className="flex-1 h-px bg-blue-500/20" />
+                </div>
+              )}
+
+              <div
+                className="rounded-xl border border-slate-800/50 overflow-x-auto overflow-y-hidden"
+                style={{ background: isFullPage ? "#0a0e1a" : "#0d1220" }}
+              >
+                {containerWidth > 0 && (
                   <div
-                    key={`ph-${i}`}
-                    className="absolute text-center"
+                    className="relative"
                     style={{
-                      left: `${ph.x}px`,
-                      top: "8px",
-                      width: `${CARD_W}px`,
-                      zIndex: 3,
+                      width: `${width}px`,
+                      height: `${height}px`,
+                      minWidth: "100%",
                     }}
                   >
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-slate-800/80 text-slate-400 border border-slate-700/50">
-                      {ph.label}
-                    </span>
-                  </div>
-                ))}
-              {isMobile &&
-                phaseHeaders?.map((ph, i) => (
-                  <div
-                    key={`mph-${i}`}
-                    className="absolute left-0 right-0 flex items-center gap-2 px-3"
-                    style={{ top: `${ph.y}px`, zIndex: 3 }}
-                  >
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-slate-800/80 text-slate-400 border border-slate-700/50">
-                      {ph.label}
-                    </span>
-                    <div className="flex-1 h-px bg-slate-700/30" />
-                    <span className="text-[9px] text-slate-600">
-                      {ph.count}
-                    </span>
-                  </div>
-                ))}
+                    {/* Phase headers */}
+                    {!isMobile &&
+                      phaseHeaders?.map((ph, i) => (
+                        <div
+                          key={`ph-${i}`}
+                          className="absolute text-center"
+                          style={{
+                            left: `${ph.x}px`,
+                            top: "8px",
+                            width: `${CARD_W}px`,
+                            zIndex: 3,
+                          }}
+                        >
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-slate-800/80 text-slate-400 border border-slate-700/50">
+                            {ph.label}
+                          </span>
+                        </div>
+                      ))}
+                    {isMobile &&
+                      phaseHeaders?.map((ph, i) => (
+                        <div
+                          key={`mph-${i}`}
+                          className="absolute left-0 right-0 flex items-center gap-2 px-3"
+                          style={{ top: `${ph.y}px`, zIndex: 3 }}
+                        >
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-slate-800/80 text-slate-400 border border-slate-700/50">
+                            {ph.label}
+                          </span>
+                          <div className="flex-1 h-px bg-slate-700/30" />
+                          <span className="text-[9px] text-slate-600">
+                            {ph.count}
+                          </span>
+                        </div>
+                      ))}
 
-              {/* SVG connectors */}
-              <svg
-                className="absolute inset-0 pointer-events-none"
-                width={width}
-                height={height}
-                style={{ zIndex: 1 }}
-              >
-                {connectors.map((c, i) => (
-                  <path
-                    key={i}
-                    d={c.path}
-                    fill="none"
-                    stroke={c.isWinnerPath ? "#3b82f6" : "#334155"}
-                    strokeWidth={c.isWinnerPath ? 2 : 1.5}
-                    strokeLinecap="round"
-                  />
-                ))}
-              </svg>
+                    {/* SVG connectors */}
+                    <svg
+                      className="absolute inset-0 pointer-events-none"
+                      width={width}
+                      height={height}
+                      style={{ zIndex: 1 }}
+                    >
+                      {connectors.map((c, i) => (
+                        <path
+                          key={i}
+                          d={c.path}
+                          fill="none"
+                          stroke={c.isWinnerPath ? "#3b82f6" : "#334155"}
+                          strokeWidth={c.isWinnerPath ? 2 : 1.5}
+                          strokeLinecap="round"
+                        />
+                      ))}
+                    </svg>
 
-              {/* Match cards */}
-              {nodes.map((n, i) => (
-                <div
-                  key={n.matchup.id}
-                  className="absolute"
-                  style={{
-                    left: `${n.x}px`,
-                    top: `${n.y}px`,
-                    width: `${n.w || CARD_W}px`,
-                    zIndex: 2,
-                  }}
-                >
-                  {isMobile ? (
-                    <MobileVerticalCard
-                      matchup={n.matchup}
-                      index={i}
-                      cardW={n.w}
-                      onSelect={setSelectedMatchup}
-                    />
-                  ) : (
-                    <MatchCard
-                      matchup={n.matchup}
-                      index={i}
-                      onSelect={setSelectedMatchup}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
+                    {/* Match cards */}
+                    {nodes.map((n, i) => (
+                      <div
+                        key={n.matchup.id}
+                        className="absolute"
+                        style={{
+                          left: `${n.x}px`,
+                          top: `${n.y}px`,
+                          width: `${n.w || CARD_W}px`,
+                          zIndex: 2,
+                        }}
+                      >
+                        {isMobile ? (
+                          <MobileVerticalCard
+                            matchup={n.matchup}
+                            index={i}
+                            cardW={n.w}
+                            onSelect={setSelectedMatchup}
+                          />
+                        ) : (
+                          <MatchCard
+                            matchup={n.matchup}
+                            index={i}
+                            onSelect={setSelectedMatchup}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
           )}
         </div>
       )}

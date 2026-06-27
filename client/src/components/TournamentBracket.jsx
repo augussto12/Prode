@@ -25,7 +25,13 @@ const KNOCKOUT_PHASES = [
 function normalizePhase(round) {
   if (!round) return null;
   const r = round.toLowerCase();
-  if (r.includes("round of 32")) return "Round of 32";
+  if (
+    r.includes("round of 32") ||
+    r.includes("1/16") ||
+    r.includes("16-finals") ||
+    r.includes("16avos")
+  )
+    return "Round of 32";
   if (r.includes("round of 16") || r.includes("1/8")) return "Round of 16";
   if (r.includes("quarter") || r.includes("1/4")) return "Quarter-finals";
   if (r.includes("semi") || r.includes("1/2")) return "Semi-finals";
@@ -49,8 +55,11 @@ function groupMatchups(fixtures) {
   fixtures.forEach((f) => {
     const homeId = f.teams.home.id;
     const awayId = f.teams.away.id;
+    const hasTeamPair = Number(homeId) > 0 && Number(awayId) > 0;
     // Create a consistent key regardless of home/away flip between legs
-    const key = [Math.min(homeId, awayId), Math.max(homeId, awayId)].join("-");
+    const key = hasTeamPair
+      ? [Math.min(homeId, awayId), Math.max(homeId, awayId)].join("-")
+      : `fixture-${f.fixture.id}`;
     if (!map[key]) map[key] = [];
     map[key].push(f);
   });
@@ -63,8 +72,18 @@ function groupMatchups(fixtures) {
     const leg2 = legs[1] || null;
 
     // Determine the "home" team as whoever was home in leg 1
-    const teamA = { ...leg1.teams.home, logo: leg1.teams.home.logo };
-    const teamB = { ...leg1.teams.away, logo: leg1.teams.away.logo };
+    const teamA = {
+      ...leg1.teams.home,
+      id: leg1.teams.home.id ?? -Number(`${leg1.fixture.id}1`),
+      name: leg1.teams.home.name || "Por definir",
+      logo: leg1.teams.home.logo,
+    };
+    const teamB = {
+      ...leg1.teams.away,
+      id: leg1.teams.away.id ?? -Number(`${leg1.fixture.id}2`),
+      name: leg1.teams.away.name || "Por definir",
+      logo: leg1.teams.away.logo,
+    };
 
     // Aggregate score across legs
     let aggA = leg1.goals?.home ?? null;
