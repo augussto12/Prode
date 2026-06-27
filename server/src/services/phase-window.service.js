@@ -98,86 +98,19 @@ function isPhaseFinished(phaseFixtures = []) {
   return relevant.length > 0 && relevant.every(isFinalFixture);
 }
 
-function phaseFirstStart(phaseFixtures = []) {
-  const dated = phaseFixtures
-    .filter(hasDefinedTeams)
-    .map(getFixtureDate)
-    .filter(Boolean)
-    .sort((a, b) => a - b);
-  return dated[0] || null;
-}
-
-function buildWindowForPhase(phaseKey, byPhase, now = new Date()) {
-  const phaseFixtures = byPhase.get(phaseKey) || [];
+function buildWindowForPhase(phaseKey, byPhase) {
   const label = PHASE_LABELS[phaseKey] || phaseKey;
-  const firstStart = phaseFirstStart(phaseFixtures);
-
-  if (!isKnockoutPhase(phaseKey)) {
-    return {
-      phaseKey,
-      label,
-      phaseRule: false,
-      canPredict: true,
-      opensAt: null,
-      closesAt: null,
-      reason: null,
-    };
-  }
-
   const previousPhaseKey = getPreviousPhaseKey(phaseKey, byPhase);
   const previousFixtures = previousPhaseKey ? byPhase.get(previousPhaseKey) || [] : [];
   const previousFinished = isPhaseFinished(previousFixtures);
-  const previousLabel = PHASE_LABELS[previousPhaseKey] || 'la fase anterior';
-
-  if (!firstStart) {
-    return {
-      phaseKey,
-      label,
-      phaseRule: true,
-      canPredict: false,
-      opensAt: null,
-      closesAt: null,
-      previousPhaseKey,
-      previousFinished,
-      reason: 'API-Football todavia no publico los cruces con equipos definidos.',
-    };
-  }
-
-  if (!previousFinished) {
-    return {
-      phaseKey,
-      label,
-      phaseRule: true,
-      canPredict: false,
-      opensAt: null,
-      closesAt: firstStart.toISOString(),
-      previousPhaseKey,
-      previousFinished,
-      reason: `Se habilita cuando termine ${previousLabel}.`,
-    };
-  }
-
-  if (now >= firstStart) {
-    return {
-      phaseKey,
-      label,
-      phaseRule: true,
-      canPredict: false,
-      opensAt: null,
-      closesAt: firstStart.toISOString(),
-      previousPhaseKey,
-      previousFinished,
-      reason: `${label} ya empezo.`,
-    };
-  }
 
   return {
     phaseKey,
     label,
-    phaseRule: true,
+    phaseRule: false,
     canPredict: true,
     opensAt: null,
-    closesAt: firstStart.toISOString(),
+    closesAt: null,
     previousPhaseKey,
     previousFinished,
     reason: null,
@@ -190,18 +123,18 @@ export function computePredictionWindows(fixtures, now = new Date()) {
   const fixtureWindows = {};
 
   for (const phaseKey of byPhase.keys()) {
-    phaseWindows[phaseKey] = buildWindowForPhase(phaseKey, byPhase, now);
+    phaseWindows[phaseKey] = buildWindowForPhase(phaseKey, byPhase);
   }
 
   for (const fixture of fixtures || []) {
     const phaseKey = normalizePhase(fixture?.league?.round);
     if (!phaseKey) continue;
 
-    const window = phaseWindows[phaseKey] || buildWindowForPhase(phaseKey, byPhase, now);
+    const window = phaseWindows[phaseKey] || buildWindowForPhase(phaseKey, byPhase);
     const fixtureId = String(fixture?.fixture?.id || '');
     if (!fixtureId) continue;
 
-    if (window.phaseRule && !hasDefinedTeams(fixture)) {
+    if (!hasDefinedTeams(fixture)) {
       fixtureWindows[fixtureId] = {
         ...window,
         canPredict: false,
@@ -246,20 +179,30 @@ export async function getCompetitionPredictionWindows(competitionId, { fresh = f
 
 export async function getFixturePredictionWindow(competition, fixture) {
   const phaseKey = normalizePhase(fixture?.league?.round);
-  if (!isKnockoutPhase(phaseKey)) {
+  const baseWindow = {
+    phaseKey,
+    label: PHASE_LABELS[phaseKey] || null,
+    phaseRule: false,
+    canPredict: true,
+    reason: null,
+  };
+
+  if (!hasDefinedTeams(fixture)) {
     return {
-      phaseKey,
-      label: PHASE_LABELS[phaseKey] || null,
-      phaseRule: false,
-      canPredict: true,
-      reason: null,
+      ...baseWindow,
+      canPredict: false,
+      reason: 'Este cruce todavia no tiene equipos definidos.',
     };
+  }
+
+  if (!isKnockoutPhase(phaseKey)) {
+    return baseWindow;
   }
 
   const fixtures = await getCompetitionFixtures(competition);
   const windows = computePredictionWindows(fixtures);
   const fixtureId = String(fixture?.fixture?.id || '');
-  return windows.fixtureWindows[fixtureId] || buildWindowForPhase(phaseKey, fixturesByPhase(fixtures));
+  return windows.fixtureWindows[fixtureId] || baseWindow;
 }
 
 export async function isFinalMatchFinished(competitionId) {

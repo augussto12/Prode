@@ -31,17 +31,18 @@ describe('phase prediction windows', () => {
     assert.equal(normalizePhase('Final'), 'final');
   });
 
-  it('keeps first knockout phase closed until the group stage is finished', () => {
+  it('keeps published knockout fixtures open even if the previous phase is not finished', () => {
     const windows = computePredictionWindows([
       fixture(1, 'Group Stage - 3', '2026-06-26T18:00:00.000Z', 'NS'),
       fixture(2, 'Round of 32', '2026-06-28T18:00:00.000Z'),
     ], new Date('2026-06-26T12:00:00.000Z'));
 
-    assert.equal(windows.fixtureWindows['2'].canPredict, false);
-    assert.match(windows.fixtureWindows['2'].reason, /Fase de grupos/);
+    assert.equal(windows.fixtureWindows['2'].canPredict, true);
+    assert.equal(windows.fixtureWindows['2'].phaseRule, false);
+    assert.equal(windows.fixtureWindows['2'].reason, null);
   });
 
-  it('opens first knockout phase after groups finish and closes it at first kickoff', () => {
+  it('does not close a whole knockout phase when its first match starts', () => {
     const fixtures = [
       fixture(1, 'Group Stage - 3', '2026-06-26T18:00:00.000Z', 'FT'),
       fixture(2, 'Round of 32', '2026-06-28T18:00:00.000Z'),
@@ -52,9 +53,9 @@ describe('phase prediction windows', () => {
     assert.equal(open.fixtureWindows['2'].canPredict, true);
     assert.equal(open.fixtureWindows['3'].canPredict, true);
 
-    const closed = computePredictionWindows(fixtures, new Date('2026-06-28T18:00:00.000Z'));
-    assert.equal(closed.fixtureWindows['2'].canPredict, false);
-    assert.equal(closed.fixtureWindows['3'].canPredict, false);
+    const afterFirstKickoff = computePredictionWindows(fixtures, new Date('2026-06-28T18:00:00.000Z'));
+    assert.equal(afterFirstKickoff.fixtureWindows['2'].canPredict, true);
+    assert.equal(afterFirstKickoff.fixtureWindows['3'].canPredict, true);
   });
 
   it('opens final after semifinals finish without requiring third-place match to finish', () => {

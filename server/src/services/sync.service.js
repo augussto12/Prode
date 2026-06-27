@@ -8,7 +8,12 @@ import prisma from '../config/database.js';
 import * as footballApi from './football-api.service.js';
 import { WORLD_CUP_2026_LOGO } from '../constants/worldCup.js';
 import { invalidateCacheByPrefix } from './cache.service.js';
-import { computePredictionWindows, invalidateCompetitionFixtureWindows } from './phase-window.service.js';
+import {
+  computePredictionWindows,
+  invalidateCompetitionFixtureWindows,
+  isKnockoutPhase,
+  normalizePhase,
+} from './phase-window.service.js';
 
 const LEAGUE_ID = Number(process.env.FOOTBALL_LEAGUE_ID) || 1;
 const SEASON = Number(process.env.FOOTBALL_SEASON) || 2026;
@@ -155,8 +160,7 @@ export async function syncKnockoutFixtures(leagueId = LEAGUE_ID, season = SEASON
   );
 
   const knockoutFixtures = fixtures.filter((fixture) => {
-    const window = windows.fixtureWindows[String(fixture.fixture?.id || '')];
-    return window?.phaseRule;
+    return isKnockoutPhase(normalizePhase(fixture?.league?.round));
   });
 
   const openPhases = Object.values(phases).filter((phase) => phase.canPredict).map((phase) => phase.label);
