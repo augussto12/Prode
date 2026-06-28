@@ -36,6 +36,30 @@ function useDebounce(value, delay) {
 
 const COUNTRIES_PER_PAGE = 25;
 const LARGE_MATCH_SECTION_THRESHOLD = 10;
+const WORLD_CUP_COMPETITION_ID = 1;
+const WC_JOKER_LIMIT = 3;
+const PHASE_LABELS = {
+  group: "Fase de grupos",
+  round32: "16avos de final",
+  round16: "Octavos de final",
+  quarter: "Cuartos de final",
+  semi: "Semifinales",
+  thirdPlace: "Tercer puesto",
+  final: "Final",
+};
+
+function normalizePhaseFromRound(round) {
+  const value = String(round || "").trim().toLowerCase();
+  if (!value) return null;
+  if (value.includes("group stage") || /^group\s+[a-z0-9]+/i.test(String(round))) return "group";
+  if (value.includes("round of 32") || value.includes("16avos")) return "round32";
+  if (value.includes("round of 16") || value.includes("octavos") || value.includes("1/8")) return "round16";
+  if (value.includes("quarter")) return "quarter";
+  if (value.includes("semi")) return "semi";
+  if (value.includes("3rd place") || value.includes("third place") || value.includes("tercer puesto")) return "thirdPlace";
+  if (value === "final" || /^final\s*-?\s*\d*$/i.test(String(round).trim())) return "final";
+  return null;
+}
 
 // Helper: fecha de hoy en formato YYYY-MM-DD (hora local del browser)
 const getTodayDate = () => {
@@ -91,6 +115,7 @@ export default function Explorer() {
   const [loading, setLoading] = useState(true);
   const [wcMatches, setWcMatches] = useState([]);
   const [wcPredictions, setWcPredictions] = useState([]);
+  const [wcJokerStatus, setWcJokerStatus] = useState(null);
   const [wcSelectedDate, setWcSelectedDate] = useState(getArgentinaDate());
   const liveIntervalRef = useRef(null);
   const wcDateInputRef = useRef(null);
@@ -326,9 +351,13 @@ export default function Explorer() {
 
   const loadWorldCupMatchesByDate = async (date = wcSelectedDate) => {
     try {
-      const [matchRes, predRes] = await Promise.all([
-        api.get("/matches?competitionId=1"),
-        user ? api.get("/predictions/my?competitionId=1") : Promise.resolve({ data: [] }),
+      const compParam = `?competitionId=${WORLD_CUP_COMPETITION_ID}`;
+      const [matchRes, predRes, jokerStatusRes] = await Promise.all([
+        api.get(`/matches${compParam}`),
+        user ? api.get(`/predictions/my${compParam}`) : Promise.resolve({ data: [] }),
+        user
+          ? api.get(`/predictions/joker-status${compParam}`).catch(() => ({ data: null }))
+          : Promise.resolve({ data: null }),
       ]);
       const selectedWcMatches = (matchRes.data || []).filter((m) => {
         if (!m.matchDate) return false;
@@ -336,6 +365,7 @@ export default function Explorer() {
       });
       setWcMatches(selectedWcMatches);
       setWcPredictions(predRes.data || []);
+      setWcJokerStatus(jokerStatusRes.data || null);
     } catch {
       /* silent */
     }
@@ -413,16 +443,48 @@ export default function Explorer() {
     [wcPredictions]
   );
   const wcGroupPredictionGroups = useMemo(
-    () => myGroups.filter((group) => Number(group.competitionId) === 1),
+    () => myGroups.filter((group) => Number(group.competitionId) === WORLD_CUP_COMPETITION_ID),
     [myGroups],
   );
 
-  const WC_JOKER_LIMIT = 3;
   const wcJokersUsed = useMemo(
     () => wcPredictions.filter((p) => p.isJoker).length,
     [wcPredictions]
   );
-  const wcJokersRemaining = Math.max(0, WC_JOKER_LIMIT - wcJokersUsed);
+  const wcLegacyJokerLimit = wcJokerStatus?.legacy?.limit ?? WC_JOKER_LIMIT;
+  const wcLegacyJokersRemaining =
+    wcJokerStatus?.legacy?.remaining ?? Math.max(0, WC_JOKER_LIMIT - wcJokersUsed);
+
+  const getWorldCupMatchJokerPhaseKey = (match) => {
+    const manualPhaseKey = wcJokerStatus?.config?.manualPhaseKey || null;
+    const apiPhaseKey =
+      match.predictionWindow?.phaseKey || normalizePhaseFromRound(match.round || match.stage);
+
+    if (wcJokerStatus?.config?.phaseMode === "FORCE_MANUAL" && manualPhaseKey) {
+      return manualPhaseKey;
+    }
+
+    return apiPhaseKey || manualPhaseKey || null;
+  };
+
+  const getWorldCupJokerAllowance = (match) => {
+    const phaseKey = getWorldCupMatchJokerPhaseKey(match);
+    const phaseStatus = phaseKey ? wcJokerStatus?.phaseStatuses?.[phaseKey] : null;
+
+    if (phaseStatus?.hasGrant) {
+      return {
+        limit: phaseStatus.limit,
+        remaining: phaseStatus.remaining,
+        label: phaseStatus.label || PHASE_LABELS[phaseKey] || "esta fase",
+      };
+    }
+
+    return {
+      limit: wcLegacyJokerLimit,
+      remaining: wcLegacyJokersRemaining,
+      label: "esta competencia",
+    };
+  };
 
   if (loading) {
     return (
@@ -642,17 +704,21 @@ export default function Explorer() {
           )}
           {wcMatches.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {wcMatches.map((match) => (
-                <MatchCard
-                  key={match.id}
-                  match={match}
-                  existingPrediction={wcPredictionsMap.get(Number(match.externalId || match.id))}
-                  onPredictionSaved={() => loadWorldCupMatchesByDate(wcSelectedDate)}
-                  jokerRemaining={wcJokersRemaining}
-                  jokerLimit={WC_JOKER_LIMIT}
-                  groupPredictionGroups={wcGroupPredictionGroups}
-                />
-              ))}
+              {wcMatches.map((match) => {
+                const jokerAllowance = getWorldCupJokerAllowance(match);
+                return (
+                  <MatchCard
+                    key={match.id}
+                    match={match}
+                    existingPrediction={wcPredictionsMap.get(Number(match.externalId || match.id))}
+                    onPredictionSaved={() => loadWorldCupMatchesByDate(wcSelectedDate)}
+                    jokerRemaining={jokerAllowance.remaining}
+                    jokerLimit={jokerAllowance.limit}
+                    jokerScopeLabel={jokerAllowance.label}
+                    groupPredictionGroups={wcGroupPredictionGroups}
+                  />
+                );
+              })}
             </div>
           ) : (
             <div className="rounded-xl border border-white/8 bg-white/[0.03] px-4 py-6 text-center text-sm text-white/55">

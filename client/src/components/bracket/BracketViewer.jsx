@@ -618,6 +618,7 @@ function MobileVerticalCard({ matchup, index, cardW, onSelect }) {
   const navigate = useNavigate();
   const { teamA, teamB, aggA, aggB, legs, winnerId, isFinished, isLive } =
     matchup;
+  const { matchNumber } = matchup;
   const isPlayed = isFinished || isLive;
 
   const matchDate = legs?.[0]?.fixture?.date;
@@ -634,7 +635,10 @@ function MobileVerticalCard({ matchup, index, cardW, onSelect }) {
   };
 
   const getShortName = (team) => {
-    if (team.id < 0) return "—";
+    if (team.id < 0) {
+      const feederNumber = String(team.name || "").match(/M(\d+)/i)?.[1];
+      return feederNumber ? `M${feederNumber}` : "—";
+    }
     if (team.code) return team.code;
     const name = tTeamName(team.name) || "";
     return name.length <= 3 ? name : name.substring(0, 3).toUpperCase();
@@ -704,7 +708,7 @@ function MobileVerticalCard({ matchup, index, cardW, onSelect }) {
     >
       <div className="flex items-center justify-between px-1.5 py-[1px] bg-slate-800/30">
         <span className="text-[7px] text-slate-500">
-          {!isPlayed && !isFinished && formatDate(matchDate)}
+          {!isPlayed && !isFinished && (formatDate(matchDate) || (matchNumber ? `M${matchNumber}` : ""))}
         </span>
         <span
           className={`text-[7px] font-bold uppercase flex items-center gap-0.5 ${

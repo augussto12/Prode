@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   calculatePredictionPoints,
+  getRegulationScore,
   hasFinalFixtureScore,
   isFinishedFixture,
 } from '../src/services/scoring.service.js';
@@ -14,6 +15,14 @@ const config = {
 const fixture = (home, away) => ({
   goals: { home, away },
 });
+
+const aetFixture = {
+  goals: { home: 2, away: 1 },
+  score: {
+    fulltime: { home: 1, away: 1 },
+    extratime: { home: 2, away: 1 },
+  },
+};
 
 describe('calculatePredictionPoints', () => {
   it('scores exact result and stores base points without multiplier', () => {
@@ -71,6 +80,28 @@ describe('calculatePredictionPoints', () => {
     assert.equal(result.basePoints, 0);
   });
 
+  it('scores knockout predictions against the 90-minute result, not extra time', () => {
+    const result = calculatePredictionPoints(
+      { homeGoals: 1, awayGoals: 1, isJoker: false },
+      aetFixture,
+      config,
+    );
+
+    assert.equal(result.points, 10);
+    assert.equal(result.basePoints, 10);
+  });
+
+  it('does not score an extra-time final score when the 90-minute result differs', () => {
+    const result = calculatePredictionPoints(
+      { homeGoals: 2, awayGoals: 1, isJoker: false },
+      aetFixture,
+      config,
+    );
+
+    assert.equal(result.points, 0);
+    assert.equal(result.basePoints, 0);
+  });
+
   it('does not score when final goals are missing', () => {
     const result = calculatePredictionPoints(
       { homeGoals: 2, awayGoals: 1, isJoker: true },
@@ -95,6 +126,30 @@ describe('calculatePredictionPoints', () => {
 });
 
 describe('fixture scoring guards', () => {
+  it('uses fulltime score as the regulation-time prode result', () => {
+    assert.deepEqual(getRegulationScore(aetFixture), {
+      home: 1,
+      away: 1,
+      source: 'fulltime',
+    });
+  });
+
+  it('handles API detail responses that wrap the raw fixture under fixture', () => {
+    assert.deepEqual(getRegulationScore({ fixture: aetFixture }), {
+      home: 1,
+      away: 1,
+      source: 'fulltime',
+    });
+  });
+
+  it('falls back to goals when fulltime score is unavailable', () => {
+    assert.deepEqual(getRegulationScore(fixture(2, 0)), {
+      home: 2,
+      away: 0,
+      source: 'goals',
+    });
+  });
+
   it('accepts only API-Football finished statuses used for scoring', () => {
     assert.equal(isFinishedFixture({ fixture: { status: { short: 'FT' } } }), true);
     assert.equal(isFinishedFixture({ fixture: { status: { short: 'AET' } } }), true);

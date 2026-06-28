@@ -23,6 +23,7 @@ export default function MatchCard({ matchup, index = 0, onSelect }) {
     isFinished,
     isLive,
     isAggregate,
+    matchNumber,
   } = matchup;
 
   const isPlayed = isFinished || isLive;
@@ -115,7 +116,7 @@ export default function MatchCard({ matchup, index = 0, onSelect }) {
             ? ""
             : isFinished
               ? ""
-              : formatDate(matchDate) || ""}
+              : formatDate(matchDate) || (matchNumber ? `M${matchNumber}` : "")}
         </span>
         <span
           className={`text-[7px] font-bold uppercase tracking-wider flex items-center gap-0.5 ${

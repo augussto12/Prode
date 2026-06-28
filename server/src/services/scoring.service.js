@@ -10,14 +10,34 @@ export function isFinishedFixture(fixtureData) {
 }
 
 export function hasFinalFixtureScore(fixtureData) {
-  const homeGoals = fixtureData?.goals?.home;
-  const awayGoals = fixtureData?.goals?.away;
+  const { home: homeGoals, away: awayGoals } = getRegulationScore(fixtureData);
   return (
     homeGoals !== null &&
     homeGoals !== undefined &&
     awayGoals !== null &&
     awayGoals !== undefined
   );
+}
+
+export function getRegulationScore(fixtureData) {
+  const matchData = fixtureData?.score ? fixtureData : fixtureData?.fixture || fixtureData;
+  const fulltimeHome = matchData?.score?.fulltime?.home;
+  const fulltimeAway = matchData?.score?.fulltime?.away;
+
+  if (
+    fulltimeHome !== null &&
+    fulltimeHome !== undefined &&
+    fulltimeAway !== null &&
+    fulltimeAway !== undefined
+  ) {
+    return { home: fulltimeHome, away: fulltimeAway, source: 'fulltime' };
+  }
+
+  return {
+    home: matchData?.goals?.home,
+    away: matchData?.goals?.away,
+    source: 'goals',
+  };
 }
 
 function getMatchResult(homeGoals, awayGoals) {
@@ -37,8 +57,7 @@ const legacyHitFields = {
 };
 
 export function calculatePredictionPoints(prediction, fixtureData, config) {
-  const actualHomeGoals = fixtureData.goals.home;
-  const actualAwayGoals = fixtureData.goals.away;
+  const { home: actualHomeGoals, away: actualAwayGoals } = getRegulationScore(fixtureData);
 
   if (
     actualHomeGoals === null ||
@@ -161,7 +180,8 @@ export async function scorePendingPredictions() {
       continue;
     }
 
-    console.log(`[Scoring] ${fixtureData.teams?.home?.name} ${fixtureData.goals?.home}-${fixtureData.goals?.away} ${fixtureData.teams?.away?.name}`);
+    const score = getRegulationScore(fixtureData);
+    console.log(`[Scoring] ${fixtureData.teams?.home?.name} ${score.home}-${score.away} ${fixtureData.teams?.away?.name} (90m)`);
 
     totalCalculated += await scoreFixturePredictions(externalFixtureId, fixtureData, config);
     finishedFixtures.push(externalFixtureId);
@@ -273,8 +293,9 @@ export async function scoreFinishedCompetitionFixtures({ leagueId = 1, season = 
     if (calculated > 0) {
       fixturesProcessed++;
       totalCalculated += calculated;
+      const score = getRegulationScore(fixtureData);
       console.log(
-        `[Auto scoring] ${fixtureData.teams?.home?.name} ${fixtureData.goals?.home}-${fixtureData.goals?.away} ${fixtureData.teams?.away?.name}: ${calculated} predicciones`,
+        `[Auto scoring] ${fixtureData.teams?.home?.name} ${score.home}-${score.away} ${fixtureData.teams?.away?.name} (90m): ${calculated} predicciones`,
       );
     }
   }

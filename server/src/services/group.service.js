@@ -1,6 +1,6 @@
 import prisma from '../config/database.js';
 import { BadRequestError, NotFoundError, ForbiddenError } from '../utils/errors.js';
-import { getScoringConfig, recalculateAllLeaderboards } from './scoring.service.js';
+import { getRegulationScore, getScoringConfig, recalculateAllLeaderboards } from './scoring.service.js';
 import { cachedApiCall } from './cache.service.js';
 import * as footballApi from './football-api.service.js';
 import { getFixturePredictionWindow } from './phase-window.service.js';
@@ -477,8 +477,7 @@ export async function getLeaderboard(groupId) {
 function getFixtureSummary(fixture, prediction) {
   const homeName = fixture?.teams?.home?.name || 'Local';
   const awayName = fixture?.teams?.away?.name || 'Visitante';
-  const homeGoals = fixture?.goals?.home;
-  const awayGoals = fixture?.goals?.away;
+  const { home: homeGoals, away: awayGoals } = getRegulationScore(fixture);
   const hasScore = homeGoals !== null && homeGoals !== undefined && awayGoals !== null && awayGoals !== undefined;
 
   return {
