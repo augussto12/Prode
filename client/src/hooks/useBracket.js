@@ -174,6 +174,27 @@ function makePlaceholderMatchup(phase, matchupIndex, matchNumber = null) {
   };
 }
 
+function getMatchupWinner(matchup) {
+  if (!matchup?.winnerId) return null;
+  if (matchup.winnerId === matchup.teamA?.id) return matchup.teamA;
+  if (matchup.winnerId === matchup.teamB?.id) return matchup.teamB;
+  return null;
+}
+
+function isUnresolvedTeam(team) {
+  const teamId = Number(team?.id);
+  const teamName = String(team?.name || "").trim();
+
+  if (!Number.isFinite(teamId) || teamId <= 0 || !teamName) return true;
+
+  return /^(por definir|tbd|to be decided|winner|ganador)\b/i.test(teamName);
+}
+
+function shouldUseFeederWinner(currentTeam, winnerTeam) {
+  if (!winnerTeam) return false;
+  return isUnresolvedTeam(currentTeam) || currentTeam?.id === winnerTeam.id;
+}
+
 function assignWorldCup2026MatchNumbers(columns) {
   return columns.map((column) => {
     const dateOrderNumbers = WORLD_CUP_2026_DATE_ORDER_MATCH_NUMBERS[column.phase] || [];
@@ -222,6 +243,38 @@ function completeWorldCup2026Bracket(columns) {
 
     return { phase, colIndex, matchups };
   });
+}
+
+function propagateWorldCup2026Winners(columns) {
+  const byMatchNumber = new Map();
+
+  columns.forEach((column) => {
+    column.matchups.forEach((matchup) => {
+      if (matchup.matchNumber) byMatchNumber.set(matchup.matchNumber, matchup);
+    });
+  });
+
+  return columns.map((column) => ({
+    ...column,
+    matchups: column.matchups.map((matchup) => {
+      const feeders = WORLD_CUP_2026_MATCH_SIDES[matchup.matchNumber];
+      if (!feeders) return matchup;
+
+      const feederA = getMatchupWinner(byMatchNumber.get(feeders[0]));
+      const feederB = getMatchupWinner(byMatchNumber.get(feeders[1]));
+      const nextMatchup = { ...matchup };
+
+      if (shouldUseFeederWinner(matchup.teamA, feederA)) {
+        nextMatchup.teamA = { ...feederA };
+      }
+
+      if (shouldUseFeederWinner(matchup.teamB, feederB)) {
+        nextMatchup.teamB = { ...feederB };
+      }
+
+      return nextMatchup;
+    }),
+  }));
 }
 
 function findNextMatchIndex(matchup, matchupIndex, nextCol) {
@@ -409,6 +462,7 @@ export function useBracket(leagueId, season) {
       if (Number(leagueId) === 1 && Number(season) === 2026) {
         columns = assignWorldCup2026MatchNumbers(columns);
         columns = completeWorldCup2026Bracket(columns);
+        columns = propagateWorldCup2026Winners(columns);
       }
 
       // ─── Connect rounds by team ID matching + reorder ───
@@ -506,7 +560,7 @@ export function useBracket(leagueId, season) {
         });
 
         // Connect SF matchups to the Final placeholder
-        sfCol.matchups.forEach((m, mi) => {
+        sfCol.matchups.forEach((m) => {
           m._nextMatchIndex = 0;
           m.nextMatchId = "final-placeholder";
         });
