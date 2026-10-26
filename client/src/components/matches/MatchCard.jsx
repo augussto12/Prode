@@ -58,7 +58,8 @@ export default memo(function MatchCard({
     return groupPredictionGroups.filter((group) => {
       if (!group?.id) return false;
       if (Number(group.id) === 1) return false;
-      if (!group.competitionId || !match.competitionId) return true;
+      if (!group.competitionId) return false;
+      if (!match.competitionId) return true;
       return Number(group.competitionId) === Number(match.competitionId);
     });
   }, [groupPredictionGroups, match.competitionId]);

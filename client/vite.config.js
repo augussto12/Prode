@@ -28,9 +28,9 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: 'Prode Mundial 2026',
-        short_name: 'Prode26',
-        description: 'Plataforma de pronósticos para el mundial',
+        name: 'Prode · Entre amigos',
+        short_name: 'Prode',
+        description: 'Tus grupos, apuestas compartidas y Prode entre amigos',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',

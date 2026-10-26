@@ -1,0 +1,2803 @@
+{
+  "data": {
+    "bet": {
+      "__typename": "Bet",
+      "id": "e3351002-10aa-43bd-812f-751e71d2f637",
+      "iid": "sport:899911",
+      "type": "swish",
+      "scope": "sport",
+      "game": {
+        "__typename": "GameKuratorGame",
+        "id": "8daddc85-9da3-4e7f-a4d9-80614b57f808",
+        "name": "swish",
+        "icon": "",
+        "slug": "swish",
+        "groupGames": []
+      },
+      "bet": {
+        "__typename": "SwishBet",
+        "active": true,
+        "amount": null,
+        "cashoutDisabled": true,
+        "potentialMultiplier": 27.078583,
+        "createdAt": "Mon, 26 Oct 2026 18:28:16 GMT",
+        "currency": "ars",
+        "customBet": true,
+        "id": "e3351002-10aa-43bd-812f-751e71d2f637",
+        "odds": 27.078583,
+        "payout": null,
+        "payoutMultiplier": 0,
+        "adjustments": [],
+        "promotionBet": null,
+        "updatedAt": "Mon, 26 Oct 2026 18:28:17 GMT",
+        "status": "confirmed",
+        "user": null,
+        "customPrices": [],
+        "outcomes": [
+          {
+            "__typename": "SwishBetOutcome",
+            "id": "a931587a-1c13-419c-893e-199ce86d9b3e",
+            "odds": 1.075,
+            "totalOdds": 2.15,
+            "lineType": "over",
+            "cancel": false,
+            "outcome": {
+              "__typename": "SwishMarketOutcome",
+              "id": "ced3f0c6-4fbf-4bb6-9013-a2e333e9a495",
+              "line": 3.5,
+              "over": 1.4082523588227012,
+              "under": 2.4102193299590264,
+              "push": 0,
+              "gradeOver": null,
+              "gradeUnder": null,
+              "suspended": false,
+              "balanced": false,
+              "name": "rebounds",
+              "competitor": {
+                "__typename": "SwishCompetitor",
+                "id": "02e76680-46bb-4f53-af43-59bc9df3303c",
+                "name": "Donovan Mitchell",
+                "stats": [
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "assists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "blocks",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "dataconfirmed",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "defensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "doubledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterassists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterpoints",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterrebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorer",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerfreethrowmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerthreemade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorertwomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "offensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "personalfouls",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "points",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "rebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "steals",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threeattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threesmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "tripledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "turnovers",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twoattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  }
+                ]
+              },
+              "market": {
+                "__typename": "SwishMarket",
+                "id": "ae1a183d-728c-4cd9-811b-9ea6eb8a9d52",
+                "game": {
+                  "__typename": "SwishGame",
+                  "homeTeam": "CLE",
+                  "awayTeam": "MIN",
+                  "disabled": false,
+                  "status": "PreGame",
+                  "cashoutConfiguration": {
+                    "__typename": "StakeSportCashoutConfiguration",
+                    "baseLoad": 0.1,
+                    "cashoutEnabled": true,
+                    "varianceSensitivity": 1.5
+                  },
+                  "id": "ed67df52-1be4-450a-9760-d391d171b08a",
+                  "fixture": {
+                    "__typename": "SportFixture",
+                    "id": "6973e08c-075d-4ad7-9ea3-77188cc3c8c0",
+                    "extId": "sr:match:73719404",
+                    "name": "Cleveland Cavaliers - Minnesota Timberwolves",
+                    "slug": "796436-cleveland-cavaliers-minnesota-timberwolves",
+                    "status": "active",
+                    "provider": "betradar",
+                    "streamExists": true,
+                    "swishGame": {
+                      "__typename": "SwishGame",
+                      "swishSportId": "1",
+                      "status": "PreGame"
+                    },
+                    "eventStatus": {
+                      "__typename": "SportFixtureEventStatusData",
+                      "homeScore": null,
+                      "awayScore": null,
+                      "matchStatus": "No Iniciado",
+                      "clock": {
+                        "__typename": "SportFixtureEventStatusClock",
+                        "matchTime": null,
+                        "remainingTime": null
+                      },
+                      "periodScores": null,
+                      "currentTeamServing": null,
+                      "homeGameScore": null,
+                      "awayGameScore": null,
+                      "statistic": {
+                        "__typename": "FixtureSportEventStatusStatistic",
+                        "yellowCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "redCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "corners": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "home": null,
+                          "away": null
+                        }
+                      }
+                    },
+                    "data": {
+                      "__typename": "SportFixtureDataMatch",
+                      "startTime": "Mon, 26 Oct 2026 23:00:00 GMT",
+                      "isOutright": false,
+                      "teams": [
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3432",
+                          "name": "Cleveland Cavaliers",
+                          "qualifier": "home"
+                        },
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3426",
+                          "name": "Minnesota Timberwolves",
+                          "qualifier": "away"
+                        }
+                      ],
+                      "competitors": [
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Cleveland Cavaliers",
+                          "extId": "sr:competitor:3432",
+                          "countryCode": "US",
+                          "abbreviation": "CLE"
+                        },
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Minnesota Timberwolves",
+                          "extId": "sr:competitor:3426",
+                          "countryCode": "US",
+                          "abbreviation": "MIN"
+                        }
+                      ]
+                    },
+                    "tournament": {
+                      "__typename": "SportTournament",
+                      "id": "6769cc2b-aade-42ae-a025-9f6769a1b1cb",
+                      "slug": "nba",
+                      "name": "NBA",
+                      "category": {
+                        "__typename": "SportCategory",
+                        "id": "3d956090-dc17-4e0c-856c-0501654ec298",
+                        "slug": "usa",
+                        "name": "Estados Unidos",
+                        "sport": {
+                          "__typename": "Sport",
+                          "id": "ad395a9d-0a03-4739-9cb5-d6688d1d1cf1",
+                          "name": "Baloncesto",
+                          "slug": "basketball"
+                        }
+                      }
+                    }
+                  }
+                },
+                "inPlay": false,
+                "stat": {
+                  "__typename": "SwishGameStat",
+                  "swishStatId": "103",
+                  "name": "rebounds",
+                  "value": 0,
+                  "type": "player"
+                },
+                "data": null
+              }
+            }
+          },
+          {
+            "__typename": "SwishBetOutcome",
+            "id": "eff5c00e-1543-4e58-b7d4-775c83e7fbb3",
+            "odds": 1.095,
+            "totalOdds": 2.19,
+            "lineType": "over",
+            "cancel": false,
+            "outcome": {
+              "__typename": "SwishMarketOutcome",
+              "id": "4fe1ca62-322f-475f-9b1a-6bb7c65c4baf",
+              "line": 9.5,
+              "over": 1.5408320493066254,
+              "under": 2.100840336134454,
+              "push": 0,
+              "gradeOver": null,
+              "gradeUnder": null,
+              "suspended": false,
+              "balanced": false,
+              "name": "points",
+              "competitor": {
+                "__typename": "SwishCompetitor",
+                "id": "42a367fb-728b-4990-93d2-83317c59423d",
+                "name": "Davion Mitchell",
+                "stats": [
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "assists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "blocks",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "dataconfirmed",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "defensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "doubledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterassists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterpoints",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterrebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorer",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerfreethrowmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerthreemade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorertwomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "offensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "personalfouls",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "points",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "rebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "steals",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threeattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threesmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "tripledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "turnovers",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twoattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  }
+                ]
+              },
+              "market": {
+                "__typename": "SwishMarket",
+                "id": "b9f307c4-69cf-4edd-9fb6-5d9a89180072",
+                "game": {
+                  "__typename": "SwishGame",
+                  "homeTeam": "MIA",
+                  "awayTeam": "DAL",
+                  "disabled": false,
+                  "status": "PreGame",
+                  "cashoutConfiguration": {
+                    "__typename": "StakeSportCashoutConfiguration",
+                    "baseLoad": 0.1,
+                    "cashoutEnabled": true,
+                    "varianceSensitivity": 1.5
+                  },
+                  "id": "f1b6c917-4e02-42b4-be47-7c1e8e246424",
+                  "fixture": {
+                    "__typename": "SportFixture",
+                    "id": "725da54b-b067-4fc0-a5be-52704a34ef33",
+                    "extId": "sr:match:73719408",
+                    "name": "Miami Heat - Dallas Mavericks",
+                    "slug": "796437-miami-heat-dallas-mavericks",
+                    "status": "active",
+                    "provider": "betradar",
+                    "streamExists": true,
+                    "swishGame": {
+                      "__typename": "SwishGame",
+                      "swishSportId": "1",
+                      "status": "PreGame"
+                    },
+                    "eventStatus": {
+                      "__typename": "SportFixtureEventStatusData",
+                      "homeScore": null,
+                      "awayScore": null,
+                      "matchStatus": "No Iniciado",
+                      "clock": {
+                        "__typename": "SportFixtureEventStatusClock",
+                        "matchTime": null,
+                        "remainingTime": null
+                      },
+                      "periodScores": null,
+                      "currentTeamServing": null,
+                      "homeGameScore": null,
+                      "awayGameScore": null,
+                      "statistic": {
+                        "__typename": "FixtureSportEventStatusStatistic",
+                        "yellowCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "redCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "corners": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "home": null,
+                          "away": null
+                        }
+                      }
+                    },
+                    "data": {
+                      "__typename": "SportFixtureDataMatch",
+                      "startTime": "Mon, 26 Oct 2026 23:30:00 GMT",
+                      "isOutright": false,
+                      "teams": [
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3435",
+                          "name": "Miami Heat",
+                          "qualifier": "home"
+                        },
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3411",
+                          "name": "Dallas Mavericks",
+                          "qualifier": "away"
+                        }
+                      ],
+                      "competitors": [
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Miami Heat",
+                          "extId": "sr:competitor:3435",
+                          "countryCode": "US",
+                          "abbreviation": "MIA"
+                        },
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Dallas Mavericks",
+                          "extId": "sr:competitor:3411",
+                          "countryCode": "US",
+                          "abbreviation": "DAL"
+                        }
+                      ]
+                    },
+                    "tournament": {
+                      "__typename": "SportTournament",
+                      "id": "6769cc2b-aade-42ae-a025-9f6769a1b1cb",
+                      "slug": "nba",
+                      "name": "NBA",
+                      "category": {
+                        "__typename": "SportCategory",
+                        "id": "3d956090-dc17-4e0c-856c-0501654ec298",
+                        "slug": "usa",
+                        "name": "Estados Unidos",
+                        "sport": {
+                          "__typename": "Sport",
+                          "id": "ad395a9d-0a03-4739-9cb5-d6688d1d1cf1",
+                          "name": "Baloncesto",
+                          "slug": "basketball"
+                        }
+                      }
+                    }
+                  }
+                },
+                "inPlay": false,
+                "stat": {
+                  "__typename": "SwishGameStat",
+                  "swishStatId": "100",
+                  "name": "points",
+                  "value": 0,
+                  "type": "player"
+                },
+                "data": null
+              }
+            }
+          },
+          {
+            "__typename": "SwishBetOutcome",
+            "id": "f831846d-3f28-4ab4-8879-3c135ceef93f",
+            "odds": 1.095,
+            "totalOdds": 2.19,
+            "lineType": "under",
+            "cancel": false,
+            "outcome": {
+              "__typename": "SwishMarketOutcome",
+              "id": "7321812a-0346-4ad2-91a8-b19fa97472ae",
+              "line": 37.5,
+              "over": 2.585315408479835,
+              "under": 1.35464643727987,
+              "push": 0,
+              "gradeOver": null,
+              "gradeUnder": null,
+              "suspended": false,
+              "balanced": false,
+              "name": "points+assists+rebounds",
+              "competitor": {
+                "__typename": "SwishCompetitor",
+                "id": "f11f5050-2c47-42ca-a902-da6b66485559",
+                "name": "Bam Adebayo",
+                "stats": [
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "assists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "blocks",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "dataconfirmed",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "defensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "doubledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterassists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterpoints",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterrebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorer",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerfreethrowmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerthreemade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorertwomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "offensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "personalfouls",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "points",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "rebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "steals",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threeattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threesmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "tripledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "turnovers",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twoattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  }
+                ]
+              },
+              "market": {
+                "__typename": "SwishMarket",
+                "id": "cf342d4d-f875-427c-9456-09c6f32fc131",
+                "game": {
+                  "__typename": "SwishGame",
+                  "homeTeam": "MIA",
+                  "awayTeam": "DAL",
+                  "disabled": false,
+                  "status": "PreGame",
+                  "cashoutConfiguration": {
+                    "__typename": "StakeSportCashoutConfiguration",
+                    "baseLoad": 0.1,
+                    "cashoutEnabled": true,
+                    "varianceSensitivity": 1.5
+                  },
+                  "id": "f1b6c917-4e02-42b4-be47-7c1e8e246424",
+                  "fixture": {
+                    "__typename": "SportFixture",
+                    "id": "725da54b-b067-4fc0-a5be-52704a34ef33",
+                    "extId": "sr:match:73719408",
+                    "name": "Miami Heat - Dallas Mavericks",
+                    "slug": "796437-miami-heat-dallas-mavericks",
+                    "status": "active",
+                    "provider": "betradar",
+                    "streamExists": true,
+                    "swishGame": {
+                      "__typename": "SwishGame",
+                      "swishSportId": "1",
+                      "status": "PreGame"
+                    },
+                    "eventStatus": {
+                      "__typename": "SportFixtureEventStatusData",
+                      "homeScore": null,
+                      "awayScore": null,
+                      "matchStatus": "No Iniciado",
+                      "clock": {
+                        "__typename": "SportFixtureEventStatusClock",
+                        "matchTime": null,
+                        "remainingTime": null
+                      },
+                      "periodScores": null,
+                      "currentTeamServing": null,
+                      "homeGameScore": null,
+                      "awayGameScore": null,
+                      "statistic": {
+                        "__typename": "FixtureSportEventStatusStatistic",
+                        "yellowCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "redCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "corners": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "home": null,
+                          "away": null
+                        }
+                      }
+                    },
+                    "data": {
+                      "__typename": "SportFixtureDataMatch",
+                      "startTime": "Mon, 26 Oct 2026 23:30:00 GMT",
+                      "isOutright": false,
+                      "teams": [
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3435",
+                          "name": "Miami Heat",
+                          "qualifier": "home"
+                        },
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3411",
+                          "name": "Dallas Mavericks",
+                          "qualifier": "away"
+                        }
+                      ],
+                      "competitors": [
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Miami Heat",
+                          "extId": "sr:competitor:3435",
+                          "countryCode": "US",
+                          "abbreviation": "MIA"
+                        },
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Dallas Mavericks",
+                          "extId": "sr:competitor:3411",
+                          "countryCode": "US",
+                          "abbreviation": "DAL"
+                        }
+                      ]
+                    },
+                    "tournament": {
+                      "__typename": "SportTournament",
+                      "id": "6769cc2b-aade-42ae-a025-9f6769a1b1cb",
+                      "slug": "nba",
+                      "name": "NBA",
+                      "category": {
+                        "__typename": "SportCategory",
+                        "id": "3d956090-dc17-4e0c-856c-0501654ec298",
+                        "slug": "usa",
+                        "name": "Estados Unidos",
+                        "sport": {
+                          "__typename": "Sport",
+                          "id": "ad395a9d-0a03-4739-9cb5-d6688d1d1cf1",
+                          "name": "Baloncesto",
+                          "slug": "basketball"
+                        }
+                      }
+                    }
+                  }
+                },
+                "inPlay": false,
+                "stat": {
+                  "__typename": "SwishGameStat",
+                  "swishStatId": "113",
+                  "name": "points+assists+rebounds",
+                  "value": 0,
+                  "type": "player"
+                },
+                "data": null
+              }
+            }
+          },
+          {
+            "__typename": "SwishBetOutcome",
+            "id": "65041d53-5249-4b1a-a2d6-5bf84adeb2a3",
+            "odds": 1.35,
+            "totalOdds": 2.7,
+            "lineType": "over",
+            "cancel": false,
+            "outcome": {
+              "__typename": "SwishMarketOutcome",
+              "id": "24a12a68-ffab-4607-883c-1a426f0d3171",
+              "line": 8.5,
+              "over": 1.7167381974248928,
+              "under": 1.9704433497536948,
+              "push": 0,
+              "gradeOver": null,
+              "gradeUnder": null,
+              "suspended": false,
+              "balanced": true,
+              "name": "points",
+              "competitor": {
+                "__typename": "SwishCompetitor",
+                "id": "5171478a-0410-48f8-bf01-0892db095c89",
+                "name": "Tre Jones",
+                "stats": [
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "assists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "blocks",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "dataconfirmed",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "defensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "doubledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterassists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterpoints",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterrebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorer",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerfreethrowmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerthreemade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorertwomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "offensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "personalfouls",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "points",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "rebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "steals",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threeattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threesmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "tripledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "turnovers",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twoattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  }
+                ]
+              },
+              "market": {
+                "__typename": "SwishMarket",
+                "id": "3f2d1795-1e5c-4adb-b5a3-e376ba7f8d98",
+                "game": {
+                  "__typename": "SwishGame",
+                  "homeTeam": "BOS",
+                  "awayTeam": "CHI",
+                  "disabled": false,
+                  "status": "PreGame",
+                  "cashoutConfiguration": {
+                    "__typename": "StakeSportCashoutConfiguration",
+                    "baseLoad": 0.1,
+                    "cashoutEnabled": true,
+                    "varianceSensitivity": 1.5
+                  },
+                  "id": "67599944-cdff-494b-9ba0-b938f2ce0093",
+                  "fixture": {
+                    "__typename": "SportFixture",
+                    "id": "fdc07674-f593-4775-854b-ee1b3e7cc668",
+                    "extId": "sr:match:73719406",
+                    "name": "Boston Celtics - Chicago Bulls",
+                    "slug": "796435-boston-celtics-chicago-bulls",
+                    "status": "active",
+                    "provider": "betradar",
+                    "streamExists": true,
+                    "swishGame": {
+                      "__typename": "SwishGame",
+                      "swishSportId": "1",
+                      "status": "PreGame"
+                    },
+                    "eventStatus": {
+                      "__typename": "SportFixtureEventStatusData",
+                      "homeScore": null,
+                      "awayScore": null,
+                      "matchStatus": "No Iniciado",
+                      "clock": {
+                        "__typename": "SportFixtureEventStatusClock",
+                        "matchTime": null,
+                        "remainingTime": null
+                      },
+                      "periodScores": null,
+                      "currentTeamServing": null,
+                      "homeGameScore": null,
+                      "awayGameScore": null,
+                      "statistic": {
+                        "__typename": "FixtureSportEventStatusStatistic",
+                        "yellowCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "redCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "corners": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "home": null,
+                          "away": null
+                        }
+                      }
+                    },
+                    "data": {
+                      "__typename": "SportFixtureDataMatch",
+                      "startTime": "Mon, 26 Oct 2026 23:30:00 GMT",
+                      "isOutright": false,
+                      "teams": [
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3422",
+                          "name": "Boston Celtics",
+                          "qualifier": "home"
+                        },
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3409",
+                          "name": "Chicago Bulls",
+                          "qualifier": "away"
+                        }
+                      ],
+                      "competitors": [
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Boston Celtics",
+                          "extId": "sr:competitor:3422",
+                          "countryCode": "US",
+                          "abbreviation": "BOS"
+                        },
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Chicago Bulls",
+                          "extId": "sr:competitor:3409",
+                          "countryCode": "US",
+                          "abbreviation": "CHI"
+                        }
+                      ]
+                    },
+                    "tournament": {
+                      "__typename": "SportTournament",
+                      "id": "6769cc2b-aade-42ae-a025-9f6769a1b1cb",
+                      "slug": "nba",
+                      "name": "NBA",
+                      "category": {
+                        "__typename": "SportCategory",
+                        "id": "3d956090-dc17-4e0c-856c-0501654ec298",
+                        "slug": "usa",
+                        "name": "Estados Unidos",
+                        "sport": {
+                          "__typename": "Sport",
+                          "id": "ad395a9d-0a03-4739-9cb5-d6688d1d1cf1",
+                          "name": "Baloncesto",
+                          "slug": "basketball"
+                        }
+                      }
+                    }
+                  }
+                },
+                "inPlay": false,
+                "stat": {
+                  "__typename": "SwishGameStat",
+                  "swishStatId": "100",
+                  "name": "points",
+                  "value": 0,
+                  "type": "player"
+                },
+                "data": null
+              }
+            }
+          },
+          {
+            "__typename": "SwishBetOutcome",
+            "id": "93c38131-9cab-4e82-8367-b49ae21988a5",
+            "odds": 1.35,
+            "totalOdds": 2.7,
+            "lineType": "over",
+            "cancel": false,
+            "outcome": {
+              "__typename": "SwishMarketOutcome",
+              "id": "4e573fee-52c0-47d7-bb28-773191cf147e",
+              "line": 8.5,
+              "over": 1.4232849416453175,
+              "under": 2.3674242424242427,
+              "push": 0,
+              "gradeOver": null,
+              "gradeUnder": null,
+              "suspended": false,
+              "balanced": false,
+              "name": "points",
+              "competitor": {
+                "__typename": "SwishCompetitor",
+                "id": "e5340394-1a57-40d5-86f1-c70b6878fbbe",
+                "name": "Jalen Smith",
+                "stats": [
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "assists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "blocks",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "dataconfirmed",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "defensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "doubledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterassists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterpoints",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterrebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorer",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerfreethrowmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerthreemade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorertwomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "offensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "personalfouls",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "points",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "rebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "steals",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threeattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threesmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "tripledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "turnovers",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twoattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  }
+                ]
+              },
+              "market": {
+                "__typename": "SwishMarket",
+                "id": "c1a7258d-c758-4f2b-97c4-0c19587ab46b",
+                "game": {
+                  "__typename": "SwishGame",
+                  "homeTeam": "BOS",
+                  "awayTeam": "CHI",
+                  "disabled": false,
+                  "status": "PreGame",
+                  "cashoutConfiguration": {
+                    "__typename": "StakeSportCashoutConfiguration",
+                    "baseLoad": 0.1,
+                    "cashoutEnabled": true,
+                    "varianceSensitivity": 1.5
+                  },
+                  "id": "67599944-cdff-494b-9ba0-b938f2ce0093",
+                  "fixture": {
+                    "__typename": "SportFixture",
+                    "id": "fdc07674-f593-4775-854b-ee1b3e7cc668",
+                    "extId": "sr:match:73719406",
+                    "name": "Boston Celtics - Chicago Bulls",
+                    "slug": "796435-boston-celtics-chicago-bulls",
+                    "status": "active",
+                    "provider": "betradar",
+                    "streamExists": true,
+                    "swishGame": {
+                      "__typename": "SwishGame",
+                      "swishSportId": "1",
+                      "status": "PreGame"
+                    },
+                    "eventStatus": {
+                      "__typename": "SportFixtureEventStatusData",
+                      "homeScore": null,
+                      "awayScore": null,
+                      "matchStatus": "No Iniciado",
+                      "clock": {
+                        "__typename": "SportFixtureEventStatusClock",
+                        "matchTime": null,
+                        "remainingTime": null
+                      },
+                      "periodScores": null,
+                      "currentTeamServing": null,
+                      "homeGameScore": null,
+                      "awayGameScore": null,
+                      "statistic": {
+                        "__typename": "FixtureSportEventStatusStatistic",
+                        "yellowCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "redCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "corners": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "home": null,
+                          "away": null
+                        }
+                      }
+                    },
+                    "data": {
+                      "__typename": "SportFixtureDataMatch",
+                      "startTime": "Mon, 26 Oct 2026 23:30:00 GMT",
+                      "isOutright": false,
+                      "teams": [
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3422",
+                          "name": "Boston Celtics",
+                          "qualifier": "home"
+                        },
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3409",
+                          "name": "Chicago Bulls",
+                          "qualifier": "away"
+                        }
+                      ],
+                      "competitors": [
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Boston Celtics",
+                          "extId": "sr:competitor:3422",
+                          "countryCode": "US",
+                          "abbreviation": "BOS"
+                        },
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Chicago Bulls",
+                          "extId": "sr:competitor:3409",
+                          "countryCode": "US",
+                          "abbreviation": "CHI"
+                        }
+                      ]
+                    },
+                    "tournament": {
+                      "__typename": "SportTournament",
+                      "id": "6769cc2b-aade-42ae-a025-9f6769a1b1cb",
+                      "slug": "nba",
+                      "name": "NBA",
+                      "category": {
+                        "__typename": "SportCategory",
+                        "id": "3d956090-dc17-4e0c-856c-0501654ec298",
+                        "slug": "usa",
+                        "name": "Estados Unidos",
+                        "sport": {
+                          "__typename": "Sport",
+                          "id": "ad395a9d-0a03-4739-9cb5-d6688d1d1cf1",
+                          "name": "Baloncesto",
+                          "slug": "basketball"
+                        }
+                      }
+                    }
+                  }
+                },
+                "inPlay": false,
+                "stat": {
+                  "__typename": "SwishGameStat",
+                  "swishStatId": "100",
+                  "name": "points",
+                  "value": 0,
+                  "type": "player"
+                },
+                "data": null
+              }
+            }
+          },
+          {
+            "__typename": "SwishBetOutcome",
+            "id": "0c188e91-36bf-4701-914d-7affaa435620",
+            "odds": 1.065,
+            "totalOdds": 2.13,
+            "lineType": "over",
+            "cancel": false,
+            "outcome": {
+              "__typename": "SwishMarketOutcome",
+              "id": "24d8c314-8763-4c27-b94b-8dad0ba55b4a",
+              "line": 4.5,
+              "over": 1.4392630972941853,
+              "under": 2.3245002324500232,
+              "push": 0,
+              "gradeOver": null,
+              "gradeUnder": null,
+              "suspended": false,
+              "balanced": false,
+              "name": "points",
+              "competitor": {
+                "__typename": "SwishCompetitor",
+                "id": "edd5a9a8-c865-4ac9-a6e4-18e3dcea33b7",
+                "name": "Ryan Kalkbrenner",
+                "stats": [
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "assists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "blocks",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "dataconfirmed",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "defensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "doubledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterassists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterpoints",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterrebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorer",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerfreethrowmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerthreemade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorertwomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "offensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "personalfouls",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "points",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "rebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "steals",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threeattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threesmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "tripledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "turnovers",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twoattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  }
+                ]
+              },
+              "market": {
+                "__typename": "SwishMarket",
+                "id": "d5e1f6b0-e789-48ac-9e08-f150d07766b6",
+                "game": {
+                  "__typename": "SwishGame",
+                  "homeTeam": "CHA",
+                  "awayTeam": "WAS",
+                  "disabled": false,
+                  "status": "PreGame",
+                  "cashoutConfiguration": {
+                    "__typename": "StakeSportCashoutConfiguration",
+                    "baseLoad": 0.1,
+                    "cashoutEnabled": true,
+                    "varianceSensitivity": 1.5
+                  },
+                  "id": "79f4d609-f934-4708-8c84-b17ae61db31f",
+                  "fixture": {
+                    "__typename": "SportFixture",
+                    "id": "4bd77051-afa6-44f5-a89a-2b4ee541d5ed",
+                    "extId": "sr:match:73719402",
+                    "name": "Charlotte Hornets - Washington Wizards",
+                    "slug": "796434-charlotte-hornets-washington-wizards",
+                    "status": "active",
+                    "provider": "betradar",
+                    "streamExists": true,
+                    "swishGame": {
+                      "__typename": "SwishGame",
+                      "swishSportId": "1",
+                      "status": "PreGame"
+                    },
+                    "eventStatus": {
+                      "__typename": "SportFixtureEventStatusData",
+                      "homeScore": null,
+                      "awayScore": null,
+                      "matchStatus": "No Iniciado",
+                      "clock": {
+                        "__typename": "SportFixtureEventStatusClock",
+                        "matchTime": null,
+                        "remainingTime": null
+                      },
+                      "periodScores": null,
+                      "currentTeamServing": null,
+                      "homeGameScore": null,
+                      "awayGameScore": null,
+                      "statistic": {
+                        "__typename": "FixtureSportEventStatusStatistic",
+                        "yellowCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "redCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "corners": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "home": null,
+                          "away": null
+                        }
+                      }
+                    },
+                    "data": {
+                      "__typename": "SportFixtureDataMatch",
+                      "startTime": "Mon, 26 Oct 2026 23:00:00 GMT",
+                      "isOutright": false,
+                      "teams": [
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3430",
+                          "name": "Charlotte Hornets",
+                          "qualifier": "home"
+                        },
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3431",
+                          "name": "Washington Wizards",
+                          "qualifier": "away"
+                        }
+                      ],
+                      "competitors": [
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Charlotte Hornets",
+                          "extId": "sr:competitor:3430",
+                          "countryCode": "US",
+                          "abbreviation": "CHA"
+                        },
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Washington Wizards",
+                          "extId": "sr:competitor:3431",
+                          "countryCode": "US",
+                          "abbreviation": "WAS"
+                        }
+                      ]
+                    },
+                    "tournament": {
+                      "__typename": "SportTournament",
+                      "id": "6769cc2b-aade-42ae-a025-9f6769a1b1cb",
+                      "slug": "nba",
+                      "name": "NBA",
+                      "category": {
+                        "__typename": "SportCategory",
+                        "id": "3d956090-dc17-4e0c-856c-0501654ec298",
+                        "slug": "usa",
+                        "name": "Estados Unidos",
+                        "sport": {
+                          "__typename": "Sport",
+                          "id": "ad395a9d-0a03-4739-9cb5-d6688d1d1cf1",
+                          "name": "Baloncesto",
+                          "slug": "basketball"
+                        }
+                      }
+                    }
+                  }
+                },
+                "inPlay": false,
+                "stat": {
+                  "__typename": "SwishGameStat",
+                  "swishStatId": "100",
+                  "name": "points",
+                  "value": 0,
+                  "type": "player"
+                },
+                "data": null
+              }
+            }
+          },
+          {
+            "__typename": "SwishBetOutcome",
+            "id": "12b6d352-1d5a-4870-a7ac-7d9095da50ea",
+            "odds": 1.075,
+            "totalOdds": 2.15,
+            "lineType": "over",
+            "cancel": false,
+            "outcome": {
+              "__typename": "SwishMarketOutcome",
+              "id": "45905799-c4cd-4094-acc2-174ea90fc83e",
+              "line": 3.5,
+              "over": 1.4224751066856332,
+              "under": 2.3696682464454977,
+              "push": 0,
+              "gradeOver": null,
+              "gradeUnder": null,
+              "suspended": false,
+              "balanced": false,
+              "name": "rebounds",
+              "competitor": {
+                "__typename": "SwishCompetitor",
+                "id": "9a34e50f-4d23-4e53-80b1-e27a59c0f67d",
+                "name": "Jaden McDaniels",
+                "stats": [
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "assists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "blocks",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "dataconfirmed",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "defensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "doubledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterassists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterpoints",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterrebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorer",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerfreethrowmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerthreemade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorertwomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "offensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "personalfouls",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "points",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "rebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "steals",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threeattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threesmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "tripledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "turnovers",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twoattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  }
+                ]
+              },
+              "market": {
+                "__typename": "SwishMarket",
+                "id": "426c7f2b-d29a-4582-9b76-4a0bd355230f",
+                "game": {
+                  "__typename": "SwishGame",
+                  "homeTeam": "CLE",
+                  "awayTeam": "MIN",
+                  "disabled": false,
+                  "status": "PreGame",
+                  "cashoutConfiguration": {
+                    "__typename": "StakeSportCashoutConfiguration",
+                    "baseLoad": 0.1,
+                    "cashoutEnabled": true,
+                    "varianceSensitivity": 1.5
+                  },
+                  "id": "ed67df52-1be4-450a-9760-d391d171b08a",
+                  "fixture": {
+                    "__typename": "SportFixture",
+                    "id": "6973e08c-075d-4ad7-9ea3-77188cc3c8c0",
+                    "extId": "sr:match:73719404",
+                    "name": "Cleveland Cavaliers - Minnesota Timberwolves",
+                    "slug": "796436-cleveland-cavaliers-minnesota-timberwolves",
+                    "status": "active",
+                    "provider": "betradar",
+                    "streamExists": true,
+                    "swishGame": {
+                      "__typename": "SwishGame",
+                      "swishSportId": "1",
+                      "status": "PreGame"
+                    },
+                    "eventStatus": {
+                      "__typename": "SportFixtureEventStatusData",
+                      "homeScore": null,
+                      "awayScore": null,
+                      "matchStatus": "No Iniciado",
+                      "clock": {
+                        "__typename": "SportFixtureEventStatusClock",
+                        "matchTime": null,
+                        "remainingTime": null
+                      },
+                      "periodScores": null,
+                      "currentTeamServing": null,
+                      "homeGameScore": null,
+                      "awayGameScore": null,
+                      "statistic": {
+                        "__typename": "FixtureSportEventStatusStatistic",
+                        "yellowCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "redCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "corners": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "home": null,
+                          "away": null
+                        }
+                      }
+                    },
+                    "data": {
+                      "__typename": "SportFixtureDataMatch",
+                      "startTime": "Mon, 26 Oct 2026 23:00:00 GMT",
+                      "isOutright": false,
+                      "teams": [
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3432",
+                          "name": "Cleveland Cavaliers",
+                          "qualifier": "home"
+                        },
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3426",
+                          "name": "Minnesota Timberwolves",
+                          "qualifier": "away"
+                        }
+                      ],
+                      "competitors": [
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Cleveland Cavaliers",
+                          "extId": "sr:competitor:3432",
+                          "countryCode": "US",
+                          "abbreviation": "CLE"
+                        },
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Minnesota Timberwolves",
+                          "extId": "sr:competitor:3426",
+                          "countryCode": "US",
+                          "abbreviation": "MIN"
+                        }
+                      ]
+                    },
+                    "tournament": {
+                      "__typename": "SportTournament",
+                      "id": "6769cc2b-aade-42ae-a025-9f6769a1b1cb",
+                      "slug": "nba",
+                      "name": "NBA",
+                      "category": {
+                        "__typename": "SportCategory",
+                        "id": "3d956090-dc17-4e0c-856c-0501654ec298",
+                        "slug": "usa",
+                        "name": "Estados Unidos",
+                        "sport": {
+                          "__typename": "Sport",
+                          "id": "ad395a9d-0a03-4739-9cb5-d6688d1d1cf1",
+                          "name": "Baloncesto",
+                          "slug": "basketball"
+                        }
+                      }
+                    }
+                  }
+                },
+                "inPlay": false,
+                "stat": {
+                  "__typename": "SwishGameStat",
+                  "swishStatId": "103",
+                  "name": "rebounds",
+                  "value": 0,
+                  "type": "player"
+                },
+                "data": null
+              }
+            }
+          },
+          {
+            "__typename": "SwishBetOutcome",
+            "id": "b45b0106-c9f9-4d0f-808a-67996e50731d",
+            "odds": 1.065,
+            "totalOdds": 2.13,
+            "lineType": "over",
+            "cancel": false,
+            "outcome": {
+              "__typename": "SwishMarketOutcome",
+              "id": "af1ae0a5-6f0a-4318-bd93-c0e9f01ae8a5",
+              "line": 11.5,
+              "over": 1.335113484646195,
+              "under": 2.6595744680851063,
+              "push": 0,
+              "gradeOver": null,
+              "gradeUnder": null,
+              "suspended": false,
+              "balanced": false,
+              "name": "points",
+              "competitor": {
+                "__typename": "SwishCompetitor",
+                "id": "8ac97dc7-f8c0-43f3-9028-f98200383393",
+                "name": "Grayson Allen",
+                "stats": [
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "assists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "blocks",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "dataconfirmed",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "defensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "doubledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "fgmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterassists",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterpoints",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstquarterrebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorer",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerfreethrowmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorerthreemade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "firstscorertwomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "ftmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "offensiverebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "personalfouls",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "points",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "rebounds",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "steals",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threeattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "threesmade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "tripledouble",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "turnovers",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twoattempted",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  },
+                  {
+                    "__typename": "SwishCompetitorStat",
+                    "name": "twomade",
+                    "dataConfirmed": false,
+                    "played": false,
+                    "starter": false
+                  }
+                ]
+              },
+              "market": {
+                "__typename": "SwishMarket",
+                "id": "6ff8f5aa-62ac-4c14-af3f-a2c752db13f7",
+                "game": {
+                  "__typename": "SwishGame",
+                  "homeTeam": "CHA",
+                  "awayTeam": "WAS",
+                  "disabled": false,
+                  "status": "PreGame",
+                  "cashoutConfiguration": {
+                    "__typename": "StakeSportCashoutConfiguration",
+                    "baseLoad": 0.1,
+                    "cashoutEnabled": true,
+                    "varianceSensitivity": 1.5
+                  },
+                  "id": "79f4d609-f934-4708-8c84-b17ae61db31f",
+                  "fixture": {
+                    "__typename": "SportFixture",
+                    "id": "4bd77051-afa6-44f5-a89a-2b4ee541d5ed",
+                    "extId": "sr:match:73719402",
+                    "name": "Charlotte Hornets - Washington Wizards",
+                    "slug": "796434-charlotte-hornets-washington-wizards",
+                    "status": "active",
+                    "provider": "betradar",
+                    "streamExists": true,
+                    "swishGame": {
+                      "__typename": "SwishGame",
+                      "swishSportId": "1",
+                      "status": "PreGame"
+                    },
+                    "eventStatus": {
+                      "__typename": "SportFixtureEventStatusData",
+                      "homeScore": null,
+                      "awayScore": null,
+                      "matchStatus": "No Iniciado",
+                      "clock": {
+                        "__typename": "SportFixtureEventStatusClock",
+                        "matchTime": null,
+                        "remainingTime": null
+                      },
+                      "periodScores": null,
+                      "currentTeamServing": null,
+                      "homeGameScore": null,
+                      "awayGameScore": null,
+                      "statistic": {
+                        "__typename": "FixtureSportEventStatusStatistic",
+                        "yellowCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "redCards": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "away": null,
+                          "home": null
+                        },
+                        "corners": {
+                          "__typename": "SportFixtureEventStatusStatisticHomeAway",
+                          "home": null,
+                          "away": null
+                        }
+                      }
+                    },
+                    "data": {
+                      "__typename": "SportFixtureDataMatch",
+                      "startTime": "Mon, 26 Oct 2026 23:00:00 GMT",
+                      "isOutright": false,
+                      "teams": [
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3430",
+                          "name": "Charlotte Hornets",
+                          "qualifier": "home"
+                        },
+                        {
+                          "__typename": "SportFixtureTeam",
+                          "extId": "sr:competitor:3431",
+                          "name": "Washington Wizards",
+                          "qualifier": "away"
+                        }
+                      ],
+                      "competitors": [
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Charlotte Hornets",
+                          "extId": "sr:competitor:3430",
+                          "countryCode": "US",
+                          "abbreviation": "CHA"
+                        },
+                        {
+                          "__typename": "SportFixtureCompetitor",
+                          "name": "Washington Wizards",
+                          "extId": "sr:competitor:3431",
+                          "countryCode": "US",
+                          "abbreviation": "WAS"
+                        }
+                      ]
+                    },
+                    "tournament": {
+                      "__typename": "SportTournament",
+                      "id": "6769cc2b-aade-42ae-a025-9f6769a1b1cb",
+                      "slug": "nba",
+                      "name": "NBA",
+                      "category": {
+                        "__typename": "SportCategory",
+                        "id": "3d956090-dc17-4e0c-856c-0501654ec298",
+                        "slug": "usa",
+                        "name": "Estados Unidos",
+                        "sport": {
+                          "__typename": "Sport",
+                          "id": "ad395a9d-0a03-4739-9cb5-d6688d1d1cf1",
+                          "name": "Baloncesto",
+                          "slug": "basketball"
+                        }
+                      }
+                    }
+                  }
+                },
+                "inPlay": false,
+                "stat": {
+                  "__typename": "SwishGameStat",
+                  "swishStatId": "100",
+                  "name": "points",
+                  "value": 0,
+                  "type": "player"
+                },
+                "data": null
+              }
+            }
+          }
+        ],
+        "activeAmount": null,
+        "cashouts": []
+      }
+    }
+  }
+}

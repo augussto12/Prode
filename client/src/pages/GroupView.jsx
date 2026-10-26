@@ -29,6 +29,7 @@ import api from "../services/api";
 import useToastStore from "../store/toastStore";
 import GroupChat from "../components/chat/GroupChat";
 import GroupMatches from "../components/matches/GroupMatches";
+import Bets from "./Bets";
 import { getLeagueLogo, getLeagueName } from "../utils/worldCupLogo";
 
 function formatActivityTime(createdAt) {
@@ -230,7 +231,7 @@ export default function GroupView() {
   const [isAddingInvite, setIsAddingInvite] = useState(false);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState("leaderboard");
+  const [activeTab, setActiveTab] = useState("bets");
   const [showEditModal, setShowEditModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -674,6 +675,7 @@ export default function GroupView() {
         <div className="w-full lg:col-span-8 xl:col-span-9 lg:col-start-1 lg:row-start-1 space-y-4 min-w-0">
           {/* Tabs — horizontal scroll on mobile */}
           <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+            <button onClick={() => setActiveTab('bets')} className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap ${activeTab === 'bets' ? 'bg-lime-300/15 text-lime-200' : 'text-white/60'}`}><Share2 size={14} /> Apuestas</button>
             <button
               onClick={() => setActiveTab("leaderboard")}
               className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
@@ -687,9 +689,9 @@ export default function GroupView() {
                   : {}
               }
             >
-              <Trophy size={14} /> Posiciones
+              <Trophy size={14} /> {group.competitionId ? 'Posiciones' : 'Integrantes'}
             </button>
-            <button
+            {group.competitionId && <button
               onClick={() => setActiveTab("activity")}
               className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === "activity"
@@ -703,8 +705,8 @@ export default function GroupView() {
               }
             >
               <Activity size={14} /> {getActivityTabLabel(activity)}
-            </button>
-            <button
+            </button>}
+            {group.competitionId && <button
               onClick={() => setActiveTab("matches")}
               className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all border-none cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === "matches"
@@ -718,7 +720,7 @@ export default function GroupView() {
               }
             >
               <Calendar size={14} /> Partidos
-            </button>
+            </button>}
             {group.isAdmin && (
               <>
                 <button
@@ -748,7 +750,9 @@ export default function GroupView() {
           </div>
 
           <AnimatePresence mode="wait">
-            {activeTab === "leaderboard" && (
+            {activeTab === 'bets' && <Bets key={`bets-${id}`} groupId={Number(id)} />}
+            {activeTab === 'leaderboard' && !group.competitionId && <div key="members" className="space-y-2">{leaderboard.map((entry) => <div key={entry.userId} className="flex items-center gap-3 rounded-xl border border-white/10 p-4 bg-white/[0.03]"><div className="w-9 h-9 rounded-xl bg-lime-300/10 text-lime-200 flex items-center justify-center">{entry.displayName.slice(0, 1)}</div><div className="flex-1"><strong className="text-sm text-white">{entry.displayName}</strong><p className="text-xs text-white/50">@{entry.username}{entry.isAdmin ? ' · Administrador' : ''}</p></div>{group.isAdmin && entry.userId !== user.id && !entry.isAdmin && <button onClick={() => handleKick(entry.userId)} className="text-xs text-red-300 px-3 py-2">Banear</button>}</div>)}</div>}
+            {activeTab === "leaderboard" && !!group.competitionId && (
               <m.div
                 key="leaderboard"
                 initial={{ opacity: 0, y: 10 }}

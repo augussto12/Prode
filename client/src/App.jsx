@@ -25,6 +25,7 @@ const LiveMatch = lazy(() => import("./pages/LiveMatch"));
 const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
 const TeamView = lazy(() => import("./pages/TeamView"));
 const Profile = lazy(() => import("./pages/Profile"));
+const Bets = lazy(() => import("./pages/Bets"));
 // [OCULTADO] Sportmonks detail views - Ya no se usa Sportmonks
 // const SmFixtureDetail = lazy(
 //   () => import("./components/matches/SmFixtureDetail"),
@@ -55,7 +56,7 @@ function AdminRoute({ children }) {
 
 function PublicRoute({ children }) {
   const user = useAuthStore((state) => state.user);
-  return user ? <Navigate to="/explorar" replace /> : children;
+  return user ? <Navigate to="/inicio" replace /> : children;
 }
 
 export default function App() {
@@ -126,6 +127,8 @@ export default function App() {
 
           {/* Main App Layout */}
           <Route element={<Layout />}>
+            <Route path="/inicio" element={<Bets home />} />
+            <Route path="/apuestas" element={<PrivateRoute><Bets /></PrivateRoute>} />
             {/* Public content (No auth required to read) */}
             <Route path="/explorar" element={<Explorer />} />
             <Route path="/liga/:id" element={<LeagueView />} />
@@ -203,7 +206,7 @@ export default function App() {
           <Route path="/mundial" element={<Navigate to="/liga/1" replace />} />
           <Route
             path="/dashboard"
-            element={<Navigate to="/explorar" replace />}
+            element={<Navigate to="/inicio" replace />}
           />
           <Route
             path="/dreamteam"
@@ -211,7 +214,7 @@ export default function App() {
           />
 
           {/* Catch-all */}
-          <Route path="*" element={<Navigate to="/explorar" replace />} />
+          <Route path="*" element={<Navigate to="/inicio" replace />} />
         </Routes>
       </Suspense>
       <PwaPrompt />

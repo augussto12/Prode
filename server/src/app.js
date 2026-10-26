@@ -20,6 +20,7 @@ import syncRoutes from './routes/sync.routes.js';
 import competitionRoutes from './routes/competition.routes.js';
 import explorerRoutes from './routes/explorer.routes.js';
 import matchRoutes from './routes/match.routes.js';
+import betCommunityRoutes from './routes/bet-community.routes.js';
 // import sportmonksRoutes from './routes/sportmonks.routes.js';
 // import fantasyRoutes from './routes/fantasy.routes.js';
 // import { setupCronJobs } from './cron/scheduledTasks.js';
@@ -140,6 +141,7 @@ app.use('/api/auth', authRoutes);
 
 app.use('/api/predictions', predictionRoutes);
 app.use('/api/groups', groupRoutes);
+app.use('/api/community', betCommunityRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/dreamteam', dreamteamRoutes);
 app.use('/api/outrights', outrightsRoutes);

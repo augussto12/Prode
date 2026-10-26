@@ -50,6 +50,12 @@ model User {
   favorites         Favorite[]
   leagueFavorites   LeagueFavorite[]
   messages          Message[]
+  betDrafts         BetImportDraft[]
+  betPosts          BetPost[]
+  betComments       BetComment[]
+  betReactions      BetReaction[]
+  savedBetPosts     SavedBetPost[]
+  betReports        BetReport[]
   dreamTeams        DreamTeam[]
   outrightPredictions OutrightPrediction[]
 
@@ -149,8 +155,8 @@ model Group {
   allowMoreOffsides   Boolean @default(true)
   allowMoreSaves      Boolean @default(true)
 
-  competitionId Int
-  competition   Competition   @relation(fields: [competitionId], references: [id])
+  competitionId Int?
+  competition   Competition?  @relation(fields: [competitionId], references: [id])
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -158,9 +164,110 @@ model Group {
   groupUsers    GroupUser[]
   invites       GroupInvite[]
   messages      Message[]
+  betPosts      BetPost[]
 
   @@index([inviteCode])
   @@index([joinPolicy])
+}
+
+// The immutable ticket is shared by posts. Only the normalized, privacy-filtered
+// snapshot is stored; provider payloads, account data and amounts are never saved.
+model BetTicket {
+  id            String   @id @default(uuid())
+  provider      String
+  host          String
+  externalId    String
+  originalOdds  Decimal  @db.Decimal(24, 12)
+  snapshot      Json
+  importedAt    DateTime @default(now())
+  posts         BetPost[]
+
+  @@unique([provider, host, externalId])
+}
+
+model BetImportDraft {
+  id            String   @id @default(uuid())
+  userId        Int
+  originalUrl   String
+  provider      String
+  state         String
+  failureCode   String?
+  snapshot      Json?
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+  consumedAt    DateTime?
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model BetPost {
+  id            String   @id @default(uuid())
+  sequence      Int      @unique @default(autoincrement())
+  authorId      Int
+  groupId       Int
+  ticketId      String?
+  originalUrl   String
+  provider      String
+  content       String   @default("")
+  importState   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  group         Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  ticket        BetTicket? @relation(fields: [ticketId], references: [id])
+  comments      BetComment[]
+  reactions     BetReaction[]
+  saves         SavedBetPost[]
+  reports       BetReport[]
+
+  @@index([groupId, sequence])
+  @@index([authorId, sequence])
+}
+
+model BetComment {
+  id            Int      @id @default(autoincrement())
+  postId        String
+  authorId      Int
+  content       String
+  createdAt     DateTime @default(now())
+  post          BetPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId, id])
+}
+
+model BetReaction {
+  postId        String
+  userId        Int
+  createdAt     DateTime @default(now())
+  post          BetPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+}
+
+model SavedBetPost {
+  postId        String
+  userId        Int
+  createdAt     DateTime @default(now())
+  post          BetPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([userId])
+}
+
+model BetReport {
+  id            Int      @id @default(autoincrement())
+  postId        String
+  userId        Int
+  reason        String
+  createdAt     DateTime @default(now())
+  post          BetPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
 }
 
 model GroupUser {

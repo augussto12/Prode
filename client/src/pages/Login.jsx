@@ -22,7 +22,7 @@ export default function Login() {
     e.preventDefault();
     try {
       await doLogin(login, password);
-      navigate("/explorar");
+      navigate("/inicio");
     } catch (err) {
       // error is set in store
     }
@@ -60,10 +60,10 @@ export default function Login() {
             <Trophy size={48} className="text-white relative z-10" />
           </m.div>
           <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-white to-purple-300 mb-2 tracking-tight">
-            Prode Mundial
+            Prode · Entre amigos
           </h1>
           <p className="text-white/60 text-base font-medium">
-            El estadio virtual para tus pronósticos
+            Tus grupos, tus apuestas y toda la conversación
           </p>
         </div>
 

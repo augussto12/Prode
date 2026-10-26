@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { User, Mail, Save, Palette, Download, LogOut, Check } from "lucide-react";
 import useAuthStore from "../store/authStore";
 import useThemeStore from "../store/themeStore";
@@ -71,6 +72,10 @@ export default function Profile() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 pb-12 space-y-6 fade-in">
+      <div className="flex flex-wrap gap-3">
+        <Link to="/apuestas?view=mine" className="px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-sm text-white/80">Mis apuestas compartidas ↗</Link>
+        <Link to="/apuestas?view=saved" className="px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-sm text-white/80">Publicaciones guardadas ↗</Link>
+      </div>
       <h1 className="text-2xl font-bold text-white px-1">Mi Perfil</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

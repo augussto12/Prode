@@ -14,6 +14,7 @@ export default function GroupList() {
   const [showCreate, setShowCreate] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [groupKind, setGroupKind] = useState('community');
   const [joinCode, setJoinCode] = useState("");
   const [copiedId, setCopiedId] = useState(null);
   const [createForm, setCreateForm] = useState({
@@ -26,8 +27,6 @@ export default function GroupList() {
   const activeCompetition = useCompetitionStore(
     (state) => state.activeCompetition,
   );
-  const competitions = useCompetitionStore((state) => state.competitions);
-
   useEffect(() => {
     loadGroups();
   }, []);
@@ -57,7 +56,7 @@ export default function GroupList() {
       setIsCreating(true);
       const { data } = await api.post("/groups", {
         ...createForm,
-        competitionId: Number(compId),
+        competitionId: groupKind === 'prode' ? Number(compId) : null,
       });
       navigate(`/groups/${data.id}`);
     } catch (err) {
@@ -107,7 +106,7 @@ export default function GroupList() {
         <div>
           <h1 className="text-2xl font-bold text-white">Mis Grupos</h1>
           <p className="text-white/50 text-sm mt-1">
-            Creá o unite a grupos para competir con amigos
+            Tu comunidad para compartir apuestas, conversar y jugar al Prode
           </p>
         </div>
         <div className="flex gap-2">
@@ -180,6 +179,14 @@ export default function GroupList() {
               </div>
             </div>
 
+            <div>
+              <label htmlFor="group-kind" className="block text-white/60 text-sm mb-1">Tipo de grupo</label>
+              <select id="group-kind" value={groupKind} onChange={(e) => setGroupKind(e.target.value)} className="w-full px-4 py-2.5 bg-slate-900 border border-white/10 rounded-xl text-white text-sm">
+                <option value="community">Comunidad de amigos · sin torneo</option>
+                <option value="prode">Grupo de Prode · {activeCompetition?.name || 'torneo activo'}</option>
+              </select>
+              <p className="text-xs text-white/45 mt-2">Ambos permiten compartir apuestas y usar el chat. Las publicaciones solo son visibles para integrantes.</p>
+            </div>
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -194,7 +201,7 @@ export default function GroupList() {
                 htmlFor="isPublic"
                 className="text-sm text-white/60 cursor-pointer"
               >
-                Grupo público (visible para todos)
+                Mostrar el grupo en el listado público (las publicaciones siguen siendo privadas)
               </label>
             </div>
 
@@ -331,16 +338,16 @@ export default function GroupList() {
                 </span>
                 <span
                   className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-black text-white shadow-sm"
-                  title="Tu posicion en el grupo"
+                  title={group.competitionId ? 'Tu posición en el grupo' : 'Comunidad de amigos'}
                   style={{
                     background: `linear-gradient(135deg, color-mix(in srgb, ${variant.accent} 24%, transparent), rgba(255,255,255,0.04))`,
                     borderColor: variant.border,
                     boxShadow: `0 0 18px color-mix(in srgb, ${variant.accent} 18%, transparent)`,
                   }}
                 >
-                  <Trophy size={12} style={{ color: variant.accent }} />
-                  <span>{hasRank ? `#${rank}` : "-"}</span>
-                  {hasRank && (
+                  {group.competitionId ? <Trophy size={12} style={{ color: variant.accent }} /> : <Users size={12} style={{ color: variant.accent }} />}
+                  <span>{group.competitionId ? (hasRank ? `#${rank}` : '-') : 'Comunidad'}</span>
+                  {!!group.competitionId && hasRank && (
                     <span className="font-semibold text-white/45">
                       / {group.memberCount}
                     </span>

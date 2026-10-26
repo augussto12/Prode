@@ -10,6 +10,7 @@ import {
   X,
   User,
   Compass,
+  Ticket,
   // [OCULTADO] Star icon solo se usaba para GranDT
   // Star,
 } from "lucide-react";
@@ -47,13 +48,15 @@ export default function Navbar() {
   };
 
   const links = [
+    { to: "/inicio", label: "Inicio", icon: Home },
+    { to: "/apuestas", label: "Apuestas", icon: Ticket },
     {
       to: "/explorar",
       label: "Explorar",
       icon: Compass,
       badge: liveCount > 0 ? liveCount : null,
     },
-    { to: "/liga/1", label: "Mundial 2026", icon: Trophy, gold: true },
+    { to: "/torneo", label: "Prode", icon: Trophy, gold: true },
     // [OCULTADO] GranDT - No es parte del Prode Mundial
     // { to: "/fantasy", label: "GranDT", icon: Star },
     { to: "/groups", label: "Grupos", icon: Users },
@@ -77,7 +80,7 @@ export default function Navbar() {
           {/* Left: flex-1 spacer on mobile, logo on desktop (flex-none) */}
           <div className="flex-1 md:flex-none flex items-center">
             <Link
-              to="/explorar"
+              to="/inicio"
               className="hidden md:flex items-center gap-2 text-white no-underline shrink-0"
               aria-label="Ir al Inicio"
             >
@@ -91,8 +94,8 @@ export default function Navbar() {
                 />
               </div>
               <span className="font-bold tracking-tight whitespace-nowrap leading-none">
-                <span className="hidden md:inline lg:hidden text-sm">Copa 2026</span>
-                <span className="hidden lg:inline text-base">Copa del Mundo 2026</span>
+                <span className="hidden md:inline lg:hidden text-sm">Prode</span>
+                <span className="hidden lg:inline text-base">Prode · Entre amigos</span>
               </span>
             </Link>
           </div>
@@ -101,7 +104,7 @@ export default function Navbar() {
           <div className="md:flex-1 flex items-center justify-center">
             {/* Mobile logo */}
             <Link
-              to="/explorar"
+              to="/inicio"
               className="md:hidden flex items-center gap-1.5 text-white no-underline shrink-0"
               aria-label="Ir al Inicio"
             >
@@ -115,7 +118,7 @@ export default function Navbar() {
                 />
               </div>
               <span className="font-bold tracking-tight whitespace-nowrap leading-none text-[10px] min-[357px]:text-sm">
-                Copa del Mundo 2026
+                Prode · Entre amigos
               </span>
             </Link>
 

@@ -95,7 +95,7 @@ export default function Register() {
             Crear Cuenta
           </h1>
           <p className="text-white/60 text-base font-medium">
-            Unite al Prode Mundial 2026
+            Unite a Prode · Entre amigos
           </p>
         </div>
 

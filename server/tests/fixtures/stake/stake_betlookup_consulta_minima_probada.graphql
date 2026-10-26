@@ -1,0 +1,33 @@
+query BetLookup($iid: String) {
+  bet(iid: $iid) {
+    id
+    iid
+    bet {
+      __typename
+      ... on SwishBet {
+        amount
+        currency
+        potentialMultiplier
+        status
+        outcomes {
+          lineType
+          totalOdds
+          outcome {
+            line
+            name
+            competitor {
+              name
+            }
+            market {
+              game {
+                fixture {
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

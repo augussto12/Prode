@@ -60,7 +60,7 @@ export const groupCreateSchema = z.object({
   description: z.string().max(500).optional().default(''),
   isPublic: z.boolean().optional().default(false),
   joinPolicy: groupJoinPolicySchema.optional().default('OPEN_WITH_CODE'),
-  competitionId: z.number().int().positive('competitionId es requerido'),
+  competitionId: z.number().int().positive().nullable().optional(),
 });
 
 export const groupThemeSchema = z.object({

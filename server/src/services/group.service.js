@@ -63,10 +63,6 @@ function canRevealGroupMatchPredictions(fixture, predictionWindow = null, now = 
 }
 
 export async function createGroup(userId, data) {
-  if (!data.competitionId) {
-    throw new BadRequestError('competitionId es requerido para crear un grupo');
-  }
-
   // Transacción: crear grupo + membresía admin atómicamente
   const group = await prisma.$transaction(async (tx) => {
     const group = await tx.group.create({
@@ -76,7 +72,7 @@ export async function createGroup(userId, data) {
         isPublic: data.isPublic || false,
         joinPolicy: data.joinPolicy || 'OPEN_WITH_CODE',
         createdById: userId,
-        competitionId: Number(data.competitionId),
+        competitionId: data.competitionId ? Number(data.competitionId) : null,
         allowMoreShots: false,
         allowMoreCorners: false,
         allowMorePossession: false,
@@ -95,7 +91,7 @@ export async function createGroup(userId, data) {
     return group;
   });
 
-  await recalculateAllLeaderboards();
+  if (data.competitionId) await recalculateAllLeaderboards();
   return group;
 }
 
@@ -448,6 +444,8 @@ export async function getLeaderboard(groupId) {
 
   if (!group) throw new NotFoundError('Grupo no encontrado');
 
+  if (!group.competitionId) return buildLeaderboard(group.groupUsers, new Map());
+
   const userIds = group.groupUsers.map((m) => m.userId);
   const config = await getScoringConfig();
   const exactHitsByUserId = await getExactHitsByUserId(userIds, group.competitionId, config);
@@ -540,6 +538,8 @@ export async function getActivity(groupId) {
   });
 
   if (!group) throw new NotFoundError('Grupo no encontrado');
+
+  if (!group.competitionId) return [];
 
   const userIds = group.groupUsers.map((m) => m.userId);
   if (userIds.length === 0) return [];
@@ -791,6 +791,7 @@ export async function getMatchPredictions(groupId, externalFixtureId, requesting
     include: { competition: true },
   });
   if (!group) throw new NotFoundError('Grupo no encontrado');
+  if (!group.competitionId) throw new BadRequestError('Esta comunidad no tiene un torneo de Prode asociado.');
 
   const fixture = await getFixtureFromApi(externalFixtureId);
   if (!fixture) throw new NotFoundError('Partido no encontrado en la API');
