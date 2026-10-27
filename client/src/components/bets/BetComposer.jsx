@@ -13,6 +13,7 @@ export default function BetComposer({ groups, fixedGroupId, onPublished, onClose
   const [content, setContent] = useState('');
   const [preview, setPreview] = useState(null);
   const [totalOdds, setTotalOdds] = useState('');
+  const [expectedSelections, setExpectedSelections] = useState(null);
   const [selections, setSelections] = useState([]);
   const [captures, setCaptures] = useState([]);
   const [editing, setEditing] = useState(false);
@@ -45,12 +46,10 @@ export default function BetComposer({ groups, fixedGroupId, onPublished, onClose
         const imageUrl = URL.createObjectURL(file);
         imageUrls.current.push(imageUrl);
         setCaptures((old) => [...old, { id: data.id, src: imageUrl }]);
-        if (data.totalOdds) setTotalOdds(data.totalOdds);
-        if (data.selections?.length) setSelections((old) => {
-          const merged = [...old, ...data.selections.map((item) => ({ ...blank(), ...item, team: item.team || '', player: item.player || '', odds: item.odds || '' }))];
-          const seen = new Set();
-          return merged.filter((item) => { const key = [item.event, item.player, item.pick].join('|').toLocaleLowerCase('es'); if (seen.has(key)) return false; seen.add(key); return true; }).slice(0, 40);
-        });
+        setTotalOdds(data.totalOdds || '');
+        setExpectedSelections(data.expectedSelections || null);
+        setSelections((data.selections || []).map((item) => ({ ...blank(), ...item, team: item.team || '', player: item.player || '', odds: item.odds || '' })));
+        if (data.ocrFailed) setError('La captura se guardó, pero no pudimos leerla automáticamente. Probá con otra imagen más nítida.');
       }
     } catch (err) { setError(err.message && !err.response ? err.message : getApiErrorMessage(err)); }
     finally { setBusy(false); }
@@ -77,7 +76,7 @@ export default function BetComposer({ groups, fixedGroupId, onPublished, onClose
   function changeLink() {
     imageUrls.current.forEach((value) => URL.revokeObjectURL(value));
     imageUrls.current = [];
-    setPreview(null); setCaptures([]); setSelections([]); setTotalOdds(''); setEditing(false); setError('');
+    setPreview(null); setCaptures([]); setSelections([]); setTotalOdds(''); setExpectedSelections(null); setEditing(false); setError('');
   }
 
   return <section className="bet-composer bet-panel" aria-label="Nueva apuesta compartida">
@@ -89,7 +88,7 @@ export default function BetComposer({ groups, fixedGroupId, onPublished, onClose
           <label className="bet-upload"><Camera size={20} /><span>{captured ? 'Agregar otra captura' : 'Subir capturas del ticket'}</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={scan} disabled={busy || captures.length >= 3} /></label>
           <p className="bet-muted">Las capturas se guardan con la apuesta y se ven al publicarla. Revisá si muestran importes o datos personales.</p>
           {captured && <BetCaptureGallery images={captures} />}
-          {(captured || selections.length > 0) && <div className="bet-ticket bet-read-preview"><div className="bet-ticket-top"><span className="bet-provider">VISTA PREVIA</span><span className="bet-label">Leído de capturas</span></div><div className="bet-ticket-summary"><div><span>{selections.length ? `${selections.length} selecciones reconocidas` : 'Detalle en las capturas'}</span><small>Revisá la vista antes de publicar</small></div><div className="bet-odds"><small>Cuota total</small><strong>{showOdds(totalOdds)}</strong></div></div>{selections.length > 0 && <div className="bet-selection-list">{selections.filter((row) => row.event && row.pick).map((row, index) => <div className="bet-manual-row" key={`${row.event}-${row.pick}-${index}`}><div><strong>{row.event}</strong><span>{[row.team, row.player].filter(Boolean).join(' · ')}</span><p>{row.pick}</p></div><b>{row.odds ? `Cuota ${showOdds(row.odds)}` : 'Cuota no detectada'}</b></div>)}</div>}</div>}
+          {(captured || selections.length > 0) && <div className="bet-ticket bet-read-preview"><div className="bet-ticket-top"><span className="bet-provider">VISTA PREVIA</span><span className="bet-label">Leído de capturas</span></div><div className="bet-ticket-summary"><div><span>{selections.length ? `${selections.length}${expectedSelections ? ` de ${expectedSelections}` : ''} selecciones reconocidas` : 'Detalle en las capturas'}</span><small>{selections[0]?.event || 'Revisá la vista antes de publicar'}</small></div><div className="bet-odds"><small>Cuota total</small><strong>{showOdds(totalOdds)}</strong></div></div>{expectedSelections && selections.length < expectedSelections && <p className="bet-muted">Faltan selecciones en la lectura. Subí la parte restante del ticket.</p>}{selections.length > 0 && <div className="bet-selection-list">{selections.filter((row) => row.event && row.pick).map((row, index) => <div className="bet-manual-row" key={`${row.event}-${row.pick}-${index}`}><div><strong>{row.player || row.event}</strong><span>{row.player ? row.event : ''}</span><p>{row.pick}</p></div><b>{row.odds ? `Cuota ${showOdds(row.odds)}` : 'Cuota individual no visible'}</b></div>)}</div>}</div>}
           {!captured && !selections.length && <div className="bet-notice">Subí las capturas para ver tu ticket. También podés cargar los datos manualmente.</div>}
           <button type="button" className="bet-button bet-button-quiet bet-edit-details" onClick={() => setEditing(!editing)}><Pencil size={15} /> {editing ? 'Ocultar edición' : 'Corregir o agregar datos'}</button>
           {editing && <div className="bet-edit-fields"><label className="bet-field">Cuota total del ticket<input inputMode="decimal" pattern="[0-9]+([.,][0-9]+)?" placeholder="Ej.: 27,08" value={totalOdds} onChange={(event) => setTotalOdds(event.target.value)} /></label><div className="bet-section-title"><h3>Selecciones</h3><button type="button" className="bet-button bet-button-quiet" disabled={selections.length >= 40} onClick={() => setSelections((old) => [...old, blank()])}><Plus size={15} /> Agregar selección</button></div>{selections.map((row, index) => <div className="bet-manual-selection" key={index}><div className="bet-section-title"><strong>Selección {index + 1}</strong><button type="button" className="bet-icon-button" aria-label={`Quitar selección ${index + 1}`} onClick={() => setSelections((old) => old.filter((_, i) => i !== index))}><Trash2 size={15} /></button></div><label className="bet-field">Partido<input maxLength={200} placeholder="Warriors vs. Lakers" value={row.event} onChange={(event) => updateSelection(index, 'event', event.target.value)} /></label><div className="bet-field-grid"><label className="bet-field">Equipo<input maxLength={100} placeholder="Warriors" value={row.team} onChange={(event) => updateSelection(index, 'team', event.target.value)} /></label><label className="bet-field">Jugador<input maxLength={100} placeholder="Stephen Curry" value={row.player} onChange={(event) => updateSelection(index, 'player', event.target.value)} /></label></div><div className="bet-field-grid"><label className="bet-field">Qué pusiste<input maxLength={200} placeholder="Más de 4,5 triples" value={row.pick} onChange={(event) => updateSelection(index, 'pick', event.target.value)} /></label><label className="bet-field">Cuota individual<input inputMode="decimal" pattern="[0-9]+([.,][0-9]+)?" placeholder="1,85" value={row.odds} onChange={(event) => updateSelection(index, 'odds', event.target.value)} /></label></div></div>)}</div>}
