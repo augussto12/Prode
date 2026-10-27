@@ -25,7 +25,7 @@ test('community end-to-end persistence and access isolation', { skip: process.en
     const group = await createGroup(owner.id, { name: `QA community ${suffix}`, isPublic: true }); groupIds.push(group.id);
     const otherGroup = await createGroup(outsider.id, { name: `QA isolated ${suffix}` }); groupIds.push(otherGroup.id);
     await prisma.groupUser.create({ data: { userId: friend.id, groupId: group.id } });
-    let post;
+    let post; let screenshotId; let privateScreenshotId;
 
     await t.test('groups can exist without a tournament and preserve member lists', async () => {
       assert.equal(group.competitionId, null);
@@ -102,6 +102,28 @@ test('community end-to-end persistence and access isolation', { skip: process.en
       assert.equal((await offline.publicFeed({ query: 'Bulls' })).items.some((item) => item.id === publicPost.id), false);
       await assert.rejects(offline.preview(owner.id, { sharedUrl: publicUrl }), { statusCode: 400 });
     });
+    await t.test('a capture can be published without a required selection or odds', async () => {
+      const captureUrl = originalUrl.replace('e3351002-10aa-43bd-812f-751e71d2f637', randomUUID());
+      const draft = await offline.preview(owner.id, { sharedUrl: captureUrl });
+      const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLytQAAAABJRU5ErkJggg==', 'base64');
+      await assert.rejects(offline.addScreenshot(friend.id, draft.id, image, 'image/png'), { statusCode: 400 });
+      const upload = await offline.addScreenshot(owner.id, draft.id, image, 'image/png');
+      screenshotId = upload.id;
+      assert.ok(upload.id);
+      const published = await offline.publish(owner.id, { draftId: draft.id, content: 'Solo la captura' });
+      assert.equal(published.importState, 'screenshot');
+      assert.deepEqual(published.selections, []);
+      assert.equal(published.totalOdds, null);
+      assert.deepEqual(published.screenshots, [upload.id]);
+      assert.deepEqual(Buffer.from((await offline.image(-1, upload.id, true)).image), image);
+      await assert.rejects(offline.preview(owner.id, { sharedUrl: captureUrl }), { statusCode: 400 });
+      const privateUrl = originalUrl.replace('e3351002-10aa-43bd-812f-751e71d2f637', randomUUID());
+      const privateDraft = await offline.preview(owner.id, { sharedUrl: privateUrl, groupId: group.id });
+      privateScreenshotId = (await offline.addScreenshot(owner.id, privateDraft.id, image, 'image/png')).id;
+      await offline.publish(owner.id, { draftId: privateDraft.id, groupId: group.id, content: 'Captura del grupo' });
+      await assert.rejects(offline.image(-1, privateScreenshotId, true), { statusCode: 404 });
+      await assert.rejects(offline.image(outsider.id, privateScreenshotId), { statusCode: 404 });
+    });
     await t.test('expired previews cannot be published', async () => {
       const draft = await offline.preview(owner.id, { sharedUrl: originalUrl.replace('e3351002-10aa-43bd-812f-751e71d2f637', randomUUID()), groupId: group.id });
       await prisma.betImportDraft.update({ where: { id: draft.id }, data: { expiresAt: new Date(0) } });
@@ -139,6 +161,8 @@ test('community end-to-end persistence and access isolation', { skip: process.en
       const publicItems = (await publicResponse.json()).items;
       assert.equal(publicItems.some((item) => item.id === post.id), false);
       assert.equal(publicItems.some((item) => item.selections[0]?.team === 'Warriors'), true);
+      assert.equal((await fetch(`${base}/public/images/${screenshotId}`)).status, 200);
+      assert.equal((await fetch(`${base}/public/images/${privateScreenshotId}`)).status, 404);
       const headers = { Authorization: `Bearer ${generateToken(owner)}`, 'Content-Type': 'application/json' };
       assert.equal((await fetch(`${base}/posts`, { headers })).status, 200);
       assert.equal((await fetch(`${base}/imports`, { headers, method: 'POST', body: JSON.stringify({ sharedUrl: originalUrl }) })).status, 400);

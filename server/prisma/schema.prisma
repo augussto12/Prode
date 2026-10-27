@@ -197,8 +197,10 @@ model BetImportDraft {
   expiresAt     DateTime
   consumedAt    DateTime?
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  screenshots   BetScreenshot[]
 
   @@index([userId, expiresAt])
+  @@index([expiresAt])
 }
 
 model BetPost {
@@ -219,6 +221,7 @@ model BetPost {
   group         Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
   ticket        BetTicket? @relation(fields: [ticketId], references: [id])
   selections    BetSelection[]
+  screenshots   BetScreenshot[]
   comments      BetComment[]
   reactions     BetReaction[]
   saves         SavedBetPost[]
@@ -228,6 +231,22 @@ model BetPost {
   @@index([authorId, sequence])
   @@index([visibility, sequence])
   @@unique([authorId, provider, originalUrl])
+}
+
+model BetScreenshot {
+  id          String   @id @default(uuid())
+  draftId     String?
+  postId      String?
+  position    Int
+  mimeType    String
+  image       Bytes    @db.ByteA
+  ocrText     String?
+  createdAt   DateTime @default(now())
+  draft       BetImportDraft? @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  post        BetPost? @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([draftId, position])
+  @@index([postId, position])
 }
 
 model BetSelection {

@@ -3,7 +3,6 @@ import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { authenticate } from '../middleware/auth.js';
 import service from '../services/bet-community.service.js';
-import { readBetScreenshot } from '../services/bet-screenshot.service.js';
 import { BadRequestError, ForbiddenError } from '../utils/errors.js';
 
 const router = Router();
@@ -26,6 +25,10 @@ router.get('/public', action(async (req, res) => {
   const query = parse(z.object({ before: positive.optional(), query: z.string().trim().max(100).default('') }).strict(), req.query);
   res.json(await service.publicFeed(query));
 }));
+router.get('/public/images/:imageId', action(async (req, res) => {
+  const image = await service.image(-1, parse(id, req.params.imageId), true);
+  res.type(image.mimeType).send(Buffer.from(image.image));
+}));
 router.use(authenticate);
 // Cookie-authenticated writes must originate in our frontend; requests without an
 // Origin remain available to authenticated native/CLI clients.
@@ -46,10 +49,15 @@ router.post('/imports', importLimit, action(async (req, res) => {
   res.status(201).json(await service.preview(req.user.id, body));
 }));
 router.post('/scan', importLimit, action(async (req, res) => {
-  res.json(await readBetScreenshot(req.body, req.headers['content-type']));
+  const query = parse(z.object({ draftId: id }).strict(), req.query);
+  res.json(await service.addScreenshot(req.user.id, query.draftId, req.body, req.headers['content-type']));
+}));
+router.get('/images/:imageId', action(async (req, res) => {
+  const image = await service.image(req.user.id, parse(id, req.params.imageId));
+  res.type(image.mimeType).send(Buffer.from(image.image));
 }));
 router.get('/posts', action(async (req, res) => {
-  const query = parse(z.object({ groupId: positive.optional(), scope: z.enum(['all', 'public', 'groups']).default('all'), before: positive.optional(), mode: z.enum(['all', 'mine', 'saved']).default('all'), query: z.string().trim().max(100).default(''), kind: z.enum(['all', 'ready', 'author_entered', 'link_only']).default('all') }).strict(), req.query);
+  const query = parse(z.object({ groupId: positive.optional(), scope: z.enum(['all', 'public', 'groups']).default('all'), before: positive.optional(), mode: z.enum(['all', 'mine', 'saved']).default('all'), query: z.string().trim().max(100).default(''), kind: z.enum(['all', 'ready', 'author_entered', 'screenshot', 'link_only']).default('all') }).strict(), req.query);
   res.json(await service.feed(req.user.id, query));
 }));
 router.post('/posts', action(async (req, res) => {

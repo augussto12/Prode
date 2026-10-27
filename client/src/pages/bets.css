@@ -116,6 +116,21 @@
 .home-switch a.is-active{background:#b8f27b;color:#1b2816}
 .bet-upload{display:flex;align-items:center;gap:10px;cursor:pointer;border:1px dashed #b8f27b77;background:#b8f27b0a;color:#d8edc0;border-radius:12px;padding:18px;margin:18px 0;font-size:13px;font-weight:700}
 .bet-upload input{position:absolute;opacity:0;width:1px;height:1px}
+.bet-upload:has(input:disabled){opacity:.55;cursor:default}
+.bet-captures{margin:16px 0 20px}
+.bet-captures-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px}
+.bet-captures-title span{color:#91a3af;font-size:11px}
+.bet-captures-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}
+.bet-captures-grid button{border:1px solid #ffffff24;background:#0d1720;border-radius:13px;overflow:hidden;padding:0;text-align:left;cursor:pointer;color:#d8e8de}
+.bet-captures-grid img{width:100%;height:210px;object-fit:contain;background:#0a1219;display:block}
+.bet-captures-grid button span{display:flex;align-items:center;gap:6px;padding:10px 12px;font-size:11px;font-weight:650}
+.bet-capture-overlay{position:fixed;inset:0;z-index:1000;background:#05090de8;display:flex;align-items:center;justify-content:center;padding:20px}
+.bet-capture-overlay>div{position:relative;max-width:min(900px,100%);max-height:100%;display:flex;justify-content:center}
+.bet-capture-overlay img{max-width:100%;max-height:calc(100vh - 40px);object-fit:contain;border-radius:12px}
+.bet-capture-close{position:absolute;top:8px;right:8px;z-index:1;border:0;border-radius:50%;width:38px;height:38px;background:#101a22;color:#fff;display:grid;place-items:center;cursor:pointer}
+.bet-read-preview{margin:18px 0}
+.bet-edit-details{margin-top:8px}
+.bet-edit-fields{border-top:1px solid var(--bet-line);margin-top:18px;padding-top:8px}
 .bet-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .bet-field-grid .bet-field{margin:7px 0}
 .bet-manual-selection{border:1px solid var(--bet-line);background:#ffffff04;border-radius:12px;padding:16px;margin:12px 0}

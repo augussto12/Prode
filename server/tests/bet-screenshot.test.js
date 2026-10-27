@@ -18,3 +18,16 @@ Cuota total 3.96`);
   assert.equal(parsed.totalOdds, '3.96');
   assert.doesNotMatch(JSON.stringify(parsed.selections), /500/);
 });
+
+test('OCR text reads stacked player, selection and odds', () => {
+  const parsed = parseBetOcrText(`Warriors vs Lakers
+Stephen Curry
+Más de 3,5 triples
+1,85
+Cuota total
+4,60`);
+  assert.equal(parsed.selections.length, 1);
+  assert.equal(parsed.selections[0].player, 'Stephen Curry');
+  assert.equal(parsed.selections[0].odds, '1.85');
+  assert.equal(parsed.totalOdds, '4.60');
+});
