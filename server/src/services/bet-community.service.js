@@ -5,21 +5,24 @@ import { parseStakeUrl, BetImportError } from './bet-imports/stake-argentina.imp
 
 const person = { id: true, username: true, displayName: true, avatar: true };
 const membership = (userId) => ({ groupUsers: { some: { userId, isBanned: false } } });
-const accessible = (userId) => ({ group: membership(userId) });
+const accessible = (userId) => ({ OR: [{ visibility: 'PUBLIC' }, { visibility: 'GROUP', group: membership(userId) }] });
 const postInclude = (userId) => ({
   author: { select: person }, group: { select: { id: true, name: true, groupUsers: { where: { userId, isBanned: false }, select: { isAdmin: true } } } },
   ticket: { select: { snapshot: true } },
+  selections: { orderBy: { position: 'asc' }, select: { event: true, team: true, player: true, pick: true, odds: true } },
   _count: { select: { comments: true, reactions: true, reports: true } },
   reactions: { where: { userId }, select: { userId: true } },
   saves: { where: { userId }, select: { userId: true } },
 });
 
 function present(post, userId) {
-  const admin = post.group.groupUsers.some((member) => member.isAdmin);
+  const admin = post.group?.groupUsers.some((member) => member.isAdmin) || false;
   return {
     id: post.id, sequence: post.sequence, content: post.content, originalUrl: post.originalUrl,
     provider: post.provider, importState: post.importState, createdAt: post.createdAt, updatedAt: post.updatedAt,
-    author: post.author, group: { id: post.group.id, name: post.group.name },
+    author: post.author, group: post.group ? { id: post.group.id, name: post.group.name } : null,
+    visibility: post.visibility, totalOdds: post.totalOdds?.toString() || null,
+    selections: post.selections.map((selection) => ({ ...selection, odds: selection.odds?.toString() || null })),
     ticket: post.ticket?.snapshot || null,
     commentCount: post._count.comments, reactionCount: post._count.reactions,
     reportCount: admin ? post._count.reports : undefined,
@@ -45,12 +48,15 @@ async function requirePost(db, userId, id) {
 export function createBetCommunityService({ db = prisma, importer = createBetImportService(), importEnabled = () => process.env.STAKE_PBA_IMPORT_ENABLED === 'true' } = {}) {
   return {
     async preview(userId, { sharedUrl, groupId }) {
-      await requireMember(db, userId, groupId);
+      if (groupId) await requireMember(db, userId, groupId);
       let parsed;
       try { parsed = parseStakeUrl(sharedUrl); }
       catch (error) {
         if (error instanceof BetImportError) throw new BadRequestError(error.message);
         throw error;
+      }
+      if (await db.betPost.findFirst({ where: { authorId: userId, provider: 'stake_pba', originalUrl: parsed.originalUrl }, select: { id: true } })) {
+        throw new BadRequestError('Ya publicaste este ticket. Podés encontrarlo en Mis apuestas.');
       }
       const result = importEnabled() ? await importer.import(parsed.originalUrl) : { state: 'not_accessible', code: 'IMPORT_DISABLED' };
       const ready = result.state === 'ready';
@@ -68,11 +74,14 @@ export function createBetCommunityService({ db = prisma, importer = createBetImp
       };
     },
 
-    async publish(userId, { draftId, groupId, content }) {
+    async publish(userId, { draftId, groupId, content, totalOdds, selections }) {
       const id = await db.$transaction(async (tx) => {
-        await requireMember(tx, userId, groupId);
+        if (groupId) await requireMember(tx, userId, groupId);
         const draft = await tx.betImportDraft.findFirst({ where: { id: draftId, userId, consumedAt: null, expiresAt: { gt: new Date() } } });
         if (!draft) throw new BadRequestError('La vista previa venció o ya fue publicada. Volvé a leer el enlace.');
+        if (await tx.betPost.findFirst({ where: { authorId: userId, provider: draft.provider, originalUrl: draft.originalUrl }, select: { id: true } })) {
+          throw new BadRequestError('Ya publicaste este ticket. Podés encontrarlo en Mis apuestas.');
+        }
         const claimed = await tx.betImportDraft.updateMany({ where: { id: draft.id, userId, consumedAt: null, expiresAt: { gt: new Date() } }, data: { consumedAt: new Date() } });
         if (claimed.count !== 1) throw new BadRequestError('Esta vista previa ya fue publicada.');
         let ticketId = null;
@@ -85,29 +94,57 @@ export function createBetCommunityService({ db = prisma, importer = createBetImp
           });
           ticketId = ticket.id;
         }
-        const post = await tx.betPost.create({ data: { authorId: userId, groupId, ticketId, content, originalUrl: draft.originalUrl, provider: draft.provider, importState: ticketId ? 'ready' : 'link_only' } });
+        if (!ticketId && (!selections || selections.length === 0)) throw new BadRequestError('Cargá al menos una selección antes de publicar.');
+        if (!ticketId && !totalOdds) throw new BadRequestError('Indicá la cuota total del ticket.');
+        const normalized = ticketId ? draft.snapshot.groups.flatMap((group) => group.selections.map((selection) => ({
+          event: group.event, team: null, player: selection.player,
+          pick: `${selection.market} ${selection.direction === 'over' ? 'más de' : 'menos de'} ${selection.line}`,
+        }))) : selections;
+        const post = await tx.betPost.create({ data: {
+          authorId: userId, groupId: groupId || null, visibility: groupId ? 'GROUP' : 'PUBLIC', ticketId, content,
+          originalUrl: draft.originalUrl, provider: draft.provider, importState: ticketId ? 'ready' : 'author_entered',
+          totalOdds: ticketId ? draft.snapshot.originalOdds : totalOdds || null,
+          selections: { create: normalized.map((selection, position) => ({ ...selection, position, odds: selection.odds || null })) },
+        } });
         return post.id;
+      }).catch((error) => {
+        if (error.code === 'P2002') throw new BadRequestError('Ya publicaste este ticket. Podés encontrarlo en Mis apuestas.');
+        throw error;
       });
       return this.get(userId, id);
     },
 
-    async feed(userId, { groupId, mode = 'all', before, query = '', kind = 'all' } = {}) {
+    async feed(userId, { groupId, scope = 'all', mode = 'all', before, query = '', kind = 'all' } = {}) {
       if (groupId) await requireMember(db, userId, groupId);
-      const where = { ...accessible(userId),
-        ...(groupId ? { groupId } : {}),
+      const where = { ...(groupId ? { visibility: 'GROUP', groupId } : scope === 'public' ? { visibility: 'PUBLIC' } : scope === 'groups' ? { visibility: 'GROUP', group: membership(userId) } : accessible(userId)),
         ...(before ? { sequence: { lt: before } } : {}),
         ...(mode === 'mine' ? { authorId: userId } : {}),
         ...(mode === 'saved' ? { saves: { some: { userId } } } : {}),
         ...(kind !== 'all' ? { importState: kind } : {}),
-        ...(query ? { OR: [
+        ...(query ? { AND: [{ OR: [
           { content: { contains: query, mode: 'insensitive' } },
           { author: { displayName: { contains: query, mode: 'insensitive' } } },
           { author: { username: { contains: query, mode: 'insensitive' } } },
-        ] } : {}),
+          { selections: { some: { OR: [
+            { event: { contains: query, mode: 'insensitive' } }, { team: { contains: query, mode: 'insensitive' } },
+            { player: { contains: query, mode: 'insensitive' } }, { pick: { contains: query, mode: 'insensitive' } },
+          ] } } },
+        ] }] } : {}),
       };
       const rows = await db.betPost.findMany({ where, include: postInclude(userId), orderBy: { sequence: 'desc' }, take: 21 });
-      const items = rows.slice(0, 20).map((row) => present(row, userId));
+      const items = rows.slice(0, 20).map((row) => {
+        const item = present(row, userId);
+        if (query) {
+          const matches = item.selections.filter((selection) => [selection.event, selection.team, selection.player, selection.pick].some((value) => value?.toLocaleLowerCase('es').includes(query.toLocaleLowerCase('es'))));
+          if (matches.length) item.selections = matches;
+        }
+        return item;
+      });
       return { items, nextCursor: rows.length > 20 ? items.at(-1).sequence : null };
+    },
+
+    async publicFeed({ before, query = '' } = {}) {
+      return this.feed(-1, { scope: 'public', before, query });
     },
 
     async get(userId, id) {
@@ -123,9 +160,9 @@ export function createBetCommunityService({ db = prisma, importer = createBetImp
     },
 
     async remove(userId, id) {
-      const result = await db.betPost.deleteMany({ where: { id, ...accessible(userId), OR: [
+      const result = await db.betPost.deleteMany({ where: { id, AND: [accessible(userId), { OR: [
         { authorId: userId }, { group: { groupUsers: { some: { userId, isAdmin: true, isBanned: false } } } },
-      ] } });
+      ] }] } });
       if (!result.count) throw new ForbiddenError('No podés eliminar esta publicación.');
     },
 
@@ -146,8 +183,8 @@ export function createBetCommunityService({ db = prisma, importer = createBetImp
     async deleteComment(userId, postId, commentId) {
       await db.$transaction(async (tx) => {
         const post = await requirePost(tx, userId, postId);
-        const member = await requireMember(tx, userId, post.groupId);
-        const result = await tx.betComment.deleteMany({ where: { id: commentId, postId, ...(member.isAdmin ? {} : { authorId: userId }) } });
+        const member = post.groupId ? await requireMember(tx, userId, post.groupId) : null;
+        const result = await tx.betComment.deleteMany({ where: { id: commentId, postId, ...(member?.isAdmin ? {} : { authorId: userId }) } });
         if (!result.count) throw new ForbiddenError('No podés eliminar este comentario.');
       });
     },
@@ -171,7 +208,7 @@ export function createBetCommunityService({ db = prisma, importer = createBetImp
 
     async reports(userId, postId) {
       const post = await requirePost(db, userId, postId);
-      if (!(await requireMember(db, userId, post.groupId)).isAdmin) throw new ForbiddenError('Solo los administradores del grupo pueden ver reportes.');
+      if (!post.groupId || !(await requireMember(db, userId, post.groupId)).isAdmin) throw new ForbiddenError('Solo los administradores del grupo pueden ver reportes.');
       return db.betReport.findMany({ where: { postId }, select: { id: true, reason: true, createdAt: true }, orderBy: { createdAt: 'desc' }, take: 100 });
     },
   };

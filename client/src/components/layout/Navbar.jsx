@@ -10,7 +10,6 @@ import {
   X,
   User,
   Compass,
-  Ticket,
   // [OCULTADO] Star icon solo se usaba para GranDT
   // Star,
 } from "lucide-react";
@@ -48,11 +47,10 @@ export default function Navbar() {
   };
 
   const links = [
-    { to: "/inicio", label: "Inicio", icon: Home },
-    { to: "/apuestas", label: "Apuestas", icon: Ticket },
+    { to: "/inicio", label: "Apuestas", icon: Home },
     {
       to: "/explorar",
-      label: "Explorar",
+      label: "Partidos",
       icon: Compass,
       badge: liveCount > 0 ? liveCount : null,
     },

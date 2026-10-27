@@ -205,17 +205,20 @@ model BetPost {
   id            String   @id @default(uuid())
   sequence      Int      @unique @default(autoincrement())
   authorId      Int
-  groupId       Int
+  groupId       Int?
   ticketId      String?
   originalUrl   String
   provider      String
   content       String   @default("")
   importState   String
+  visibility    String   @default("GROUP")
+  totalOdds     Decimal? @db.Decimal(24, 12)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  group         Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group         Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
   ticket        BetTicket? @relation(fields: [ticketId], references: [id])
+  selections    BetSelection[]
   comments      BetComment[]
   reactions     BetReaction[]
   saves         SavedBetPost[]
@@ -223,6 +226,24 @@ model BetPost {
 
   @@index([groupId, sequence])
   @@index([authorId, sequence])
+  @@index([visibility, sequence])
+  @@unique([authorId, provider, originalUrl])
+}
+
+model BetSelection {
+  id          Int      @id @default(autoincrement())
+  postId      String
+  position    Int
+  event       String
+  team        String?
+  player      String?
+  pick        String
+  odds        Decimal? @db.Decimal(24, 12)
+  post        BetPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, position])
+  @@index([team])
+  @@index([player])
 }
 
 model BetComment {

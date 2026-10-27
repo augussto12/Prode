@@ -23,6 +23,8 @@ import { tCountry, tRound, tTeamName } from "../utils/translations";
 import { WORLD_CUP_2026_LOGO, getLeagueLogo, getLeagueName } from "../utils/worldCupLogo";
 import { getGroupCardVariant } from "../utils/groupCardVariants";
 import MatchCard from "../components/matches/MatchCard";
+import HomeSwitch from "../components/bets/HomeSwitch";
+import "./bets.css";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -511,6 +513,7 @@ export default function Explorer() {
 
   return (
     <div className="space-y-6">
+      <HomeSwitch active="matches" />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

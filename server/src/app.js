@@ -91,6 +91,7 @@ app.use(cors({
 app.use(cookieParser());
 
 // Body parser con límite de 1MB (anti payload bombing)
+app.use('/api/community/scan', express.raw({ type: ['image/jpeg', 'image/png', 'image/webp'], limit: '5mb' }));
 app.use(express.json({ limit: '1mb' }));
 
 // Rate limiter global: 100 requests por minuto por IP

@@ -39,8 +39,10 @@ test('community end-to-end persistence and access isolation', { skip: process.en
       const draft = await offline.preview(owner.id, { sharedUrl: originalUrl, groupId: group.id });
       assert.equal(draft.state, 'link_only'); assert.equal(draft.ticket, null);
       await assert.rejects(offline.publish(friend.id, { draftId: draft.id, groupId: group.id, content: 'stolen' }), { statusCode: 400 });
-      post = await offline.publish(owner.id, { draftId: draft.id, groupId: group.id, content: 'Ticket para conversar' });
-      assert.equal(post.importState, 'link_only'); assert.equal(post.ticket, null);
+      post = await offline.publish(owner.id, { draftId: draft.id, groupId: group.id, content: 'Ticket para conversar', totalOdds: '3.25', selections: [{ event: 'Warriors vs Lakers', team: 'Warriors', player: 'Stephen Curry', pick: 'Más de 3 triples', odds: '1.80' }] });
+      assert.equal(post.importState, 'author_entered'); assert.equal(post.ticket, null);
+      assert.equal(post.selections[0].team, 'Warriors');
+      await assert.rejects(offline.preview(owner.id, { sharedUrl: originalUrl, groupId: group.id }), { statusCode: 400 });
       await assert.rejects(offline.publish(owner.id, { draftId: draft.id, groupId: group.id, content: 'replay' }), { statusCode: 400 });
     });
     await t.test('only members can list, open, comment, save or react even in a publicly listed group', async () => {
@@ -82,8 +84,26 @@ test('community end-to-end persistence and access isolation', { skip: process.en
       await assert.rejects(offline.toggle(friend.id, post.id, 'reaction', false), { statusCode: 404 });
       await prisma.groupUser.update({ where: { userId_groupId: { userId: friend.id, groupId: group.id } }, data: { isBanned: false } });
     });
+    await t.test('public bets appear to everyone and search finds individual selections', async () => {
+      const publicUrl = originalUrl.replace('e3351002-10aa-43bd-812f-751e71d2f637', randomUUID());
+      const draft = await offline.preview(owner.id, { sharedUrl: publicUrl });
+      const publicPost = await offline.publish(owner.id, { draftId: draft.id, content: 'Para todos', totalOdds: '5.4', selections: [
+        { event: 'Warriors vs Lakers', team: 'Warriors', player: 'Stephen Curry', pick: 'Más de 3 triples', odds: '1.8' },
+        { event: 'Celtics vs Heat', team: 'Celtics', player: 'Jayson Tatum', pick: 'Más de 20 puntos', odds: '2.2' },
+      ] });
+      assert.equal(publicPost.group, null);
+      assert.equal(publicPost.totalOdds, '5.4');
+      assert.equal((await offline.publicFeed()).items.some((item) => item.id === publicPost.id), true);
+      const found = (await offline.publicFeed({ query: 'Warriors' })).items.find((item) => item.id === publicPost.id);
+      assert.equal(found.selections.length, 1);
+      assert.equal(found.selections[0].player, 'Stephen Curry');
+      assert.equal(found.totalOdds, '5.4');
+      assert.equal((await offline.publicFeed({ query: 'Tatum' })).items.some((item) => item.id === publicPost.id), true);
+      assert.equal((await offline.publicFeed({ query: 'Bulls' })).items.some((item) => item.id === publicPost.id), false);
+      await assert.rejects(offline.preview(owner.id, { sharedUrl: publicUrl }), { statusCode: 400 });
+    });
     await t.test('expired previews cannot be published', async () => {
-      const draft = await offline.preview(owner.id, { sharedUrl: originalUrl, groupId: group.id });
+      const draft = await offline.preview(owner.id, { sharedUrl: originalUrl.replace('e3351002-10aa-43bd-812f-751e71d2f637', randomUUID()), groupId: group.id });
       await prisma.betImportDraft.update({ where: { id: draft.id }, data: { expiresAt: new Date(0) } });
       await assert.rejects(offline.publish(owner.id, { draftId: draft.id, groupId: group.id, content: '' }), { statusCode: 400 });
     });
@@ -97,7 +117,7 @@ test('community end-to-end persistence and access isolation', { skip: process.en
         const draft = await recorded.preview(userId, { sharedUrl: originalUrl, groupId });
         return recorded.publish(userId, { draftId: draft.id, groupId, content: 'Recorded contract test' });
       };
-      const a = await publishFor(owner.id, group.id);
+      const a = await publishFor(friend.id, group.id);
       const storedA = await prisma.betPost.findUnique({ where: { id: a.id } }); ticketIds.push(storedA.ticketId);
       const b = await publishFor(outsider.id, otherGroup.id);
       const storedB = await prisma.betPost.findUnique({ where: { id: b.id } });
@@ -114,8 +134,14 @@ test('community end-to-end persistence and access isolation', { skip: process.en
       server = await new Promise((resolve) => { const instance = app.listen(0, '127.0.0.1', () => resolve(instance)); });
       const base = `http://127.0.0.1:${server.address().port}/api/community`;
       assert.equal((await fetch(`${base}/posts`)).status, 401);
+      const publicResponse = await fetch(`${base}/public?query=Warriors`);
+      assert.equal(publicResponse.status, 200);
+      const publicItems = (await publicResponse.json()).items;
+      assert.equal(publicItems.some((item) => item.id === post.id), false);
+      assert.equal(publicItems.some((item) => item.selections[0]?.team === 'Warriors'), true);
       const headers = { Authorization: `Bearer ${generateToken(owner)}`, 'Content-Type': 'application/json' };
       assert.equal((await fetch(`${base}/posts`, { headers })).status, 200);
+      assert.equal((await fetch(`${base}/imports`, { headers, method: 'POST', body: JSON.stringify({ sharedUrl: originalUrl }) })).status, 400);
       assert.equal((await fetch(`${base}/posts`, { headers, method: 'POST', body: JSON.stringify({ draftId: randomUUID(), groupId: group.id, content: '', ticket: { amount: 999 } }) })).status, 400);
       assert.equal((await fetch(`${base}/posts/${post.id}`, { headers: { Authorization: `Bearer ${generateToken(outsider)}` } })).status, 404);
     });

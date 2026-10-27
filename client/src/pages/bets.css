@@ -111,6 +111,25 @@
 .bet-side-note{font-size:10px;line-height:1.8;color:#84979f;padding:0 11px}
 .bet-side-note svg{display:inline;vertical-align:middle;margin-right:5px}
 .bet-composer{padding:23px}
+.home-switch{display:inline-flex;gap:4px;padding:5px;margin:0 0 18px;border:1px solid #ffffff18;border-radius:12px;background:#121e27}
+.home-switch a{padding:9px 19px;border-radius:9px;color:#a8b9be;font-size:13px;font-weight:700;text-decoration:none}
+.home-switch a.is-active{background:#b8f27b;color:#1b2816}
+.bet-upload{display:flex;align-items:center;gap:10px;cursor:pointer;border:1px dashed #b8f27b77;background:#b8f27b0a;color:#d8edc0;border-radius:12px;padding:18px;margin:18px 0;font-size:13px;font-weight:700}
+.bet-upload input{position:absolute;opacity:0;width:1px;height:1px}
+.bet-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.bet-field-grid .bet-field{margin:7px 0}
+.bet-manual-selection{border:1px solid var(--bet-line);background:#ffffff04;border-radius:12px;padding:16px;margin:12px 0}
+.bet-manual-selection .bet-section-title{margin-bottom:0}
+.bet-manual-row{display:flex;justify-content:space-between;gap:20px;padding:15px 19px;border-top:1px solid var(--bet-line)}
+.bet-manual-row>div{min-width:0}
+.bet-manual-row strong,.bet-manual-row span{display:block}
+.bet-manual-row strong{font-size:13px}
+.bet-manual-row span{font-size:11px;color:#a2b4bc;margin-top:3px}
+.bet-manual-row p{font-size:12px;margin:8px 0 0;color:#deecdc}
+.bet-manual-row b{font-size:11px;white-space:nowrap;color:#c9e7aa}
+.bet-search-main{display:flex;align-items:center;gap:8px;border:1px solid var(--bet-line);border-radius:10px;padding:6px 10px;background:#141e28;margin:0 0 18px}
+.bet-search-main input{flex:1;min-width:0;border:0;background:transparent}
+.bet-search-main button{border:0;background:transparent;color:#c9e7aa;font-size:11px;cursor:pointer}
 .bet-field{display:block;font-size:12px;font-weight:600;color:#c3cec6;margin:17px 0}
 .bet-field>input,.bet-field>select,.bet-field>textarea{display:block;width:100%;margin-top:8px}
 .bet-field small{font-size:10px;font-weight:400;color:#8c9fa9;display:block;margin-top:6px}
@@ -171,6 +190,8 @@
 .bet-hero-art .bet-orbit{width:240px;height:240px}
 }
 @media(max-width:560px){.bet-hero{border-radius:18px;margin-bottom:22px}
+.bet-field-grid{grid-template-columns:1fr}
+.bet-manual-row{flex-direction:column;gap:7px}
 .bet-hero-copy{padding:27px 22px}
 .bet-hero h1{font-size:35px;letter-spacing:-1.2px}
 .bet-hero p{font-size:13px}

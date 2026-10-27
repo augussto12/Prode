@@ -3,12 +3,18 @@ import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { authenticate } from '../middleware/auth.js';
 import service from '../services/bet-community.service.js';
+import { readBetScreenshot } from '../services/bet-screenshot.service.js';
 import { BadRequestError, ForbiddenError } from '../utils/errors.js';
 
 const router = Router();
 const id = z.string().uuid();
 const positive = z.coerce.number().int().positive().max(2147483647);
 const content = z.string().trim().max(2000);
+const odds = z.string().trim().regex(/^\d{1,12}(?:\.\d{1,12})?$/).refine((value) => Number(value) >= 1 && Number(value) <= 1000000);
+const selection = z.object({
+  event: z.string().trim().min(2).max(200), team: z.string().trim().max(100).nullable(),
+  player: z.string().trim().max(100).nullable(), pick: z.string().trim().min(2).max(200), odds: odds.nullable(),
+}).strict();
 const parse = (schema, value) => {
   const result = schema.safeParse(value);
   if (!result.success) throw new BadRequestError('Revisá los campos: el enlace, el grupo o el texto no son válidos.');
@@ -16,6 +22,10 @@ const parse = (schema, value) => {
 };
 const action = (fn) => async (req, res, next) => { try { await fn(req, res); } catch (error) { next(error); } };
 
+router.get('/public', action(async (req, res) => {
+  const query = parse(z.object({ before: positive.optional(), query: z.string().trim().max(100).default('') }).strict(), req.query);
+  res.json(await service.publicFeed(query));
+}));
 router.use(authenticate);
 // Cookie-authenticated writes must originate in our frontend; requests without an
 // Origin remain available to authenticated native/CLI clients.
@@ -32,15 +42,18 @@ const writeLimit = rateLimit({ windowMs: 60000, limit: 30, keyGenerator: (req) =
 router.use((req, res, next) => req.method === 'GET' ? next() : writeLimit(req, res, next));
 
 router.post('/imports', importLimit, action(async (req, res) => {
-  const body = parse(z.object({ sharedUrl: z.string().max(2048), groupId: positive }).strict(), req.body);
+  const body = parse(z.object({ sharedUrl: z.string().max(2048), groupId: positive.optional() }).strict(), req.body);
   res.status(201).json(await service.preview(req.user.id, body));
 }));
+router.post('/scan', importLimit, action(async (req, res) => {
+  res.json(await readBetScreenshot(req.body, req.headers['content-type']));
+}));
 router.get('/posts', action(async (req, res) => {
-  const query = parse(z.object({ groupId: positive.optional(), before: positive.optional(), mode: z.enum(['all', 'mine', 'saved']).default('all'), query: z.string().trim().max(100).default(''), kind: z.enum(['all', 'ready', 'link_only']).default('all') }).strict(), req.query);
+  const query = parse(z.object({ groupId: positive.optional(), scope: z.enum(['all', 'public', 'groups']).default('all'), before: positive.optional(), mode: z.enum(['all', 'mine', 'saved']).default('all'), query: z.string().trim().max(100).default(''), kind: z.enum(['all', 'ready', 'author_entered', 'link_only']).default('all') }).strict(), req.query);
   res.json(await service.feed(req.user.id, query));
 }));
 router.post('/posts', action(async (req, res) => {
-  res.status(201).json(await service.publish(req.user.id, parse(z.object({ draftId: id, groupId: positive, content: content.default('') }).strict(), req.body)));
+  res.status(201).json(await service.publish(req.user.id, parse(z.object({ draftId: id, groupId: positive.optional(), content: content.default(''), totalOdds: odds.nullable().optional(), selections: z.array(selection).min(1).max(40).optional() }).strict(), req.body)));
 }));
 router.param('postId', (req, res, next, value) => { try { parse(id, value); next(); } catch (error) { next(error); } });
 router.get('/posts/:postId', action(async (req, res) => res.json(await service.get(req.user.id, req.params.postId))));
