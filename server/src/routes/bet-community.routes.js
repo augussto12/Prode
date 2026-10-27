@@ -12,7 +12,7 @@ const content = z.string().trim().max(2000);
 const odds = z.string().trim().regex(/^\d{1,12}(?:\.\d{1,12})?$/).refine((value) => Number(value) >= 1 && Number(value) <= 1000000);
 const selection = z.object({
   event: z.string().trim().min(2).max(200), team: z.string().trim().max(100).nullable(),
-  player: z.string().trim().max(100).nullable(), pick: z.string().trim().min(2).max(200), odds: odds.nullable(),
+  player: z.string().trim().max(100).nullable(), pick: z.string().trim().min(2).max(200), odds: odds.nullable(), groupOdds: odds.nullable().optional(),
 }).strict();
 const parse = (schema, value) => {
   const result = schema.safeParse(value);
@@ -45,7 +45,7 @@ const writeLimit = rateLimit({ windowMs: 60000, limit: 30, keyGenerator: (req) =
 router.use((req, res, next) => req.method === 'GET' ? next() : writeLimit(req, res, next));
 
 router.post('/imports', importLimit, action(async (req, res) => {
-  const body = parse(z.object({ sharedUrl: z.string().max(2048), groupId: positive.optional() }).strict(), req.body);
+  const body = parse(z.object({ provider: z.enum(['stake_pba', 'bet365', 'betano']).default('stake_pba'), sharedUrl: z.string().max(2048).optional(), groupId: positive.optional() }).strict(), req.body);
   res.status(201).json(await service.preview(req.user.id, body));
 }));
 router.post('/scan', importLimit, action(async (req, res) => {

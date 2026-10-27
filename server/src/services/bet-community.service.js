@@ -1,4 +1,5 @@
 import prisma from '../config/database.js';
+import { createHash, randomUUID } from 'node:crypto';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../utils/errors.js';
 import { createBetImportService } from './bet-imports/index.js';
 import { parseStakeUrl, BetImportError } from './bet-imports/stake-argentina.importer.js';
@@ -10,7 +11,7 @@ const accessible = (userId) => ({ OR: [{ visibility: 'PUBLIC' }, { visibility: '
 const postInclude = (userId) => ({
   author: { select: person }, group: { select: { id: true, name: true, groupUsers: { where: { userId, isBanned: false }, select: { isAdmin: true } } } },
   ticket: { select: { snapshot: true } },
-  selections: { orderBy: { position: 'asc' }, select: { event: true, team: true, player: true, pick: true, odds: true } },
+  selections: { orderBy: { position: 'asc' }, select: { event: true, team: true, player: true, pick: true, odds: true, groupOdds: true } },
   screenshots: { orderBy: { position: 'asc' }, select: { id: true } },
   _count: { select: { comments: true, reactions: true, reports: true } },
   reactions: { where: { userId }, select: { userId: true } },
@@ -24,13 +25,13 @@ function present(post, userId) {
     provider: post.provider, importState: post.importState, createdAt: post.createdAt, updatedAt: post.updatedAt,
     author: post.author, group: post.group ? { id: post.group.id, name: post.group.name } : null,
     visibility: post.visibility, totalOdds: post.totalOdds?.toString() || null,
-    selections: post.selections.map((selection) => ({ ...selection, odds: selection.odds?.toString() || null })),
+    selections: post.selections.map((selection) => ({ ...selection, odds: selection.odds?.toString() || null, groupOdds: selection.groupOdds?.toString() || null })),
     screenshots: post.screenshots.map((screenshot) => screenshot.id),
     ticket: post.ticket?.snapshot || null,
     commentCount: post._count.comments, reactionCount: post._count.reactions,
     reportCount: admin ? post._count.reports : undefined,
     reacted: post.reactions.length > 0, saved: post.saves.length > 0,
-    canEdit: post.authorId === userId, canDelete: post.authorId === userId || admin,
+    canEdit: post.authorId === userId, canDelete: post.authorId === userId,
   };
 }
 
@@ -50,50 +51,59 @@ async function requirePost(db, userId, id) {
 // as an HTTP parameter. Production uses only the real importer and explicit flag.
 export function createBetCommunityService({ db = prisma, importer = createBetImportService(), importEnabled = () => process.env.STAKE_PBA_IMPORT_ENABLED === 'true' } = {}) {
   return {
-    async preview(userId, { sharedUrl, groupId }) {
+    async preview(userId, { sharedUrl, groupId, provider = 'stake_pba' }) {
       if (groupId) await requireMember(db, userId, groupId);
-      let parsed;
-      try { parsed = parseStakeUrl(sharedUrl); }
-      catch (error) {
-        if (error instanceof BetImportError) throw new BadRequestError(error.message);
-        throw error;
+      let originalUrl = `capture:${randomUUID()}`;
+      if (sharedUrl?.trim()) {
+        if (provider !== 'stake_pba') throw new BadRequestError('Para Bet365 y Betano subí capturas; no hace falta un enlace.');
+        try { originalUrl = parseStakeUrl(sharedUrl).originalUrl; }
+        catch (error) {
+          if (error instanceof BetImportError) throw new BadRequestError(error.message);
+          throw error;
+        }
       }
-      if (await db.betPost.findFirst({ where: { authorId: userId, provider: 'stake_pba', originalUrl: parsed.originalUrl }, select: { id: true } })) {
+      if (await db.betPost.findFirst({ where: { authorId: userId, provider, originalUrl }, select: { id: true } })) {
         throw new BadRequestError('Ya publicaste este ticket. Podés encontrarlo en Mis apuestas.');
       }
-      const result = importEnabled() ? await importer.import(parsed.originalUrl) : { state: 'not_accessible', code: 'IMPORT_DISABLED' };
+      const result = provider === 'stake_pba' && sharedUrl?.trim() && importEnabled()
+        ? await importer.import(originalUrl) : { state: 'not_accessible', code: 'SCREENSHOT_IMPORT' };
       const ready = result.state === 'ready';
       // Expired drafts also release their unpublished screenshots.
       await db.betImportDraft.deleteMany({ where: { expiresAt: { lt: new Date() } } });
       const draft = await db.betImportDraft.create({ data: {
-        userId, originalUrl: parsed.originalUrl, provider: 'stake_pba', state: ready ? 'ready' : 'link_only',
+        userId, originalUrl, provider, state: ready ? 'ready' : 'link_only',
         failureCode: ready ? null : result.code,
         ...(ready ? { snapshot: result.ticket } : {}),
         expiresAt: new Date(Date.now() + 30 * 60 * 1000),
       } });
-      return { id: draft.id, state: draft.state, originalUrl: draft.originalUrl, ticket: ready ? result.ticket : null,
+      return { id: draft.id, state: draft.state, provider, originalUrl: draft.originalUrl, ticket: ready ? result.ticket : null,
         expiresAt: draft.expiresAt,
-        message: ready ? 'Ticket importado. Revisalo antes de publicar.' : 'No pudimos importar el detalle. Podés compartir el enlace original con tu grupo.',
+        message: ready ? 'Ticket importado. Revisalo antes de publicar.' : 'Subí las capturas para leer el ticket.',
       };
     },
 
     async addScreenshot(userId, draftId, image, mimeType) {
       validateBetScreenshot(image, mimeType);
       const draftWhere = { id: draftId, userId, consumedAt: null, expiresAt: { gt: new Date() } };
-      if (!(await db.betImportDraft.findFirst({ where: draftWhere, select: { id: true } }))) throw new BadRequestError('La vista previa venció. Volvé a pegar el enlace.');
+      const draft = await db.betImportDraft.findFirst({ where: draftWhere, select: { provider: true } });
+      if (!draft) throw new BadRequestError('La vista previa venció. Volvé a pegar el enlace.');
+      const checksum = createHash('sha256').update(image).digest('hex');
+      if (await db.betScreenshot.findFirst({ where: { checksum, OR: [{ draftId }, { post: { authorId: userId, provider: draft.provider } }] }, select: { id: true } })) {
+        throw new BadRequestError('Esta captura ya está en el ticket o en una apuesta que publicaste.');
+      }
       if (await db.betScreenshot.count({ where: { draftId } }) >= 3) throw new BadRequestError('Podés subir hasta 3 capturas por ticket.');
       let recognized;
-      try { recognized = await readBetScreenshot(image, mimeType); }
+      try { recognized = await readBetScreenshot(image, mimeType, draft.provider); }
       catch { recognized = { rawText: null, ocrFailed: true }; }
       const screenshot = await db.$transaction(async (tx) => {
         const validDraft = await tx.betImportDraft.findFirst({ where: draftWhere, select: { id: true } });
         if (!validDraft) throw new BadRequestError('La vista previa venció. Volvé a pegar el enlace.');
         const position = await tx.betScreenshot.count({ where: { draftId } });
         if (position >= 3) throw new BadRequestError('Podés subir hasta 3 capturas por ticket.');
-        return tx.betScreenshot.create({ data: { draftId, position, mimeType, image, ocrText: recognized.rawText || null }, select: { id: true } });
+        return tx.betScreenshot.create({ data: { draftId, position, mimeType, image, checksum, ocrText: recognized.rawText || null }, select: { id: true } });
       });
       const screenshots = await db.betScreenshot.findMany({ where: { draftId }, orderBy: { position: 'asc' }, select: { ocrText: true } });
-      return { id: screenshot.id, ...combineBetOcrTexts(screenshots.map((item) => item.ocrText)), ocrFailed: Boolean(recognized.ocrFailed) };
+      return { id: screenshot.id, ...combineBetOcrTexts(screenshots.map((item) => item.ocrText), draft.provider), ocrFailed: Boolean(recognized.ocrFailed) };
     },
 
     async image(userId, imageId, publicOnly = false) {
@@ -124,18 +134,18 @@ export function createBetCommunityService({ db = prisma, importer = createBetImp
         }
         const screenshots = await tx.betScreenshot.findMany({ where: { draftId: draft.id }, orderBy: { position: 'asc' }, select: { ocrText: true } });
         const screenshotCount = screenshots.length;
-        const recognized = combineBetOcrTexts(screenshots.map((item) => item.ocrText));
+        const recognized = combineBetOcrTexts(screenshots.map((item) => item.ocrText), draft.provider);
         if (!ticketId && !screenshotCount && (!selections || selections.length === 0)) throw new BadRequestError('Subí una captura o cargá una selección.');
         if (!ticketId && !screenshotCount && !totalOdds) throw new BadRequestError('Indicá la cuota total del ticket.');
         const normalized = ticketId ? draft.snapshot.groups.flatMap((group) => group.selections.map((selection) => ({
-          event: group.event, team: null, player: selection.player,
+          event: group.event, team: null, player: selection.player, groupOdds: group.groupOdds,
           pick: `${selection.market} ${selection.direction === 'over' ? 'más de' : 'menos de'} ${selection.line}`,
         }))) : selections?.length >= recognized.selections.length ? selections : recognized.selections;
         const post = await tx.betPost.create({ data: {
           authorId: userId, groupId: groupId || null, visibility: groupId ? 'GROUP' : 'PUBLIC', ticketId, content,
           originalUrl: draft.originalUrl, provider: draft.provider, importState: ticketId ? 'ready' : screenshotCount ? 'screenshot' : 'author_entered',
           totalOdds: ticketId ? draft.snapshot.originalOdds : totalOdds || recognized.totalOdds || null,
-          selections: { create: normalized.map((selection, position) => ({ ...selection, position, odds: selection.odds || null })) },
+          selections: { create: normalized.map((selection, position) => ({ ...selection, position, odds: selection.odds || null, groupOdds: selection.groupOdds || null })) },
         } });
         if (screenshotCount) await tx.betScreenshot.updateMany({ where: { draftId: draft.id }, data: { draftId: null, postId: post.id } });
         return post.id;
@@ -193,9 +203,7 @@ export function createBetCommunityService({ db = prisma, importer = createBetImp
     },
 
     async remove(userId, id) {
-      const result = await db.betPost.deleteMany({ where: { id, AND: [accessible(userId), { OR: [
-        { authorId: userId }, { group: { groupUsers: { some: { userId, isAdmin: true, isBanned: false } } } },
-      ] }] } });
+      const result = await db.betPost.deleteMany({ where: { id, authorId: userId, ...accessible(userId) } });
       if (!result.count) throw new ForbiddenError('No podés eliminar esta publicación.');
     },
 

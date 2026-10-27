@@ -240,6 +240,7 @@ model BetScreenshot {
   position    Int
   mimeType    String
   image       Bytes    @db.ByteA
+  checksum    String?
   ocrText     String?
   createdAt   DateTime @default(now())
   draft       BetImportDraft? @relation(fields: [draftId], references: [id], onDelete: Cascade)
@@ -247,6 +248,7 @@ model BetScreenshot {
 
   @@index([draftId, position])
   @@index([postId, position])
+  @@index([checksum])
 }
 
 model BetSelection {
@@ -258,6 +260,7 @@ model BetSelection {
   player      String?
   pick        String
   odds        Decimal? @db.Decimal(24, 12)
+  groupOdds   Decimal? @db.Decimal(24, 12)
   post        BetPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([postId, position])

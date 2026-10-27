@@ -14,7 +14,7 @@ export default function TicketDetail({ ticket, originalUrl }) {
     {ticket ? <>
       <div className="bet-ticket-summary"><div><span>{ticket.groupsCount} partidos · {ticket.selectionCount} selecciones</span><small>{ticket.betAcceptanceStatus === 'confirmed' ? 'Confirmada por la casa' : `Estado original: ${ticket.betAcceptanceStatus}`} · Resultado sin verificar</small></div><div className="bet-odds"><small>Cuota original</small><strong>{decimal(ticket.originalOdds)}</strong></div></div>
       <div className="bet-events">{ticket.groups.map((group) => <details key={group.eventId} open>
-        <summary><span>{group.event}</span><span className="bet-group-odds">{decimal(group.groupOdds)}</span></summary>
+        <summary><span>{group.event}</span>{ticket.groups.length > 1 && <span className="bet-group-odds">{decimal(group.groupOdds)}</span>}</summary>
         {group.selections.map((selection) => <div className="bet-selection" key={selection.sourceIndex}>
           <span className="bet-selection-dot" /><div><strong>{selection.player}</strong><span>{marketNames[selection.market] || selection.market}</span></div>
           <b>{selection.direction === 'over' ? 'Más de' : 'Menos de'} {decimal(selection.line)}</b>

@@ -118,6 +118,8 @@
 .bet-upload input{position:absolute;opacity:0;width:1px;height:1px}
 .bet-upload:has(input:disabled){opacity:.55;cursor:default}
 .bet-captures{margin:16px 0 20px}
+.bet-captures-toggle{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--bet-line);border-radius:9px;background:#ffffff06;color:#c6d7c6;padding:9px 12px;font-size:11px;font-weight:700;cursor:pointer}
+.bet-captures-toggle+.bet-captures-grid{margin-top:12px}
 .bet-captures-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px}
 .bet-captures-title span{color:#91a3af;font-size:11px}
 .bet-captures-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}
@@ -142,6 +144,19 @@
 .bet-manual-row span{font-size:11px;color:#a2b4bc;margin-top:3px}
 .bet-manual-row p{font-size:12px;margin:8px 0 0;color:#deecdc}
 .bet-manual-row b{font-size:11px;white-space:nowrap;color:#c9e7aa}
+.bet-ticket-toggle{display:flex;justify-content:space-between;align-items:center;gap:18px;width:100%;border:0;background:transparent;color:inherit;text-align:left;padding:17px 19px;cursor:pointer}
+.bet-ticket-toggle>div{display:flex;flex-direction:column;min-width:0;gap:5px}
+.bet-ticket-toggle strong{font-size:14px;line-height:1.35}
+.bet-ticket-toggle small{font-size:11px;color:#97aeb0}
+.bet-ticket-toggle-right{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.bet-ticket-toggle-right b{font-size:22px;color:var(--bet-accent)}
+.bet-ticket-toggle-right svg{transition:transform .2s}
+.bet-ticket-toggle-right svg.is-open{transform:rotate(180deg)}
+.bet-selection-group{border-top:1px solid var(--bet-line)}
+.bet-selection-group-title{display:flex;justify-content:space-between;gap:15px;padding:11px 19px;color:#b6c7bb;font-size:11px;background:#ffffff04}
+.bet-selection-group-title span{color:var(--bet-accent);white-space:nowrap}
+.bet-selection-group .bet-manual-row{padding:11px 19px}
+.bet-ticket>.bet-captures{padding:0 19px;margin:14px 0}
 .bet-search-main{display:flex;align-items:center;gap:8px;border:1px solid var(--bet-line);border-radius:10px;padding:6px 10px;background:#141e28;margin:0 0 18px}
 .bet-search-main input{flex:1;min-width:0;border:0;background:transparent}
 .bet-search-main button{border:0;background:transparent;color:#c9e7aa;font-size:11px;cursor:pointer}
@@ -233,6 +248,13 @@
 .bet-selection strong{font-size:10px}
 .bet-ticket-summary{padding:15px 12px}
 .bet-odds strong{font-size:23px}
+.bet-ticket-toggle{padding:14px 12px;gap:10px}
+.bet-ticket-toggle strong{font-size:12px}
+.bet-ticket-toggle-right{gap:5px}
+.bet-ticket-toggle-right small{display:none}
+.bet-ticket-toggle-right b{font-size:18px}
+.bet-selection-group-title{flex-wrap:wrap;padding:10px 12px}
+.bet-selection-group .bet-manual-row{padding:10px 12px}
 .bet-composer-footer{align-items:flex-start}
 .bet-empty{padding:32px 20px}
 .bet-section-title h2{font-size:15px}

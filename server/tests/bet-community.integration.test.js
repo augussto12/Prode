@@ -88,11 +88,12 @@ test('community end-to-end persistence and access isolation', { skip: process.en
       const publicUrl = originalUrl.replace('e3351002-10aa-43bd-812f-751e71d2f637', randomUUID());
       const draft = await offline.preview(owner.id, { sharedUrl: publicUrl });
       const publicPost = await offline.publish(owner.id, { draftId: draft.id, content: 'Para todos', totalOdds: '5.4', selections: [
-        { event: 'Warriors vs Lakers', team: 'Warriors', player: 'Stephen Curry', pick: 'Más de 3 triples', odds: '1.8' },
+        { event: 'Warriors vs Lakers', team: 'Warriors', player: 'Stephen Curry', pick: 'Más de 3 triples', odds: '1.8', groupOdds: '1.50' },
         { event: 'Celtics vs Heat', team: 'Celtics', player: 'Jayson Tatum', pick: 'Más de 20 puntos', odds: '2.2' },
       ] });
       assert.equal(publicPost.group, null);
       assert.equal(publicPost.totalOdds, '5.4');
+      assert.equal(publicPost.selections[0].groupOdds, '1.5');
       assert.equal((await offline.publicFeed()).items.some((item) => item.id === publicPost.id), true);
       const found = (await offline.publicFeed({ query: 'Warriors' })).items.find((item) => item.id === publicPost.id);
       assert.equal(found.selections.length, 1);
@@ -119,7 +120,7 @@ test('community end-to-end persistence and access isolation', { skip: process.en
       await assert.rejects(offline.preview(owner.id, { sharedUrl: captureUrl }), { statusCode: 400 });
       const privateUrl = originalUrl.replace('e3351002-10aa-43bd-812f-751e71d2f637', randomUUID());
       const privateDraft = await offline.preview(owner.id, { sharedUrl: privateUrl, groupId: group.id });
-      privateScreenshotId = (await offline.addScreenshot(owner.id, privateDraft.id, image, 'image/png')).id;
+      privateScreenshotId = (await offline.addScreenshot(owner.id, privateDraft.id, Buffer.concat([image, Buffer.from([1])]), 'image/png')).id;
       await offline.publish(owner.id, { draftId: privateDraft.id, groupId: group.id, content: 'Captura del grupo' });
       await assert.rejects(offline.image(-1, privateScreenshotId, true), { statusCode: 404 });
       await assert.rejects(offline.image(outsider.id, privateScreenshotId), { statusCode: 404 });
@@ -165,6 +166,7 @@ test('community end-to-end persistence and access isolation', { skip: process.en
       assert.equal((await fetch(`${base}/public/images/${privateScreenshotId}`)).status, 404);
       const headers = { Authorization: `Bearer ${generateToken(owner)}`, 'Content-Type': 'application/json' };
       assert.equal((await fetch(`${base}/posts`, { headers })).status, 200);
+      assert.equal((await fetch(`${base}/imports`, { headers, method: 'POST', body: JSON.stringify({ provider: 'bet365' }) })).status, 201);
       assert.equal((await fetch(`${base}/imports`, { headers, method: 'POST', body: JSON.stringify({ sharedUrl: originalUrl }) })).status, 400);
       assert.equal((await fetch(`${base}/posts`, { headers, method: 'POST', body: JSON.stringify({ draftId: randomUUID(), groupId: group.id, content: '', ticket: { amount: 999 } }) })).status, 400);
       assert.equal((await fetch(`${base}/posts/${post.id}`, { headers: { Authorization: `Bearer ${generateToken(outsider)}` } })).status, 404);
@@ -174,6 +176,20 @@ test('community end-to-end persistence and access isolation', { skip: process.en
       await offline.remove(owner.id, post.id);
       assert.equal(await prisma.savedBetPost.count({ where: { postId: post.id } }), 0);
       await assert.rejects(offline.get(owner.id, post.id), { statusCode: 404 });
+    });
+    await t.test('Betano screenshots need no link and even a group admin cannot delete another author’s bet', async () => {
+      const draft = await offline.preview(friend.id, { provider: 'betano', groupId: group.id });
+      assert.match(draft.originalUrl, /^capture:/);
+      const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLytQAAAABJRU5ErkJggg==', 'base64');
+      await offline.addScreenshot(friend.id, draft.id, image, 'image/png');
+      const bet = await offline.publish(friend.id, { draftId: draft.id, groupId: group.id, content: '' });
+      assert.equal(bet.provider, 'betano');
+      assert.equal(bet.canDelete, true);
+      assert.equal((await offline.get(owner.id, bet.id)).canDelete, false);
+      await assert.rejects(offline.remove(owner.id, bet.id), { statusCode: 403 });
+      const duplicateDraft = await offline.preview(friend.id, { provider: 'betano', groupId: group.id });
+      await assert.rejects(offline.addScreenshot(friend.id, duplicateDraft.id, image, 'image/png'), { statusCode: 400 });
+      await offline.remove(friend.id, bet.id);
     });
   } finally {
     if (server) await new Promise((resolve) => server.close(resolve));
