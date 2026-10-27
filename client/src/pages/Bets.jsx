@@ -5,6 +5,7 @@ import useAuthStore from '../store/authStore';
 import api, { getApiErrorMessage } from '../services/api';
 import BetComposer from '../components/bets/BetComposer';
 import BetPost from '../components/bets/BetPost';
+import { readShareInbox, SHARE_CACHE } from '../components/bets/shareInbox';
 import HomeSwitch from '../components/bets/HomeSwitch';
 import './bets.css';
 
@@ -19,11 +20,32 @@ export default function Bets({ home = false, groupId: fixedGroupId }) {
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [composer, setComposer] = useState(false);
+  const [sharedPayload, setSharedPayload] = useState(null);
+  const [shareMessage, setShareMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refresh, setRefresh] = useState(0);
   const requestId = useRef(0);
   const groupId = fixedGroupId ? Number(fixedGroupId) : undefined;
+
+  useEffect(() => {
+    if (params.get('sharedError')) {
+      setShareMessage('No pudimos recibir lo que compartiste. Probá de nuevo o pegá el enlace.');
+      setParams((current) => { const next = new URLSearchParams(current); next.delete('sharedError'); return next; }, { replace: true });
+    }
+  }, [params, setParams]);
+  useEffect(() => {
+    if (!user || fixedGroupId || sharedPayload) return;
+    let active = true;
+    readShareInbox().then((payload) => {
+      if (!active || !payload) return;
+      setSharedPayload(payload);
+      setComposer(true);
+      setShareMessage('');
+      if (params.has('shared')) setParams((current) => { const next = new URLSearchParams(current); next.delete('shared'); return next; }, { replace: true });
+    }).catch((err) => { if (active) setShareMessage(err.message); });
+    return () => { active = false; };
+  }, [user, fixedGroupId, sharedPayload, params, setParams]);
 
   useEffect(() => {
     if (!user) return;
@@ -50,7 +72,9 @@ export default function Bets({ home = false, groupId: fixedGroupId }) {
     {!fixedGroupId && <HomeSwitch active="bets" />}
     {!fixedGroupId && <section className="bet-hero bet-home-hero"><div className="bet-hero-copy"><span className="bet-eyebrow"><span className="bet-live-dot" /> APUESTAS ENTRE AMIGOS</span><h1>{home ? <>Las apuestas<br /><em>están acá.</em></> : <>Apuestas<br /><em>compartidas.</em></>}</h1><p>Encontrá qué jugaron, quién lo publicó, el partido, cada selección y las cuotas. Buscá por equipo o jugador.</p><div className="bet-actions">{user ? <button className="bet-button" onClick={() => setComposer(true)}><CirclePlus size={18} /> Subir apuesta</button> : <Link className="bet-button" to="/register"><CirclePlus size={18} /> Crear cuenta para publicar</Link>}<Link className="bet-button bet-button-quiet" to="/groups"><Users size={17} /> Grupos</Link></div></div><div className="bet-home-aside"><span className="bet-eyebrow">EN EL INICIO</span><strong>Partido.<br />Selección.<br /><span>Cuota.</span></strong><span className="bet-hero-note">Buscá Warriors, Curry o cualquier equipo y jugador.</span></div></section>}
     <div className="bet-layout"><div className="bet-feed-column">
-      {user && (composer ? <BetComposer groups={fixedGroupId ? groups.filter((group) => group.id === groupId) : groups} fixedGroupId={fixedGroupId} onClose={() => setComposer(false)} onPublished={(post) => { setComposer(false); setMode('all'); setScope(post.group ? 'groups' : 'public'); setSearch(''); setQuery(''); setRefresh((value) => value + 1); }} /> : <button className="bet-composer-prompt bet-panel" onClick={() => setComposer(true)}><span className="bet-avatar">{(user.displayName || user.username).slice(0, 1)}</span><span>¿Qué apuesta querés compartir?</span><span className="bet-prompt-link"><CirclePlus size={17} /> Subir</span></button>)}
+      {shareMessage && <p className="bet-notice" role="status">{shareMessage}</p>}
+      {!user && params.has('shared') && <p className="bet-notice">Ingresá a tu cuenta para publicar lo que compartiste. <Link to="/login">Ingresar</Link></p>}
+      {user && (composer ? <BetComposer key={sharedPayload?.receivedAt || 'manual'} groups={fixedGroupId ? groups.filter((group) => group.id === groupId) : groups} fixedGroupId={fixedGroupId} initialShare={sharedPayload} onClose={() => { setComposer(false); setSharedPayload(null); if (sharedPayload) caches.delete(SHARE_CACHE); }} onPublished={(post) => { if (sharedPayload) caches.delete(SHARE_CACHE); setSharedPayload(null); setComposer(false); setMode('all'); setScope(post.group ? 'groups' : 'public'); setSearch(''); setQuery(''); setRefresh((value) => value + 1); }} /> : <button className="bet-composer-prompt bet-panel" onClick={() => setComposer(true)}><span className="bet-avatar">{(user.displayName || user.username).slice(0, 1)}</span><span>¿Qué apuesta querés compartir?</span><span className="bet-prompt-link"><CirclePlus size={17} /> Subir</span></button>)}
       <div className="bet-feed-toolbar"><div className="bet-feed-tabs" role="group" aria-label="Filtrar apuestas">{!fixedGroupId && <button className={scope === 'public' && mode === 'all' ? 'is-active' : ''} onClick={() => { setScope('public'); changeMode('all'); }}>Para todos</button>}{user && <>{!fixedGroupId && <button className={scope === 'groups' && mode === 'all' ? 'is-active' : ''} onClick={() => { setScope('groups'); changeMode('all'); }}>Mis grupos</button>}<button className={mode === 'mine' ? 'is-active' : ''} onClick={() => { setScope('all'); changeMode('mine'); }}><Ticket size={16} /> Mis apuestas</button><button className={mode === 'saved' ? 'is-active' : ''} onClick={() => { setScope('all'); changeMode('saved'); }}><Bookmark size={16} /> Guardadas</button></>}</div><button className="bet-icon-button" aria-label="Actualizar" onClick={() => setRefresh((value) => value + 1)}><RefreshCw size={16} /></button></div>
       <form className="bet-search bet-search-main" onSubmit={(event) => { event.preventDefault(); setQuery(search.trim()); }}><Search size={17} /><input aria-label="Buscar equipo, jugador o partido" placeholder="Equipo, jugador o partido…" maxLength={100} value={search} onChange={(event) => setSearch(event.target.value)} /><button type="submit">Buscar</button>{query && <button type="button" onClick={() => { setSearch(''); setQuery(''); }}>Limpiar</button>}</form>
       {query && <p className="bet-muted">Mostrando las selecciones que coinciden con “{query}” y la cuota total de cada ticket.</p>}

@@ -16,6 +16,7 @@ export default defineConfig({
       injectRegister: 'auto',
       devOptions: { enabled: false },
       workbox: {
+        importScripts: ['/share-target-sw.js'],
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
@@ -37,6 +38,17 @@ export default defineConfig({
         orientation: 'portrait',
         start_url: '/',
         scope: '/',
+        share_target: {
+          action: '/share-target',
+          method: 'POST',
+          enctype: 'multipart/form-data',
+          params: {
+            title: 'title',
+            text: 'text',
+            url: 'url',
+            files: [{ name: 'images', accept: ['image/jpeg', 'image/png', 'image/webp', '.jpg', '.jpeg', '.png', '.webp'] }],
+          },
+        },
         icons: [
           {
             src: '/icon-512.png?v=2026-6',

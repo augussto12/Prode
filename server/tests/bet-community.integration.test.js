@@ -103,6 +103,20 @@ test('community end-to-end persistence and access isolation', { skip: process.en
       assert.equal((await offline.publicFeed({ query: 'Bulls' })).items.some((item) => item.id === publicPost.id), false);
       await assert.rejects(offline.preview(owner.id, { sharedUrl: publicUrl }), { statusCode: 400 });
     });
+    await t.test('Bet365 and Betano shared links publish once without inventing selections', async () => {
+      for (const [provider, host] of [['bet365', 'www.bet365.com'], ['betano', 'www.betano.com']]) {
+        const url = `https://${host}/share/${randomUUID()}`;
+        await assert.rejects(offline.preview(owner.id, { provider, sharedUrl: `https://${host}.evil.test/share/1` }), { statusCode: 400 });
+        await assert.rejects(offline.preview(owner.id, { provider, sharedUrl: `http://${host}/share/1` }), { statusCode: 400 });
+        const draft = await offline.preview(owner.id, { provider, sharedUrl: url });
+        const bet = await offline.publish(owner.id, { draftId: draft.id, content: '' });
+        assert.equal(bet.importState, 'link_only');
+        assert.equal(bet.originalUrl, url);
+        assert.deepEqual(bet.selections, []);
+        assert.equal(bet.totalOdds, null);
+        await assert.rejects(offline.preview(owner.id, { provider, sharedUrl: url }), { statusCode: 400 });
+      }
+    });
     await t.test('a capture can be published without a required selection or odds', async () => {
       const captureUrl = originalUrl.replace('e3351002-10aa-43bd-812f-751e71d2f637', randomUUID());
       const draft = await offline.preview(owner.id, { sharedUrl: captureUrl });

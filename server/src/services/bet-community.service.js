@@ -47,6 +47,21 @@ async function requirePost(db, userId, id) {
   return post;
 }
 
+function parseOtherBookmakerUrl(value, provider) {
+  let url;
+  try { url = new URL(value); } catch { throw new BadRequestError('Pegá un enlace válido de la casa de apuestas.'); }
+  const host = url.hostname.toLowerCase();
+  const allowed = provider === 'bet365'
+    ? ['bet365.com', 'bet365.bet.ar']
+    : provider === 'betano' ? ['betano.com', 'betano.bet.ar', 'betano.com.ar'] : [];
+  if (url.protocol !== 'https:' || url.username || url.password || url.port || !allowed.some((domain) => host === domain || host.endsWith(`.${domain}`))) {
+    throw new BadRequestError('El enlace debe ser HTTPS y pertenecer a la casa de apuestas elegida.');
+  }
+  if (value.length > 2048) throw new BadRequestError('El enlace es demasiado largo.');
+  url.hash = '';
+  return url.toString();
+}
+
 // Factory allows contract/integration tests with a recorded importer, never exposed
 // as an HTTP parameter. Production uses only the real importer and explicit flag.
 export function createBetCommunityService({ db = prisma, importer = createBetImportService(), importEnabled = () => process.env.STAKE_PBA_IMPORT_ENABLED === 'true' } = {}) {
@@ -55,8 +70,7 @@ export function createBetCommunityService({ db = prisma, importer = createBetImp
       if (groupId) await requireMember(db, userId, groupId);
       let originalUrl = `capture:${randomUUID()}`;
       if (sharedUrl?.trim()) {
-        if (provider !== 'stake_pba') throw new BadRequestError('Para Bet365 y Betano subí capturas; no hace falta un enlace.');
-        try { originalUrl = parseStakeUrl(sharedUrl).originalUrl; }
+        try { originalUrl = provider === 'stake_pba' ? parseStakeUrl(sharedUrl).originalUrl : parseOtherBookmakerUrl(sharedUrl, provider); }
         catch (error) {
           if (error instanceof BetImportError) throw new BadRequestError(error.message);
           throw error;
@@ -78,7 +92,7 @@ export function createBetCommunityService({ db = prisma, importer = createBetImp
       } });
       return { id: draft.id, state: draft.state, provider, originalUrl: draft.originalUrl, ticket: ready ? result.ticket : null,
         expiresAt: draft.expiresAt,
-        message: ready ? 'Ticket importado. Revisalo antes de publicar.' : 'Subí las capturas para leer el ticket.',
+        message: ready ? 'Ticket importado. Revisalo antes de publicar.' : 'Subí las capturas para leer el ticket o publicá el enlace.',
       };
     },
 
@@ -135,15 +149,16 @@ export function createBetCommunityService({ db = prisma, importer = createBetImp
         const screenshots = await tx.betScreenshot.findMany({ where: { draftId: draft.id }, orderBy: { position: 'asc' }, select: { ocrText: true } });
         const screenshotCount = screenshots.length;
         const recognized = combineBetOcrTexts(screenshots.map((item) => item.ocrText), draft.provider);
-        if (!ticketId && !screenshotCount && (!selections || selections.length === 0)) throw new BadRequestError('Subí una captura o cargá una selección.');
-        if (!ticketId && !screenshotCount && !totalOdds) throw new BadRequestError('Indicá la cuota total del ticket.');
+        const linkOnly = !ticketId && !screenshotCount && (!selections || selections.length === 0) && draft.originalUrl.startsWith('https://');
+        if (!ticketId && !screenshotCount && !linkOnly && (!selections || selections.length === 0)) throw new BadRequestError('Subí una captura o cargá una selección.');
+        if (!ticketId && !screenshotCount && !linkOnly && !totalOdds) throw new BadRequestError('Indicá la cuota total del ticket.');
         const normalized = ticketId ? draft.snapshot.groups.flatMap((group) => group.selections.map((selection) => ({
           event: group.event, team: null, player: selection.player, groupOdds: group.groupOdds,
           pick: `${selection.market} ${selection.direction === 'over' ? 'más de' : 'menos de'} ${selection.line}`,
         }))) : selections?.length >= recognized.selections.length ? selections : recognized.selections;
         const post = await tx.betPost.create({ data: {
           authorId: userId, groupId: groupId || null, visibility: groupId ? 'GROUP' : 'PUBLIC', ticketId, content,
-          originalUrl: draft.originalUrl, provider: draft.provider, importState: ticketId ? 'ready' : screenshotCount ? 'screenshot' : 'author_entered',
+          originalUrl: draft.originalUrl, provider: draft.provider, importState: ticketId ? 'ready' : screenshotCount ? 'screenshot' : linkOnly ? 'link_only' : 'author_entered',
           totalOdds: ticketId ? draft.snapshot.originalOdds : totalOdds || recognized.totalOdds || null,
           selections: { create: normalized.map((selection, position) => ({ ...selection, position, odds: selection.odds || null, groupOdds: selection.groupOdds || null })) },
         } });
