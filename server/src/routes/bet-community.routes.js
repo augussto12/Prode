@@ -67,6 +67,7 @@ router.param('postId', (req, res, next, value) => { try { parse(id, value); next
 router.get('/posts/:postId', action(async (req, res) => res.json(await service.get(req.user.id, req.params.postId))));
 router.patch('/posts/:postId', action(async (req, res) => res.json(await service.edit(req.user.id, req.params.postId, parse(z.object({ content }).strict(), req.body).content))));
 router.delete('/posts/:postId', action(async (req, res) => { await service.remove(req.user.id, req.params.postId); res.sendStatus(204); }));
+router.post('/posts/:postId/link-open', action(async (req, res) => { await service.openLink(req.user.id, req.params.postId); res.sendStatus(204); }));
 router.get('/posts/:postId/comments', action(async (req, res) => res.json(await service.comments(req.user.id, req.params.postId, parse(z.object({ after: positive.optional() }).strict(), req.query).after))));
 router.post('/posts/:postId/comments', action(async (req, res) => res.status(201).json(await service.comment(req.user.id, req.params.postId, parse(z.object({ content: content.min(1).max(1000) }).strict(), req.body).content))));
 router.delete('/posts/:postId/comments/:commentId', action(async (req, res) => { await service.deleteComment(req.user.id, req.params.postId, parse(positive, req.params.commentId)); res.sendStatus(204); }));

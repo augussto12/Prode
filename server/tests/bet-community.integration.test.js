@@ -71,6 +71,16 @@ test('community end-to-end persistence and access isolation', { skip: process.en
       await offline.deleteComment(friend.id, post.id, comment.id);
       assert.equal((await offline.comments(owner.id, post.id)).items.length, 0);
     });
+    await t.test('link opens count each signed-in visitor once and are visible only to the author', async () => {
+      assert.equal((await offline.get(owner.id, post.id)).linkOpenCount, 0);
+      await offline.openLink(friend.id, post.id);
+      await offline.openLink(friend.id, post.id);
+      await offline.openLink(owner.id, post.id);
+      assert.equal((await offline.get(owner.id, post.id)).linkOpenCount, 1);
+      assert.equal((await offline.get(friend.id, post.id)).linkOpenCount, undefined);
+      await assert.rejects(offline.openLink(outsider.id, post.id), { statusCode: 404 });
+      assert.equal((await offline.get(owner.id, post.id)).linkOpenCount, 1);
+    });
     await t.test('reports are visible only to group admins', async () => {
       await offline.report(friend.id, post.id, 'Revisar contenido de prueba');
       await assert.rejects(offline.reports(friend.id, post.id), { statusCode: 403 });

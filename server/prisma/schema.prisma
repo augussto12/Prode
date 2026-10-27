@@ -54,6 +54,7 @@ model User {
   betPosts          BetPost[]
   betComments       BetComment[]
   betReactions      BetReaction[]
+  betLinkOpens      BetLinkOpen[]
   savedBetPosts     SavedBetPost[]
   betReports        BetReport[]
   dreamTeams        DreamTeam[]
@@ -224,6 +225,7 @@ model BetPost {
   screenshots   BetScreenshot[]
   comments      BetComment[]
   reactions     BetReaction[]
+  linkOpens     BetLinkOpen[]
   saves         SavedBetPost[]
   reports       BetReport[]
 
@@ -288,6 +290,17 @@ model BetReaction {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([postId, userId])
+}
+
+model BetLinkOpen {
+  postId        String
+  userId        Int
+  createdAt     DateTime @default(now())
+  post          BetPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([userId])
 }
 
 model SavedBetPost {

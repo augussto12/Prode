@@ -56,7 +56,7 @@ export default function BetPost({ post, userId, filterQuery, onChange, onDelete 
       </button>
       {(expanded || filterQuery) && <>
         {groups.map((group) => <section className="bet-selection-group" key={group.key}><div className="bet-selection-group-title"><strong>{group.event || 'Partido no visible'}</strong>{group.odds && (groups.length > 1 || Number(group.odds) !== Number(post.totalOdds)) && <span>Cuota del partido {odds(group.odds)}</span>}</div>{group.selections.map((selection, index) => <div className="bet-manual-row" key={`${group.key}-${index}`}><div><strong>{selection.player || selection.event}</strong><p>{selection.pick}</p></div>{selection.odds && <b>Cuota {odds(selection.odds)}</b>}</div>)}</section>)}
-        {post.originalUrl?.startsWith('https://') && <a className="bet-external" href={post.originalUrl} target="_blank" rel="noopener noreferrer">Ver enlace original ↗</a>}
+        {post.originalUrl?.startsWith('https://') && <div className="bet-original-link"><a className="bet-external" href={post.originalUrl} target="_blank" rel="noopener noreferrer" onClick={() => { if (userId && userId !== post.author.id) api.post(`/community/posts/${post.id}/link-open`).catch(() => {}); }}>Hacer apuesta ↗</a>{post.canEdit && <small>{post.linkOpenCount || 0} {post.linkOpenCount === 1 ? 'usuario registrado abrió' : 'usuarios registrados abrieron'} el enlace</small>}</div>}
       </>}
       {(expanded || filterQuery) && <BetCaptureGallery images={(post.screenshots || []).map((id) => ({ id, src: post.group ? `/api/community/images/${id}` : `/api/community/public/images/${id}` }))} />}
     </div>

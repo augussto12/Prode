@@ -13,7 +13,7 @@ const postInclude = (userId) => ({
   ticket: { select: { snapshot: true } },
   selections: { orderBy: { position: 'asc' }, select: { event: true, team: true, player: true, pick: true, odds: true, groupOdds: true } },
   screenshots: { orderBy: { position: 'asc' }, select: { id: true } },
-  _count: { select: { comments: true, reactions: true, reports: true } },
+  _count: { select: { comments: true, reactions: true, reports: true, linkOpens: true } },
   reactions: { where: { userId }, select: { userId: true } },
   saves: { where: { userId }, select: { userId: true } },
 });
@@ -29,6 +29,7 @@ function present(post, userId) {
     screenshots: post.screenshots.map((screenshot) => screenshot.id),
     ticket: post.ticket?.snapshot || null,
     commentCount: post._count.comments, reactionCount: post._count.reactions,
+    linkOpenCount: post.authorId === userId ? post._count.linkOpens : undefined,
     reportCount: admin ? post._count.reports : undefined,
     reacted: post.reactions.length > 0, saved: post.saves.length > 0,
     canEdit: post.authorId === userId, canDelete: post.authorId === userId,
@@ -253,6 +254,14 @@ export function createBetCommunityService({ db = prisma, importer = createBetImp
         else await table.deleteMany({ where: { postId, userId } });
       });
       return this.get(userId, postId);
+    },
+
+    async openLink(userId, postId) {
+      const post = await requirePost(db, userId, postId);
+      if (!post.originalUrl.startsWith('https://')) throw new BadRequestError('Este ticket no tiene un enlace original.');
+      if (post.authorId !== userId) {
+        await db.betLinkOpen.upsert({ where: { postId_userId: { postId, userId } }, create: { postId, userId }, update: {} });
+      }
     },
 
     async report(userId, postId, reason) {
