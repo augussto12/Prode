@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { authenticate } from '../middleware/auth.js';
 import service from '../services/bet-community.service.js';
 import { BadRequestError, ForbiddenError } from '../utils/errors.js';
+import { ANONYMOUS_BET_COOKIE, anonymousBetVisitor } from '../utils/anonymous-bet-visitor.js';
 
 const router = Router();
 const id = z.string().uuid();
@@ -28,6 +29,20 @@ router.get('/public', action(async (req, res) => {
 router.get('/public/images/:imageId', action(async (req, res) => {
   const image = await service.image(-1, parse(id, req.params.imageId), true);
   res.type(image.mimeType).send(Buffer.from(image.image));
+}));
+const anonymousOpenLimit = rateLimit({ windowMs: 60000, limit: 20, standardHeaders: true, legacyHeaders: false });
+router.post('/public/posts/:postId/link-open', anonymousOpenLimit, action(async (req, res) => {
+  const allowedOrigins = [process.env.FRONTEND_URL?.replace(/\/$/, ''),
+    ...(process.env.NODE_ENV === 'production' ? [] : ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000'])];
+  if (!req.headers.origin || !allowedOrigins.includes(req.headers.origin)) throw new ForbiddenError('Origen de solicitud no permitido.');
+  const postId = parse(id, req.params.postId);
+  const visitor = anonymousBetVisitor(req.cookies?.[ANONYMOUS_BET_COOKIE], process.env.JWT_SECRET);
+  await service.openAnonymousLink(postId, visitor.visitorKey);
+  if (visitor.fresh) res.cookie(ANONYMOUS_BET_COOKIE, visitor.cookie, {
+    httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax',
+    path: '/api/community/public/posts', maxAge: 365 * 24 * 60 * 60 * 1000,
+  });
+  res.sendStatus(204);
 }));
 router.use(authenticate);
 // Cookie-authenticated writes must originate in our frontend; requests without an

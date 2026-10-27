@@ -13,7 +13,7 @@ const postInclude = (userId) => ({
   ticket: { select: { snapshot: true } },
   selections: { orderBy: { position: 'asc' }, select: { event: true, team: true, player: true, pick: true, odds: true, groupOdds: true } },
   screenshots: { orderBy: { position: 'asc' }, select: { id: true } },
-  _count: { select: { comments: true, reactions: true, reports: true, linkOpens: true } },
+  _count: { select: { comments: true, reactions: true, reports: true, linkOpens: true, anonymousLinkOpens: true } },
   reactions: { where: { userId }, select: { userId: true } },
   saves: { where: { userId }, select: { userId: true } },
 });
@@ -30,6 +30,7 @@ function present(post, userId) {
     ticket: post.ticket?.snapshot || null,
     commentCount: post._count.comments, reactionCount: post._count.reactions,
     linkOpenCount: post.authorId === userId ? post._count.linkOpens : undefined,
+    anonymousLinkOpenCount: post.authorId === userId ? post._count.anonymousLinkOpens : undefined,
     reportCount: admin ? post._count.reports : undefined,
     reacted: post.reactions.length > 0, saved: post.saves.length > 0,
     canEdit: post.authorId === userId, canDelete: post.authorId === userId,
@@ -262,6 +263,13 @@ export function createBetCommunityService({ db = prisma, importer = createBetImp
       if (post.authorId !== userId) {
         await db.betLinkOpen.upsert({ where: { postId_userId: { postId, userId } }, create: { postId, userId }, update: {} });
       }
+    },
+
+    async openAnonymousLink(postId, visitorKey) {
+      const post = await db.betPost.findFirst({ where: { id: postId, visibility: 'PUBLIC' }, select: { id: true, originalUrl: true } });
+      if (!post) throw new NotFoundError('La publicación no está disponible.');
+      if (!post.originalUrl.startsWith('https://')) throw new BadRequestError('Este ticket no tiene un enlace original.');
+      await db.betAnonymousLinkOpen.upsert({ where: { postId_visitorKey: { postId, visitorKey } }, create: { postId, visitorKey }, update: {} });
     },
 
     async report(userId, postId, reason) {

@@ -226,6 +226,7 @@ model BetPost {
   comments      BetComment[]
   reactions     BetReaction[]
   linkOpens     BetLinkOpen[]
+  anonymousLinkOpens BetAnonymousLinkOpen[]
   saves         SavedBetPost[]
   reports       BetReport[]
 
@@ -301,6 +302,15 @@ model BetLinkOpen {
 
   @@id([postId, userId])
   @@index([userId])
+}
+
+model BetAnonymousLinkOpen {
+  postId        String
+  visitorKey    String
+  createdAt     DateTime @default(now())
+  post          BetPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([postId, visitorKey])
 }
 
 model SavedBetPost {

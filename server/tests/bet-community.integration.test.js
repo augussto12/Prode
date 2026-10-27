@@ -79,6 +79,7 @@ test('community end-to-end persistence and access isolation', { skip: process.en
       assert.equal((await offline.get(owner.id, post.id)).linkOpenCount, 1);
       assert.equal((await offline.get(friend.id, post.id)).linkOpenCount, undefined);
       await assert.rejects(offline.openLink(outsider.id, post.id), { statusCode: 404 });
+      await assert.rejects(offline.openAnonymousLink(post.id, randomUUID()), { statusCode: 404 });
       assert.equal((await offline.get(owner.id, post.id)).linkOpenCount, 1);
     });
     await t.test('reports are visible only to group admins', async () => {
@@ -111,6 +112,11 @@ test('community end-to-end persistence and access isolation', { skip: process.en
       assert.equal(found.totalOdds, '5.4');
       assert.equal((await offline.publicFeed({ query: 'Tatum' })).items.some((item) => item.id === publicPost.id), true);
       assert.equal((await offline.publicFeed({ query: 'Bulls' })).items.some((item) => item.id === publicPost.id), false);
+      const anonymousVisitor = randomUUID();
+      await offline.openAnonymousLink(publicPost.id, anonymousVisitor);
+      await offline.openAnonymousLink(publicPost.id, anonymousVisitor);
+      assert.equal((await offline.get(owner.id, publicPost.id)).anonymousLinkOpenCount, 1);
+      assert.equal((await offline.publicFeed()).items.find((item) => item.id === publicPost.id).anonymousLinkOpenCount, undefined);
       await assert.rejects(offline.preview(owner.id, { sharedUrl: publicUrl }), { statusCode: 400 });
     });
     await t.test('Bet365 and Betano shared links publish once without inventing selections', async () => {
@@ -194,6 +200,16 @@ test('community end-to-end persistence and access isolation', { skip: process.en
       assert.equal((await fetch(`${base}/imports`, { headers, method: 'POST', body: JSON.stringify({ sharedUrl: originalUrl }) })).status, 400);
       assert.equal((await fetch(`${base}/posts`, { headers, method: 'POST', body: JSON.stringify({ draftId: randomUUID(), groupId: group.id, content: '', ticket: { amount: 999 } }) })).status, 400);
       assert.equal((await fetch(`${base}/posts/${post.id}`, { headers: { Authorization: `Bearer ${generateToken(outsider)}` } })).status, 404);
+      const publicBet = publicItems.find((item) => item.author.id === owner.id && item.visibility === 'PUBLIC');
+      const anonymousPath = `${base}/public/posts/${publicBet.id}/link-open`;
+      assert.equal((await fetch(anonymousPath, { method: 'POST' })).status, 403);
+      const firstOpen = await fetch(anonymousPath, { method: 'POST', headers: { Origin: 'http://localhost:5173' } });
+      assert.equal(firstOpen.status, 204);
+      const visitorCookie = firstOpen.headers.get('set-cookie').split(';')[0];
+      assert.match(visitorCookie, /^prode_anonymous_bet_visitor=/);
+      assert.equal((await fetch(anonymousPath, { method: 'POST', headers: { Origin: 'http://localhost:5173', Cookie: visitorCookie } })).status, 204);
+      assert.equal((await offline.get(owner.id, publicBet.id)).anonymousLinkOpenCount, 2);
+      assert.equal((await fetch(`${base}/public/posts/${post.id}/link-open`, { method: 'POST', headers: { Origin: 'http://localhost:5173', Cookie: visitorCookie } })).status, 404);
     });
     await t.test('author deletes own post and related records are removed', async () => {
       await assert.rejects(offline.remove(friend.id, post.id), { statusCode: 403 });
