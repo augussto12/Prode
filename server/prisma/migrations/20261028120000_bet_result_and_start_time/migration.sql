@@ -1,0 +1,3 @@
+ALTER TABLE "BetPost" ADD COLUMN "result" TEXT;
+ALTER TABLE "BetPost" ADD COLUMN "settledAt" TIMESTAMP(3);
+ALTER TABLE "BetSelection" ADD COLUMN "startsAt" TEXT;

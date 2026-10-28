@@ -10,8 +10,9 @@ export function providerForUrl(value) {
   try {
     const host = new URL(value).hostname.toLowerCase();
     if (host === 'pba.stake.bet.ar') return 'stake_pba';
-    if (host === 'bet365.com' || host.endsWith('.bet365.com')) return 'bet365';
-    if (host === 'betano.com' || host.endsWith('.betano.com')) return 'betano';
+    const is = (domains) => domains.some((domain) => host === domain || host.endsWith(`.${domain}`));
+    if (is(['bet365.com', 'bet365.bet.ar'])) return 'bet365';
+    if (is(['betano.com', 'betano.bet.ar', 'betano.com.ar'])) return 'betano';
   } catch { /* The backend provides the final URL validation. */ }
   return null;
 }

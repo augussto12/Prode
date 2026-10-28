@@ -216,6 +216,8 @@ model BetPost {
   importState   String
   visibility    String   @default("GROUP")
   totalOdds     Decimal? @db.Decimal(24, 12)
+  result        String?
+  settledAt     DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
@@ -262,6 +264,7 @@ model BetSelection {
   team        String?
   player      String?
   pick        String
+  startsAt    String?
   odds        Decimal? @db.Decimal(24, 12)
   groupOdds   Decimal? @db.Decimal(24, 12)
   post        BetPost  @relation(fields: [postId], references: [id], onDelete: Cascade)

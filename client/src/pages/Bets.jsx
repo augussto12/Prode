@@ -15,6 +15,7 @@ export default function Bets({ home = false, groupId: fixedGroupId }) {
   const [groups, setGroups] = useState([]);
   const [items, setItems] = useState([]);
   const [nextCursor, setNextCursor] = useState(null);
+  const [status, setStatus] = useState('all');
   const [mode, setMode] = useState(params.get('view') === 'saved' ? 'saved' : params.get('view') === 'mine' ? 'mine' : 'all');
   const [scope, setScope] = useState(fixedGroupId ? 'groups' : 'public');
   const [search, setSearch] = useState('');
@@ -57,13 +58,13 @@ export default function Bets({ home = false, groupId: fixedGroupId }) {
     const current = ++requestId.current;
     setLoading(true); setError(''); setItems([]); setNextCursor(null);
     const path = user ? '/community/posts' : '/community/public';
-    const options = { params: user ? { groupId, scope, mode, query } : { query } };
+    const options = { params: user ? { groupId, scope, mode, query, status } : { query } };
     api.get(path, options).then(({ data }) => { if (current === requestId.current) { setItems(data.items); setNextCursor(data.nextCursor); } }).catch((err) => { if (current === requestId.current) setError(getApiErrorMessage(err)); }).finally(() => { if (current === requestId.current) setLoading(false); });
     return () => { if (requestId.current === current) requestId.current = current + 1; };
-  }, [user, groupId, scope, mode, query, refresh]);
+  }, [user, groupId, scope, mode, query, status, refresh]);
   async function more() {
     setLoading(true); setError('');
-    try { const { data } = await api.get(user ? '/community/posts' : '/community/public', { params: user ? { groupId, scope, mode, query, before: nextCursor } : { query, before: nextCursor } }); setItems((old) => [...old, ...data.items]); setNextCursor(data.nextCursor); }
+    try { const { data } = await api.get(user ? '/community/posts' : '/community/public', { params: user ? { groupId, scope, mode, query, status, before: nextCursor } : { query, before: nextCursor } }); setItems((old) => [...old, ...data.items]); setNextCursor(data.nextCursor); }
     catch (err) { setError(getApiErrorMessage(err)); } finally { setLoading(false); }
   }
   function changeMode(value) { setMode(value); if (!fixedGroupId) setParams(value === 'all' ? {} : { view: value }, { replace: true }); }
@@ -75,7 +76,7 @@ export default function Bets({ home = false, groupId: fixedGroupId }) {
       {shareMessage && <p className="bet-notice" role="status">{shareMessage}</p>}
       {!user && params.has('shared') && <p className="bet-notice">Ingresá a tu cuenta para publicar lo que compartiste. <Link to="/login">Ingresar</Link></p>}
       {user && (composer ? <BetComposer key={sharedPayload?.receivedAt || 'manual'} groups={fixedGroupId ? groups.filter((group) => group.id === groupId) : groups} fixedGroupId={fixedGroupId} initialShare={sharedPayload} onClose={() => { setComposer(false); setSharedPayload(null); if (sharedPayload) caches.delete(SHARE_CACHE); }} onPublished={(post) => { if (sharedPayload) caches.delete(SHARE_CACHE); setSharedPayload(null); setComposer(false); setMode('all'); setScope(post.group ? 'groups' : 'public'); setSearch(''); setQuery(''); setRefresh((value) => value + 1); }} /> : <button className="bet-composer-prompt bet-panel" onClick={() => setComposer(true)}><span className="bet-avatar">{(user.displayName || user.username).slice(0, 1)}</span><span>¿Qué apuesta querés compartir?</span><span className="bet-prompt-link"><CirclePlus size={17} /> Subir</span></button>)}
-      <div className="bet-feed-toolbar"><div className="bet-feed-tabs" role="group" aria-label="Filtrar apuestas">{!fixedGroupId && <button className={scope === 'public' && mode === 'all' ? 'is-active' : ''} onClick={() => { setScope('public'); changeMode('all'); }}>Para todos</button>}{user && <>{!fixedGroupId && <button className={scope === 'groups' && mode === 'all' ? 'is-active' : ''} onClick={() => { setScope('groups'); changeMode('all'); }}>Mis grupos</button>}<button className={mode === 'mine' ? 'is-active' : ''} onClick={() => { setScope('all'); changeMode('mine'); }}><Ticket size={16} /> Mis apuestas</button><button className={mode === 'saved' ? 'is-active' : ''} onClick={() => { setScope('all'); changeMode('saved'); }}><Bookmark size={16} /> Guardadas</button></>}</div><button className="bet-icon-button" aria-label="Actualizar" onClick={() => setRefresh((value) => value + 1)}><RefreshCw size={16} /></button></div>
+      <div className="bet-feed-toolbar"><div className="bet-feed-tabs" role="group" aria-label="Filtrar apuestas">{!fixedGroupId && <button className={scope === 'public' && mode === 'all' ? 'is-active' : ''} onClick={() => { setScope('public'); changeMode('all'); }}>Para todos</button>}{user && <>{!fixedGroupId && <button className={scope === 'groups' && mode === 'all' ? 'is-active' : ''} onClick={() => { setScope('groups'); changeMode('all'); }}>Mis grupos</button>}<button className={mode === 'mine' ? 'is-active' : ''} onClick={() => { setScope('all'); changeMode('mine'); }}><Ticket size={16} /> Mis apuestas</button><button className={mode === 'saved' ? 'is-active' : ''} onClick={() => { setScope('all'); changeMode('saved'); }}><Bookmark size={16} /> Guardadas</button></>}</div><div className="bet-toolbar-end">{user && <select className="bet-status-filter" aria-label="Estado de la apuesta" value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">Todas</option><option value="open">En juego</option><option value="won">Ganadas</option><option value="lost">Perdidas</option><option value="void">Nulas</option></select>}<button className="bet-icon-button" aria-label="Actualizar" onClick={() => setRefresh((value) => value + 1)}><RefreshCw size={16} /></button></div></div>
       <form className="bet-search bet-search-main" onSubmit={(event) => { event.preventDefault(); setQuery(search.trim()); }}><Search size={17} /><input aria-label="Buscar equipo, jugador o partido" placeholder="Equipo, jugador o partido…" maxLength={100} value={search} onChange={(event) => setSearch(event.target.value)} /><button type="submit">Buscar</button>{query && <button type="button" onClick={() => { setSearch(''); setQuery(''); }}>Limpiar</button>}</form>
       {query && <p className="bet-muted">Mostrando las selecciones que coinciden con “{query}” y la cuota total de cada ticket.</p>}
       {error && <div className="bet-error" role="alert">{error}<button onClick={() => setRefresh((value) => value + 1)}>Reintentar</button></div>}

@@ -3,7 +3,10 @@ import { createHash, randomUUID } from 'node:crypto';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../utils/errors.js';
 import { createBetImportService } from './bet-imports/index.js';
 import { parseStakeUrl, BetImportError } from './bet-imports/stake-argentina.importer.js';
-import { combineBetOcrTexts, readBetScreenshot, validateBetScreenshot } from './bet-screenshot.service.js';
+import { combineBetOcrTexts, detectProviderFromText, readBetScreenshot, validateBetScreenshot } from './bet-screenshot.service.js';
+
+export const MAX_SCREENSHOTS = 5;
+export const BET_RESULTS = ['won', 'lost', 'void'];
 
 const person = { id: true, username: true, displayName: true, avatar: true };
 const membership = (userId) => ({ groupUsers: { some: { userId, isBanned: false } } });
@@ -11,7 +14,7 @@ const accessible = (userId) => ({ OR: [{ visibility: 'PUBLIC' }, { visibility: '
 const postInclude = (userId) => ({
   author: { select: person }, group: { select: { id: true, name: true, groupUsers: { where: { userId, isBanned: false }, select: { isAdmin: true } } } },
   ticket: { select: { snapshot: true } },
-  selections: { orderBy: { position: 'asc' }, select: { event: true, team: true, player: true, pick: true, odds: true, groupOdds: true } },
+  selections: { orderBy: { position: 'asc' }, select: { event: true, startsAt: true, team: true, player: true, pick: true, odds: true, groupOdds: true } },
   screenshots: { orderBy: { position: 'asc' }, select: { id: true } },
   _count: { select: { comments: true, reactions: true, reports: true, linkOpens: true, anonymousLinkOpens: true } },
   reactions: { where: { userId }, select: { userId: true } },
@@ -25,6 +28,7 @@ function present(post, userId) {
     provider: post.provider, importState: post.importState, createdAt: post.createdAt, updatedAt: post.updatedAt,
     author: post.author, group: post.group ? { id: post.group.id, name: post.group.name } : null,
     visibility: post.visibility, totalOdds: post.totalOdds?.toString() || null,
+    result: post.result || null, settledAt: post.settledAt || null,
     selections: post.selections.map((selection) => ({ ...selection, odds: selection.odds?.toString() || null, groupOdds: selection.groupOdds?.toString() || null })),
     screenshots: post.screenshots.map((screenshot) => screenshot.id),
     ticket: post.ticket?.snapshot || null,
@@ -49,6 +53,37 @@ async function requirePost(db, userId, id) {
   return post;
 }
 
+// Each capture's OCR text is parsed and merged, so overlapping captures count once.
+async function recognizeDraft(db, draftId, provider) {
+  const screenshots = await db.betScreenshot.findMany({ where: { draftId }, orderBy: { position: 'asc' }, select: { id: true, image: true, mimeType: true, ocrText: true } });
+  // 'auto' drafts take the bookmaker the screenshots show.
+  const settle = async (detected) => {
+    if (provider !== 'auto' || !detected) return provider;
+    await db.betImportDraft.update({ where: { id: draftId }, data: { provider: detected } });
+    return detected;
+  };
+  let ocrFailed = false;
+  for (const screenshot of screenshots) if (!screenshot.ocrText) {
+    try {
+      screenshot.ocrText = (await readBetScreenshot(Buffer.from(screenshot.image), screenshot.mimeType, provider)).rawText || null;
+      await db.betScreenshot.update({ where: { id: screenshot.id }, data: { ocrText: screenshot.ocrText } });
+    } catch { ocrFailed = true; }
+  }
+  const detected = await settle(detectProviderFromText(screenshots.map((item) => item.ocrText || '').join('\n')));
+  return { ...combineBetOcrTexts(screenshots.map((item) => item.ocrText), detected === 'auto' ? 'stake_pba' : detected), provider: detected, ocrFailed, source: 'ocr' };
+}
+
+export function detectProviderFromUrl(value) {
+  try {
+    const host = new URL(value).hostname.toLowerCase();
+    const is = (domains) => domains.some((domain) => host === domain || host.endsWith(`.${domain}`));
+    if (is(['pba.stake.bet.ar'])) return 'stake_pba';
+    if (is(['bet365.com', 'bet365.bet.ar'])) return 'bet365';
+    if (is(['betano.com', 'betano.bet.ar', 'betano.com.ar'])) return 'betano';
+  } catch { /* validated below */ }
+  return null;
+}
+
 function parseOtherBookmakerUrl(value, provider) {
   let url;
   try { url = new URL(value); } catch { throw new BadRequestError('Pegá un enlace válido de la casa de apuestas.'); }
@@ -68,8 +103,12 @@ function parseOtherBookmakerUrl(value, provider) {
 // as an HTTP parameter. Production uses only the real importer and explicit flag.
 export function createBetCommunityService({ db = prisma, importer = createBetImportService(), importEnabled = () => process.env.STAKE_PBA_IMPORT_ENABLED === 'true' } = {}) {
   return {
-    async preview(userId, { sharedUrl, groupId, provider = 'stake_pba' }) {
+    async preview(userId, { sharedUrl, groupId, provider = 'auto' }) {
       if (groupId) await requireMember(db, userId, groupId);
+      if (provider === 'auto' && sharedUrl?.trim()) {
+        provider = detectProviderFromUrl(sharedUrl.trim());
+        if (!provider) throw new BadRequestError('El enlace tiene que ser de Stake, Bet365 o Betano.');
+      }
       let originalUrl = `capture:${randomUUID()}`;
       if (sharedUrl?.trim()) {
         try { originalUrl = provider === 'stake_pba' ? parseStakeUrl(sharedUrl).originalUrl : parseOtherBookmakerUrl(sharedUrl, provider); }
@@ -100,26 +139,37 @@ export function createBetCommunityService({ db = prisma, importer = createBetImp
 
     async addScreenshot(userId, draftId, image, mimeType) {
       validateBetScreenshot(image, mimeType);
+      // Re-read below: an 'auto' draft learns its provider from the first screenshot.
       const draftWhere = { id: draftId, userId, consumedAt: null, expiresAt: { gt: new Date() } };
       const draft = await db.betImportDraft.findFirst({ where: draftWhere, select: { provider: true } });
-      if (!draft) throw new BadRequestError('La vista previa venció. Volvé a pegar el enlace.');
+      if (!draft) throw new BadRequestError('La vista previa venció. Volvé a empezar la carga.');
       const checksum = createHash('sha256').update(image).digest('hex');
       if (await db.betScreenshot.findFirst({ where: { checksum, OR: [{ draftId }, { post: { authorId: userId, provider: draft.provider } }] }, select: { id: true } })) {
         throw new BadRequestError('Esta captura ya está en el ticket o en una apuesta que publicaste.');
       }
-      if (await db.betScreenshot.count({ where: { draftId } }) >= 3) throw new BadRequestError('Podés subir hasta 3 capturas por ticket.');
-      let recognized;
-      try { recognized = await readBetScreenshot(image, mimeType, draft.provider); }
-      catch { recognized = { rawText: null, ocrFailed: true }; }
+      const tooMany = `Podés subir hasta ${MAX_SCREENSHOTS} capturas por ticket.`;
+      if (await db.betScreenshot.count({ where: { draftId } }) >= MAX_SCREENSHOTS) throw new BadRequestError(tooMany);
       const screenshot = await db.$transaction(async (tx) => {
         const validDraft = await tx.betImportDraft.findFirst({ where: draftWhere, select: { id: true } });
-        if (!validDraft) throw new BadRequestError('La vista previa venció. Volvé a pegar el enlace.');
-        const position = await tx.betScreenshot.count({ where: { draftId } });
-        if (position >= 3) throw new BadRequestError('Podés subir hasta 3 capturas por ticket.');
-        return tx.betScreenshot.create({ data: { draftId, position, mimeType, image, checksum, ocrText: recognized.rawText || null }, select: { id: true } });
+        if (!validDraft) throw new BadRequestError('La vista previa venció. Volvé a empezar la carga.');
+        if (await tx.betScreenshot.count({ where: { draftId } }) >= MAX_SCREENSHOTS) throw new BadRequestError(tooMany);
+        const last = await tx.betScreenshot.findFirst({ where: { draftId }, orderBy: { position: 'desc' }, select: { position: true } });
+        return tx.betScreenshot.create({ data: { draftId, position: (last?.position ?? -1) + 1, mimeType, image, checksum }, select: { id: true } });
       });
-      const screenshots = await db.betScreenshot.findMany({ where: { draftId }, orderBy: { position: 'asc' }, select: { ocrText: true } });
-      return { id: screenshot.id, ...combineBetOcrTexts(screenshots.map((item) => item.ocrText), draft.provider), ocrFailed: Boolean(recognized.ocrFailed) };
+      return { id: screenshot.id, ...(await recognizeDraft(db, draftId, draft.provider)) };
+    },
+
+    async removeScreenshot(userId, draftId, screenshotId) {
+      const draft = await db.betImportDraft.findFirst({ where: { id: draftId, userId, consumedAt: null, expiresAt: { gt: new Date() } }, select: { provider: true } });
+      if (!draft) throw new BadRequestError('La vista previa venció. Volvé a empezar la carga.');
+      await db.betScreenshot.deleteMany({ where: { id: screenshotId, draftId } });
+      return recognizeDraft(db, draftId, draft.provider);
+    },
+
+    async settle(userId, id, result) {
+      const updated = await db.betPost.updateMany({ where: { id, authorId: userId }, data: { result, settledAt: result ? new Date() : null } });
+      if (!updated.count) throw new ForbiddenError('Solo quien publicó la apuesta puede cerrarla.');
+      return this.get(userId, id);
     },
 
     async image(userId, imageId, publicOnly = false) {
@@ -162,7 +212,7 @@ export function createBetCommunityService({ db = prisma, importer = createBetImp
           authorId: userId, groupId: groupId || null, visibility: groupId ? 'GROUP' : 'PUBLIC', ticketId, content,
           originalUrl: draft.originalUrl, provider: draft.provider, importState: ticketId ? 'ready' : screenshotCount ? 'screenshot' : linkOnly ? 'link_only' : 'author_entered',
           totalOdds: ticketId ? draft.snapshot.originalOdds : totalOdds || recognized.totalOdds || null,
-          selections: { create: normalized.map((selection, position) => ({ ...selection, position, odds: selection.odds || null, groupOdds: selection.groupOdds || null })) },
+          selections: { create: normalized.map((selection, position) => ({ ...selection, position, startsAt: selection.startsAt || null, odds: selection.odds || null, groupOdds: selection.groupOdds || null })) },
         } });
         if (screenshotCount) await tx.betScreenshot.updateMany({ where: { draftId: draft.id }, data: { draftId: null, postId: post.id } });
         return post.id;
@@ -173,13 +223,14 @@ export function createBetCommunityService({ db = prisma, importer = createBetImp
       return this.get(userId, id);
     },
 
-    async feed(userId, { groupId, scope = 'all', mode = 'all', before, query = '', kind = 'all' } = {}) {
+    async feed(userId, { groupId, scope = 'all', mode = 'all', before, query = '', kind = 'all', status = 'all' } = {}) {
       if (groupId) await requireMember(db, userId, groupId);
       const where = { ...(groupId ? { visibility: 'GROUP', groupId } : scope === 'public' ? { visibility: 'PUBLIC' } : scope === 'groups' ? { visibility: 'GROUP', group: membership(userId) } : accessible(userId)),
         ...(before ? { sequence: { lt: before } } : {}),
         ...(mode === 'mine' ? { authorId: userId } : {}),
         ...(mode === 'saved' ? { saves: { some: { userId } } } : {}),
         ...(kind !== 'all' ? { importState: kind } : {}),
+        ...(status === 'open' ? { result: null } : status !== 'all' ? { result: status } : {}),
         ...(query ? { AND: [{ OR: [
           { content: { contains: query, mode: 'insensitive' } },
           { author: { displayName: { contains: query, mode: 'insensitive' } } },

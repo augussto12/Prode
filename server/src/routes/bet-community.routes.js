@@ -2,7 +2,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { authenticate } from '../middleware/auth.js';
-import service from '../services/bet-community.service.js';
+import service, { BET_RESULTS } from '../services/bet-community.service.js';
 import { BadRequestError, ForbiddenError } from '../utils/errors.js';
 import { ANONYMOUS_BET_COOKIE, anonymousBetVisitor } from '../utils/anonymous-bet-visitor.js';
 
@@ -13,7 +13,7 @@ const content = z.string().trim().max(2000);
 const odds = z.string().trim().regex(/^\d{1,12}(?:\.\d{1,12})?$/).refine((value) => Number(value) >= 1 && Number(value) <= 1000000);
 const selection = z.object({
   event: z.string().trim().min(2).max(200), team: z.string().trim().max(100).nullable(),
-  player: z.string().trim().max(100).nullable(), pick: z.string().trim().min(2).max(200), odds: odds.nullable(), groupOdds: odds.nullable().optional(),
+  player: z.string().trim().max(100).nullable(), startsAt: z.string().trim().max(40).nullable().optional(), pick: z.string().trim().min(2).max(200), odds: odds.nullable(), groupOdds: odds.nullable().optional(),
 }).strict();
 const parse = (schema, value) => {
   const result = schema.safeParse(value);
@@ -56,23 +56,28 @@ router.use((req, res, next) => {
   next();
 });
 const importLimit = rateLimit({ windowMs: 60000, limit: 5, keyGenerator: (req) => String(req.user.id), standardHeaders: true, legacyHeaders: false, message: { error: 'Esperá un minuto antes de leer otro enlace.' } });
+const scanLimit = rateLimit({ windowMs: 60000, limit: 15, keyGenerator: (req) => String(req.user.id), standardHeaders: true, legacyHeaders: false, message: { error: 'Subiste muchas capturas seguidas. Esperá un minuto.' } });
 const writeLimit = rateLimit({ windowMs: 60000, limit: 30, keyGenerator: (req) => String(req.user.id), standardHeaders: true, legacyHeaders: false, message: { error: 'Estás publicando muy rápido. Esperá un minuto.' } });
 router.use((req, res, next) => req.method === 'GET' ? next() : writeLimit(req, res, next));
 
 router.post('/imports', importLimit, action(async (req, res) => {
-  const body = parse(z.object({ provider: z.enum(['stake_pba', 'bet365', 'betano']).default('stake_pba'), sharedUrl: z.string().max(2048).optional(), groupId: positive.optional() }).strict(), req.body);
+  const body = parse(z.object({ provider: z.enum(['auto', 'stake_pba', 'bet365', 'betano']).default('auto'), sharedUrl: z.string().max(2048).optional(), groupId: positive.optional() }).strict(), req.body);
   res.status(201).json(await service.preview(req.user.id, body));
 }));
-router.post('/scan', importLimit, action(async (req, res) => {
+router.post('/scan', scanLimit, action(async (req, res) => {
   const query = parse(z.object({ draftId: id }).strict(), req.query);
   res.json(await service.addScreenshot(req.user.id, query.draftId, req.body, req.headers['content-type']));
+}));
+router.delete('/scan/:screenshotId', action(async (req, res) => {
+  const query = parse(z.object({ draftId: id }).strict(), req.query);
+  res.json(await service.removeScreenshot(req.user.id, query.draftId, parse(id, req.params.screenshotId)));
 }));
 router.get('/images/:imageId', action(async (req, res) => {
   const image = await service.image(req.user.id, parse(id, req.params.imageId));
   res.type(image.mimeType).send(Buffer.from(image.image));
 }));
 router.get('/posts', action(async (req, res) => {
-  const query = parse(z.object({ groupId: positive.optional(), scope: z.enum(['all', 'public', 'groups']).default('all'), before: positive.optional(), mode: z.enum(['all', 'mine', 'saved']).default('all'), query: z.string().trim().max(100).default(''), kind: z.enum(['all', 'ready', 'author_entered', 'screenshot', 'link_only']).default('all') }).strict(), req.query);
+  const query = parse(z.object({ groupId: positive.optional(), scope: z.enum(['all', 'public', 'groups']).default('all'), before: positive.optional(), mode: z.enum(['all', 'mine', 'saved']).default('all'), query: z.string().trim().max(100).default(''), kind: z.enum(['all', 'ready', 'author_entered', 'screenshot', 'link_only']).default('all'), status: z.enum(['all', 'open', ...BET_RESULTS]).default('all') }).strict(), req.query);
   res.json(await service.feed(req.user.id, query));
 }));
 router.post('/posts', action(async (req, res) => {
@@ -82,6 +87,7 @@ router.param('postId', (req, res, next, value) => { try { parse(id, value); next
 router.get('/posts/:postId', action(async (req, res) => res.json(await service.get(req.user.id, req.params.postId))));
 router.patch('/posts/:postId', action(async (req, res) => res.json(await service.edit(req.user.id, req.params.postId, parse(z.object({ content }).strict(), req.body).content))));
 router.delete('/posts/:postId', action(async (req, res) => { await service.remove(req.user.id, req.params.postId); res.sendStatus(204); }));
+router.put('/posts/:postId/result', action(async (req, res) => res.json(await service.settle(req.user.id, req.params.postId, parse(z.object({ result: z.enum(BET_RESULTS).nullable() }).strict(), req.body).result))));
 router.post('/posts/:postId/link-open', action(async (req, res) => { await service.openLink(req.user.id, req.params.postId); res.sendStatus(204); }));
 router.get('/posts/:postId/comments', action(async (req, res) => res.json(await service.comments(req.user.id, req.params.postId, parse(z.object({ after: positive.optional() }).strict(), req.query).after))));
 router.post('/posts/:postId/comments', action(async (req, res) => res.status(201).json(await service.comment(req.user.id, req.params.postId, parse(z.object({ content: content.min(1).max(1000) }).strict(), req.body).content))));
