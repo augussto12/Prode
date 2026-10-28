@@ -80,7 +80,31 @@ function parseStake(rawText) {
 
 const teamName = /\b(?:Warriors|Nuggets|Mavericks|Heat|Bulls|Celtics|Thunder|Suns|Bucks|Pacers|Jazz|Grizzlies|Rockets|Hawks|Lakers|Clippers|Knicks|Nets|Spurs|Kings|Raptors|Pelicans|Pistons|Hornets|Magic|Trail Blazers|Timberwolves|Cavaliers|76ers|Wizards)\b/i;
 const teamLine = (line) => teamName.test(line) && !/\b(?:puntos|rebotes|asistencias|total de|marcador|bet builder)\b/i.test(line);
-const cleanTeam = (line) => line.replace(/^[^\p{L}]+/u, '').replace(/\s+(?:\d{1,3}|\d{1,2}:\d{2}).*$/, '').trim();
+// Bet365 prints the kick-off beside the teams: "DET Pistons  Mar 27 oct" / "NY Knicks  21:10".
+const dayDate = /\b(?:lun|mar|mi[eé]|jue|vie|s[aá]b|dom)\.?\s+\d{1,2}\s+\p{L}{3}\.?/iu;
+const trailingDayDate = /\s+(?:lun|mar|mi[eé]|jue|vie|s[aá]b|dom)\.?\s+\d{1,2}\s+\p{L}{3}.*$/iu;
+const cleanTeam = (line) => line.replace(/^[^\p{L}]+/u, '').replace(trailingDayDate, '').replace(/\s+(?:\d{1,3}|\d{1,2}:\d{2}).*$/, '').trim();
+function teamsStartTime(lines) {
+  const teams = lines.filter(teamLine);
+  const date = teams.map((line) => line.match(dayDate)?.[0]).find(Boolean);
+  const time = teams.map((line) => line.match(/\b\d{1,2}:\d{2}\b/)?.[0]).find(Boolean);
+  return date || time ? [date, time].filter(Boolean).join(' ') : null;
+}
+// Stake amount and potential payout, on the same line as their labels or below them.
+function payoutOdds(lines) {
+  const amount = /\$\s*([\d.]+,\d{2})/g;
+  let stake = null; let payout = null;
+  for (const [index, line] of lines.entries()) {
+    const here = [...line.matchAll(amount)].map((match) => match[1]);
+    const below = [...(lines[index + 1] || '').matchAll(amount)].map((match) => match[1]);
+    if (/\bApuesta\b/i.test(line) && /\bGanancias\s+potenciales\b/i.test(line) && below.length >= 2) [stake, payout] = below;
+    else if (/^Apuesta\b/i.test(line) && !stake) stake = here[0] || below[0] || null;
+    else if (/\bGanancias\s+potenciales\b/i.test(line) && !payout) payout = here[0] || below[0] || null;
+  }
+  const money = (value) => Number(value.replaceAll('.', '').replace(',', '.'));
+  const odds = stake && payout && money(stake) > 0 ? (money(payout) / money(stake)).toFixed(2) : null;
+  return odds && validOdds(odds) ? odds : null;
+}
 const inlinePick = (line) => line.match(/^(.{3,100}?)\s*[-–—:]\s*(\d+(?:[.,]\d+)?\+\s*(?:puntos?|rebotes?|asistencias?|triples?))\b(?:\s+(\d+[.,]\d{2}))?/i);
 
 function parseOther(rawText, provider) {
@@ -102,7 +126,7 @@ function parseOther(rawText, provider) {
   for (const block of blocks) {
     const teams = block.lines.filter(teamLine).map(cleanTeam).filter(Boolean);
     const event = teams.length >= 2 ? `${teams[0]} - ${teams[1]}`.slice(0, 200) : '';
-    const startsAt = block.lines.map(timeLine).find(Boolean) || null;
+    const startsAt = block.lines.map(timeLine).find(Boolean) || teamsStartTime(block.lines);
     for (let index = 0; index < block.lines.length; index++) {
       const line = block.lines[index];
       if (provider === 'bet365') {
@@ -116,7 +140,7 @@ function parseOther(rawText, provider) {
           if (teamLine(block.lines[offset])) followingTeams.push(cleanTeam(block.lines[offset]));
         }
         const rowEvent = followingTeams.length === 2 ? `${followingTeams[0]} - ${followingTeams[1]}` : event;
-        selections.push({ event: rowEvent, startsAt, team: null, player, pick: match[2].trim(), odds: match[3] ? decimal(match[3]) : null, groupOdds: block.groupOdds });
+        selections.push({ event: rowEvent, startsAt: followingTeams.length === 2 ? teamsStartTime(block.lines.slice(index + 1)) || startsAt : startsAt, team: null, player, pick: match[2].trim(), odds: match[3] ? decimal(match[3]) : null, groupOdds: block.groupOdds });
       } else {
         const combined = /^((?:\d+(?:[.,]\d+)?\+)\s*)?(.+?)\s+Total\s+de\s+(Puntos|rebotes|asistencias|triples)/i.exec(line);
         if (!combined) continue;
@@ -129,14 +153,76 @@ function parseOther(rawText, provider) {
     }
   }
   const groupOdds = [...new Set(blocks.map((block) => block.groupOdds).filter(Boolean))];
-  const stakeAmount = rawText.match(/\bApuesta\s*\$?\s*([\d.]+,\d{2})/i)?.[1];
-  const payoutAmount = rawText.match(/\bGanancias\s+potenciales\s*\$?\s*([\d.]+,\d{2})/i)?.[1];
-  const money = (value) => Number(value.replaceAll('.', '').replace(',', '.'));
-  const payoutOdds = stakeAmount && payoutAmount && money(stakeAmount) > 0 ? (money(payoutAmount) / money(stakeAmount)).toFixed(2) : null;
   const headerTotal = groupOdds.length === 1 && blocks.filter((block) => block.groupOdds).length === 1 ? groupOdds[0] : null;
-  const derivedTotalOdds = payoutOdds && validOdds(payoutOdds) ? payoutOdds : null;
+  const derivedTotalOdds = payoutOdds(lines);
   return { selections, expectedSelections: null, totalOdds: headerTotal || derivedTotalOdds, derivedTotalOdds,
     headerOdds: groupOdds.length === 1 ? groupOdds[0] : null };
+}
+
+// Betano splits each pick over several lines: "10+", "Victor Wembanyama Total de",
+// "rebotes". Builder odds sit in a badge that OCR may place before or after the
+// "Creador de Apuestas" title, and the ticket total follows "Doble"/"Triple"/...
+const betanoMarket = /^(.+?)\s+((?:Total\s+de\s+.+)|(?:(?:Asistencias|Rebotes|Puntos|Triples|Tiros)\b.*\btotales))$/i;
+const betanoComplete = (text) => !/(?:\by|\bde|,)$/i.test(text) && (/\btotales$/i.test(text) || /\bTotal\s+de\s+\p{L}{4,}/iu.test(text));
+function parseBetano(rawText) {
+  // OCR often reads the small bold "5+" as "St" or "S+".
+  const lines = rawText.split(/\r?\n/).map((line) => line.trim().replace(/^S[t+]$/, '5+').replace(/^(\d{1,2})t$/, '$1+'))
+    .filter((line) => line.length > 2 || /^\d{1,2}\+$/.test(line));
+  const header = /\b(?:Bet\s*Builder|Creador\s+de\s+Apuestas)\b(?:.*?\b(\d+[.,]\d{2})\b)?/i;
+  const bareOdds = /^(\d+[.,]\d{2})$/;
+  const blocks = [];
+  let block = null; let pick = null; let pendingOdds = null; let explicitTotalOdds = null; let typeSeen = false; let skipOdds = false;
+  const closePick = () => {
+    if (pick && block) {
+      const text = pick.text.join(' ').replace(/\s+/g, ' ').trim();
+      const inline = text.match(/^(\d+(?:[.,]\d+)?\+)\s*(.+)$/);
+      const value = pick.value || inline?.[1] || null;
+      const parts = betanoMarket.exec(inline && !pick.value ? inline[2] : text);
+      if (parts && playerLine(parts[1].trim())) block.picks.push({ player: parts[1].trim().slice(0, 100), pick: [value, parts[2]].filter(Boolean).join(' ').slice(0, 200) });
+    }
+    pick = null;
+  };
+  for (const [index, line] of lines.entries()) {
+    if (/^(?:Apuesta|Ganancias|Cash\s*out)\b/i.test(line)) { closePick(); break; }
+    if (/^(?:Simple|Doble|Triple|Combinada|M[uú]ltiple)\b/i.test(line)) {
+      typeSeen = true;
+      const inline = line.match(/\s(\d+[.,]\d{2})$/)?.[1];
+      if (inline && !/\$\s*[\d.]*$/.test(line.slice(0, -inline.length))) explicitTotalOdds = decimal(inline);
+      continue;
+    }
+    const headerMatch = line.match(header);
+    if (headerMatch) {
+      closePick();
+      const after = lines[index + 1]?.match(bareOdds)?.[1];
+      const odds = headerMatch[1] || pendingOdds || after;
+      skipOdds = !headerMatch[1] && !pendingOdds && !!after;
+      block = { groupOdds: validOdds(odds) ? decimal(odds) : null, teams: [], startsAt: null, picks: [] };
+      blocks.push(block); pendingOdds = null;
+      continue;
+    }
+    if (bareOdds.test(line)) {
+      if (skipOdds) { skipOdds = false; continue; }
+      if (typeSeen && !explicitTotalOdds && !blocks.length) explicitTotalOdds = decimal(line);
+      else pendingOdds = line;
+      continue;
+    }
+    skipOdds = false;
+    if (!block) continue;
+    const time = timeLine(line) || (/^noche\s+\d{1,2}:\d{2}$/i.test(line) ? 'Esta ' + line : null);
+    if (time) { block.startsAt ||= time; continue; }
+    if (teamLine(line) && (!pick?.text.length || betanoComplete(pick.text.join(' ')))) { closePick(); block.teams.push(cleanTeam(line)); continue; }
+    if (/^\d+(?:[.,]\d+)?\+$/.test(line)) { closePick(); pick = { value: line, text: [] }; continue; }
+    const startsNew = /^\d+(?:[.,]\d+)?\+\s/.test(line) || (/^\p{Lu}/u.test(line) && pick && betanoComplete(pick.text.join(' ')));
+    if (startsNew || !pick) { closePick(); pick = { value: null, text: [line] }; }
+    else pick.text.push(line);
+  }
+  closePick();
+  const selections = blocks.flatMap((item) => item.picks.map((entry) => ({
+    event: item.teams.length >= 2 ? item.teams[0] + ' - ' + item.teams[1] : '', startsAt: item.startsAt, team: null,
+    player: entry.player, pick: entry.pick, odds: null, groupOdds: item.groupOdds,
+  })));
+  const derivedTotalOdds = payoutOdds(rawText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean));
+  return { selections, expectedSelections: null, explicitTotalOdds, totalOdds: explicitTotalOdds || derivedTotalOdds, derivedTotalOdds, headerOdds: null };
 }
 
 const normalize = (value) => value?.toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\d]+/gu, '') || '';
@@ -176,7 +262,7 @@ export function detectProviderFromText(text) {
 }
 
 export function combineBetOcrTexts(rawTexts, provider = 'stake_pba') {
-  const parts = rawTexts.filter(Boolean).map((text) => provider === 'stake_pba' ? parseStake(text) : parseOther(text, provider));
+  const parts = rawTexts.filter(Boolean).map((text) => provider === 'stake_pba' ? parseStake(text) : provider === 'betano' ? parseBetano(text) : parseOther(text, provider));
   const events = [...new Set(parts.flatMap((part) => part.selections.map((selection) => selection.event).filter(Boolean)))];
   const soleEvent = events.length === 1 ? events[0] : null;
   const knownGroupOdds = [...new Set(parts.flatMap((part) => part.selections.map((selection) => selection.groupOdds).filter(Boolean)))];
